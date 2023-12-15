@@ -19,6 +19,12 @@ The original MAPPO code was too complex in terms of environment encapsulation, s
 
 Simply download the code, create a Conda environment, and then run the code, adding packages as needed. Specific packages will be added later.
 
+```
+conda create -n marl python=3.11.3
+conda activate marl
+pip install -r requirements.txt
+```
+
 ## Usage
 
 - The environment part is an empty implementation, and the implementation of the environment part in the light_mappo/envs/env_core.py file is: [Code] (https://github.com/tinyzqh/light_mappo/blob/main/envs/env_core.py)
