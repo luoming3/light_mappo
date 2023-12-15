@@ -155,7 +155,12 @@ class Runner(object):
                 str(self.save_dir) + "/critic_agent" + str(agent_id) + ".pt",
             )
 
-    def restore(self):
+    def restore(self, model_dir=None):
+        if model_dir:
+            self.model_dir = model_dir
+        else:
+            self.model_dir = self.save_dir
+        
         for agent_id in range(self.num_agents):
             policy_actor_state_dict = torch.load(str(self.model_dir) + "/actor_agent" + str(agent_id) + ".pt")
             self.policy[agent_id].actor.load_state_dict(policy_actor_state_dict)
@@ -163,6 +168,8 @@ class Runner(object):
                 str(self.model_dir) + "/critic_agent" + str(agent_id) + ".pt"
             )
             self.policy[agent_id].critic.load_state_dict(policy_critic_state_dict)
+
+        return self.policy
 
     def log_train(self, train_infos, total_num_steps):
         for agent_id in range(self.num_agents):

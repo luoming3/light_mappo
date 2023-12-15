@@ -153,7 +153,7 @@ class EnvRunner(Runner):
             else:
                 # TODO 这里改造成自己环境需要的形式即可
                 # TODO Here, you can change the action_env to the form you need
-                action_env = action
+                action_env = np.tanh(action)
                 # raise NotImplementedError
 
             actions.append(action)
@@ -273,10 +273,17 @@ class EnvRunner(Runner):
                         np.eye(self.eval_envs.action_space[agent_id].n)[eval_action], 1
                     )
                 else:
-                    raise NotImplementedError
+                    # eval_action_env = eval_action
+                    # TODO: map action space to [-1, 1]
+                    eval_action_env = np.tanh(eval_action)
+                    # raise NotImplementedError
 
                 eval_temp_actions_env.append(eval_action_env)
                 eval_rnn_states[:, agent_id] = _t2n(eval_rnn_state)
+
+            # TODO: verify the value of action space, it can be remove if the acion space is right
+            if not (np.array(eval_temp_actions_env) > -1).all() and (np.array(eval_temp_actions_env) < 1).all():
+                print("action space out of bound")
 
             # [envs, agents, dim]
             eval_actions_env = []
@@ -296,6 +303,10 @@ class EnvRunner(Runner):
             )
             eval_masks = np.ones((self.n_eval_rollout_threads, self.num_agents, 1), dtype=np.float32)
             eval_masks[eval_dones == True] = np.zeros(((eval_dones == True).sum(), 1), dtype=np.float32)
+
+            if np.any(eval_dones):
+                print(f"episode step: {eval_step+1}")
+                break
 
         eval_episode_rewards = np.array(eval_episode_rewards)
 
