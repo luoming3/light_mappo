@@ -92,12 +92,18 @@ class EnvCore(object):
             self.agents = []
         else:
             sub_agent_done = [False for _ in range(self.agent_num)]
-            sub_agent_reward = [[np.array(-0.1)] for _ in range(self.agent_num)]
+            sub_agent_reward = self.get_reward()
 
         return [
             sub_agent_obs, sub_agent_reward, sub_agent_done, sub_agent_info
         ]
 
+    def get_reward(self):
+        car_location = np.mean(list(self.wheels.values()), axis=0)
+        dist = np.linalg.norm(car_location - self.dest)
+        sub_agent_reward = [[np.array(dist * -0.01)] for _ in range(self.agent_num)]
+
+        return sub_agent_reward
 
 if __name__ == "__main__":
     env = EnvCore()
