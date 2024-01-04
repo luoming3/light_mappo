@@ -166,7 +166,8 @@ class EnvRunner(Runner):
         else:
             # TODO 这里改造成自己环境需要的形式即可
             # TODO Here, you can change the shape of actions_env to fit your environment
-            actions_env = actions
+            # actions_env = actions
+            actions_env = np.tanh(actions)
             # raise NotImplementedError
 
         return (
@@ -254,7 +255,8 @@ class EnvRunner(Runner):
             elif self.eval_envs.action_space[0].__class__.__name__ == "Discrete":
                 eval_actions_env = np.squeeze(np.eye(self.eval_envs.action_space[0].n)[eval_actions], 2)
             else:
-                raise NotImplementedError
+                eval_actions_env = np.tanh(eval_actions)
+                # raise NotImplementedError
 
             # Obser reward and next obs
             eval_obs, eval_rewards, eval_dones, eval_infos = self.eval_envs.step(eval_actions_env)
@@ -266,6 +268,10 @@ class EnvRunner(Runner):
             )
             eval_masks = np.ones((self.n_eval_rollout_threads, self.num_agents, 1), dtype=np.float32)
             eval_masks[eval_dones == True] = np.zeros(((eval_dones == True).sum(), 1), dtype=np.float32)
+
+            if np.any(eval_dones):
+                print(f"eval episode step: {eval_step+1}")
+                break
 
         eval_episode_rewards = np.array(eval_episode_rewards)
         eval_env_infos = {}
