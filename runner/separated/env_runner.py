@@ -246,10 +246,6 @@ class EnvRunner(Runner):
         )
         eval_masks = np.ones((self.n_eval_rollout_threads, self.num_agents, 1), dtype=np.float32)
 
-        # wheels point
-        points = []
-        # destination point
-        dest = list(eval_obs[0, 0, 2:4])
         for eval_step in range(self.episode_length):
             eval_temp_actions_env = []
             for agent_id in range(self.num_agents):
@@ -285,10 +281,6 @@ class EnvRunner(Runner):
                 eval_temp_actions_env.append(eval_action_env)
                 eval_rnn_states[:, agent_id] = _t2n(eval_rnn_state)
 
-            # TODO: verify the value of action space, it can be remove if the acion space is right
-            if not (np.array(eval_temp_actions_env) > -1).all() and (np.array(eval_temp_actions_env) < 1).all():
-                print("action space out of bound")
-
             # [envs, agents, dim]
             eval_actions_env = []
             for i in range(self.n_eval_rollout_threads):
@@ -297,8 +289,6 @@ class EnvRunner(Runner):
                     eval_one_hot_action_env.append(eval_temp_action_env[i])
                 eval_actions_env.append(eval_one_hot_action_env)
 
-            # get location of each wheel
-            points.append([tuple(eval_obs[0, i, 0:2]) for i in range(self.num_agents)])
             # Obser reward and next obs
             eval_obs, eval_rewards, eval_dones, eval_infos = self.eval_envs.step(eval_actions_env)
             eval_episode_rewards.append(eval_rewards)
@@ -323,47 +313,6 @@ class EnvRunner(Runner):
             print("eval average episode rewards of agent%i: " % agent_id + str(eval_average_episode_rewards))
 
         self.log_train(eval_train_infos, total_num_steps)
-        self.render_gif(total_num_steps, points, dest)
-    
-    @torch.no_grad()
-    def render_gif(self, total_num_steps, points, dest):
-        '''
-        to generate gif for each eval
-        '''
-
-        import matplotlib.pyplot as plt
-        from matplotlib import patches, animation
-
-        W = 100
-        L = 100
-
-        plt.rcParams["animation.html"] = "jshtml"
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlim(-5,105)
-        ax.set_ylim(-1,101)
-        rect = patches.Rectangle((0, 0), W, L, linewidth=1, edgecolor='r', facecolor='none')
-        cir = patches.Circle(dest, 1)
-        ax.add_patch(rect)
-        ax.add_patch(cir)
-        P = np.transpose(np.array(points), axes=(1,2,0))
-        
-        patch = patches.Polygon(P[:,:,0],closed=True, fc='r', ec='r')
-        ax.add_patch(patch)
-        
-        def init():
-            return patch,
-        
-        def animate(i):
-            patch.set_xy(P[:,:,i])
-            return patch,
-        
-        ani = animation.FuncAnimation(fig, animate, np.arange(P.shape[2]), init_func=init,
-                                      interval=1, blit=True)
-        
-        gif_save_path = self.gif_dir + "/num_timesteps_" + str(total_num_steps) + ".gif"
-        ani.save(gif_save_path)
 
     @torch.no_grad()
     def render(self):
