@@ -206,7 +206,7 @@ def get_config():
     parser.add_argument(
         "--num_env_steps",
         type=int,
-        default=1e6,
+        default=1e7,
         help="Number of environment steps to train (default: 10e6)",
     )
     parser.add_argument(
@@ -464,13 +464,13 @@ def get_config():
     parser.add_argument(
         "--save_gifs",
         action="store_true",
-        default=False,
+        default=True,
         help="by default, do not save render video. If set, save video.",
     )
     parser.add_argument(
         "--use_render",
         action="store_true",
-        default=False,
+        default=True,
         help="by default, do not render the env during training. If set, start render. Note: something, the environment has internal render process which is not controlled by this hyperparam.",
     )
     parser.add_argument(

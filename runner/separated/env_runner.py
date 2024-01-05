@@ -281,10 +281,6 @@ class EnvRunner(Runner):
                 eval_temp_actions_env.append(eval_action_env)
                 eval_rnn_states[:, agent_id] = _t2n(eval_rnn_state)
 
-            # TODO: verify the value of action space, it can be remove if the acion space is right
-            if not (np.array(eval_temp_actions_env) > -1).all() and (np.array(eval_temp_actions_env) < 1).all():
-                print("action space out of bound")
-
             # [envs, agents, dim]
             eval_actions_env = []
             for i in range(self.n_eval_rollout_threads):
