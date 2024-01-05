@@ -73,6 +73,16 @@ Just write this part of the code, and you can seamlessly connect with MAPPO. Aft
 
 In the train.py file, choose to comment out continuous environment or discrete environment to switch the demo environment.
 
+### train
+
+1. modify *config.py* to adjust args
+2. `python train/train.py` (execute under the project directory)
+
+### render
+
+1. modify *script/render.sh*, select your model
+2. `bash script/render.sh` (execute under the project directory)
+
 ## Related Efforts
 
 - [on-policy](https://github.com/marlbenchmark/on-policy) - 💌 Learn the author implementation of MAPPO.
