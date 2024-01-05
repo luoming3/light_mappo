@@ -85,7 +85,12 @@ class ContinuousActionEnv(object):
         pass
 
     def render(self, mode="rgb_array"):
-        pass
+        if mode == "rgb_array":
+            return self.env.render(mode)
+        elif mode == "human":
+            self.env.render(mode)
+        else:
+            raise NotImplementedError
 
     def seed(self, seed):
         pass

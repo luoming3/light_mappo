@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from runner.shared.base_runner import Runner
 
-# import imageio
+import imageio
 
 
 def _t2n(x):
@@ -285,25 +285,25 @@ class EnvRunner(Runner):
         """Visualize the env."""
         envs = self.envs
 
-        all_frames = []
         for episode in range(self.all_args.render_episodes):
             obs = envs.reset()
+            all_frames = []
             if self.all_args.save_gifs:
-                image = envs.render("rgb_array")[0][0]
+                image = envs.render("rgb_array")[0]
                 all_frames.append(image)
             else:
                 envs.render("human")
 
             rnn_states = np.zeros(
                 (
-                    self.n_rollout_threads,
+                    self.n_render_rollout_threads,
                     self.num_agents,
                     self.recurrent_N,
                     self.hidden_size,
                 ),
                 dtype=np.float32,
             )
-            masks = np.ones((self.n_rollout_threads, self.num_agents, 1), dtype=np.float32)
+            masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
 
             episode_rewards = []
 
@@ -317,8 +317,8 @@ class EnvRunner(Runner):
                     np.concatenate(masks),
                     deterministic=True,
                 )
-                actions = np.array(np.split(_t2n(action), self.n_rollout_threads))
-                rnn_states = np.array(np.split(_t2n(rnn_states), self.n_rollout_threads))
+                actions = np.array(np.split(_t2n(action), self.n_render_rollout_threads))
+                rnn_states = np.array(np.split(_t2n(rnn_states), self.n_render_rollout_threads))
 
                 if envs.action_space[0].__class__.__name__ == "MultiDiscrete":
                     for i in range(envs.action_space[0].shape):
@@ -330,7 +330,8 @@ class EnvRunner(Runner):
                 elif envs.action_space[0].__class__.__name__ == "Discrete":
                     actions_env = np.squeeze(np.eye(envs.action_space[0].n)[actions], 2)
                 else:
-                    raise NotImplementedError
+                    actions_env = np.tanh(actions)
+                    # raise NotImplementedError
 
                 # Obser reward and next obs
                 obs, rewards, dones, infos = envs.step(actions_env)
@@ -340,11 +341,11 @@ class EnvRunner(Runner):
                     ((dones == True).sum(), self.recurrent_N, self.hidden_size),
                     dtype=np.float32,
                 )
-                masks = np.ones((self.n_rollout_threads, self.num_agents, 1), dtype=np.float32)
+                masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
                 masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
 
                 if self.all_args.save_gifs:
-                    image = envs.render("rgb_array")[0][0]
+                    image = envs.render("rgb_array")[0]  # TODO: support parallel env setting
                     all_frames.append(image)
                     calc_end = time.time()
                     elapsed = calc_end - calc_start
@@ -352,8 +353,15 @@ class EnvRunner(Runner):
                         time.sleep(self.all_args.ifi - elapsed)
                 else:
                     envs.render("human")
+                
+                if np.any(dones):
+                    break
+            
+            average_episode_rewards = np.mean(np.sum(np.array(episode_rewards), axis=0))
+            print("average episode rewards is: " + str(average_episode_rewards))
 
-            print("average episode rewards is: " + str(np.mean(np.sum(np.array(episode_rewards), axis=0))))
-
-        # if self.all_args.save_gifs:
-        #     imageio.mimsave(str(self.gif_dir) + '/render.gif', all_frames, duration=self.all_args.ifi)
+            if self.all_args.save_gifs:
+                imageio.mimsave(str(self.gif_dir) + '/' + str(episode) + '_' + '{:.2f}'.format(average_episode_rewards) + '.gif',
+                                all_frames,
+                                duration=self.all_args.ifi,
+                                loop=0)

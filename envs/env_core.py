@@ -3,6 +3,12 @@ from shapely.geometry import Polygon, Point
 from shapely import intersects, within
 import random
 
+import matplotlib.pyplot as plt
+from matplotlib import patches
+import io
+import imageio
+
+
 L = 100
 W = 100
 field = Polygon([(0, 0), (0, L), (W, L), (W, 0)])
@@ -105,22 +111,67 @@ class EnvCore(object):
 
         return sub_agent_reward
 
+    def render(self, mode='rgb_array'):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        ax.set_xlim(-5,105)
+        ax.set_ylim(-1,101)
+
+        # 方框大小
+        rect = patches.Rectangle((0, 0), W, L, linewidth=1, edgecolor='r', facecolor='none')
+        # 目标
+        cir = patches.Circle(self.dest, 1)
+        ax.add_patch(rect)
+        ax.add_patch(cir)
+
+        # 绘制小车的位置
+        patch = patches.Polygon(list(self.wheels.values()),closed=True, fc='r', ec='r')
+        ax.add_patch(patch)
+
+        # 保存在内存中
+        # 创建一个内存缓冲区
+        buffer = io.BytesIO()
+
+        # 将图像保存到内存中
+        plt.savefig(buffer, format='png')
+        plt.close(fig)  # 关闭图像以释放内存
+
+        # 重置缓冲区的指针到开始位置
+        buffer.seek(0)
+
+        # 使用PIL从内存中读取图像
+        image = imageio.v2.imread(buffer)
+
+        # 关闭缓冲区
+        buffer.close()
+
+        return image
+
+
 if __name__ == "__main__":
     env = EnvCore()
     # print(env.reset())
 
     # test the validation of env
-    episode = 10
+    episode = 1
+    all_frames = []
     for _ in range(episode):
         env.reset()
+        image = env.render()
+        all_frames.append(image)
         step = 0
         for _ in range(1000):
             actions = np.random.random(size=(8, )) * 2 - 1
             result = env.step(actions=actions)
+            all_frames.append(env.render())
             step += 1
 
             sub_agent_obs, done = result[1], result[2]
             if np.all(done):
-                print(sub_agent_obs)
                 break
         print(step)
+
+    import os
+    gif_save_path = os.path.dirname(__file__) + '/' + "render.gif"
+    imageio.mimsave(gif_save_path, all_frames, duration=1)

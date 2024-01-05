@@ -56,6 +56,9 @@ class Runner(object):
         self.save_dir = str(self.run_dir / 'models')
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
+        self.gif_dir = str(self.run_dir / "gifs")
+        if not os.path.exists(self.gif_dir):
+            os.makedirs(self.gif_dir)
 
         from algorithms.algorithm.r_mappo import RMAPPO as TrainAlgo
         from algorithms.algorithm.rMAPPOPolicy import RMAPPOPolicy as Policy
