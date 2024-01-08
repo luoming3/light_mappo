@@ -1,8 +1,8 @@
 import gym
 from gym import spaces
 import numpy as np
-from envs.env_core import EnvCore
-
+# from envs.env_core import EnvCore
+from envs.car_racing import CarRacing
 
 class ContinuousActionEnv(object):
     """
@@ -11,7 +11,8 @@ class ContinuousActionEnv(object):
     """
 
     def __init__(self):
-        self.env = EnvCore()
+        # self.env = EnvCore()
+        self.env = CarRacing(render_mode="human")
         self.num_agent = self.env.agent_num
 
         self.signal_obs_dim = self.env.obs_dim

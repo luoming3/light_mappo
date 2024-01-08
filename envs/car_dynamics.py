@@ -19,7 +19,6 @@ try:
 except ImportError:
     raise DependencyNotInstalled("box2D is not installed, run `pip install gym[box2d]`")
 
-
 SIZE = 0.02
 ENGINE_POWER = 100000000 * SIZE * SIZE
 WHEEL_MOMENT_OF_INERTIA = 4000 * SIZE * SIZE
@@ -142,10 +141,14 @@ class Car:
             gas (float): How much gas gets applied. Gets clipped between 0 and 1.
         """
         gas = np.clip(gas, 0, 1)
-        for w in self.wheels[2:4]:
-            diff = gas - w.gas
-            if diff > 0.1:
-                diff = 0.1  # gradually increase, but stop immediately
+        # for w in self.wheels[2:4]:
+        #     diff = gas - w.gas
+        #     if any(diff) > 0.1:
+        #         diff = 0.1  # gradually increase, but stop immediately
+        #     w.gas += diff
+        
+        for i,w in enumerate(self.wheels):
+            diff = min(gas[i] - w.gas,0.1)
             w.gas += diff
 
     def brake(self, b):
@@ -153,16 +156,21 @@ class Car:
 
         Args:
             b (0..1): Degree to which the brakes are applied. More than 0.9 blocks the wheels to zero rotation"""
-        for w in self.wheels:
-            w.brake = b
+        # for w in self.wheels:
+        #     w.brake = b
+
+        for i,item in enumerate(b):
+            self.wheels[i].brake = item
 
     def steer(self, s):
         """control: steer
 
         Args:
             s (-1..1): target position, it takes time to rotate steering wheel from side-to-side"""
-        self.wheels[0].steer = -s
-        self.wheels[1].steer = s
+        # self.wheels[0].steer = s
+        # self.wheels[1].steer = s
+        for i,item in enumerate(s):
+            self.wheels[i].steer = item
 
     def step(self, dt):
         for w in self.wheels:

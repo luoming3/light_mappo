@@ -1,13 +1,16 @@
 __credits__ = ["Andrea PIERRÉ"]
 
-import math
+import math,random
 from typing import Optional, Union
 
 import numpy as np
+from shapely.geometry import Polygon, Point
+from shapely import intersects, within
 
 import gym
 from gym import spaces
-from gym.envs.box2d.car_dynamics import Car
+from envs.car_dynamics import Car
+# from gym.envs.box2d.car_dynamics import Car
 from gym.error import DependencyNotInstalled, InvalidAction
 from gym.utils import EzPickle
 
@@ -205,6 +208,10 @@ class CarRacing(gym.Env, EzPickle):
             domain_randomize,
             continuous,
         )
+        self.agent_num = 4  # number of agent
+        self.obs_dim = 8  # observation dimension of agents
+        self.action_dim = 3  # set the action dimension of agents
+
         self.continuous = continuous
         self.domain_randomize = domain_randomize
         self.lap_complete_percent = lap_complete_percent
@@ -494,6 +501,9 @@ class CarRacing(gym.Env, EzPickle):
         self.new_lap = False
         self.road_poly = []
 
+        # 目标位置
+        self.dest = np.array((random.random() * PLAYFIELD, random.random() * PLAYFIELD))
+
         if self.domain_randomize:
             randomize = True
             if isinstance(options, dict):
@@ -515,15 +525,16 @@ class CarRacing(gym.Env, EzPickle):
 
         if self.render_mode == "human":
             self.render()
-        return self.step(None)[0], {}
+        return self.step(None)[0]
+        # return self.step(None)[0], {}
 
     def step(self, action: Union[np.ndarray, int]):
         assert self.car is not None
         if action is not None:
             if self.continuous:
-                self.car.steer(-action[0])
-                self.car.gas(action[1])
-                self.car.brake(action[2])
+                self.car.steer(-action[:,0])
+                self.car.gas(action[:,1])
+                self.car.brake(action[:,2])
             else:
                 if not self.action_space.contains(action):
                     raise InvalidAction(
@@ -538,8 +549,22 @@ class CarRacing(gym.Env, EzPickle):
         self.world.Step(1.0 / FPS, 6 * 30, 2 * 30)
         self.t += 1.0 / FPS
 
-        self.state = self._render("state_pixels")
+        # self.state = self._render("state_pixels")
 
+        sub_agent_obs = []
+        for i in range(self.agent_num):
+            w = self.car.wheels[i]
+
+            sub_obs = np.reshape(
+                [np.array([w.position.x,w.position.y]),self.dest,np.array([w.omega,w.phase]),
+                 self.dest-np.array([w.position.x,w.position.y])],self.obs_dim)
+
+            sub_agent_obs.append(sub_obs)
+        self.state = sub_agent_obs
+
+        '''
+        car_racing reward discarded
+        '''
         step_reward = 0
         terminated = False
         truncated = False
@@ -559,11 +584,47 @@ class CarRacing(gym.Env, EzPickle):
             if abs(x) > PLAYFIELD or abs(y) > PLAYFIELD:
                 terminated = True
                 step_reward = -100
+        '''
+        car_racing reward discarded
+        '''
+        
+        sub_agent_reward = []
+        sub_agent_terminated = []
+        wheels_pos = ((w.position.x, w.position.y) for w in self.car.wheels)
+        car = Polygon(wheels_pos)
+        bounds = PLAYFIELD
+        field = Polygon([
+            (bounds, bounds),
+            (bounds, -bounds),
+            (-bounds, -bounds),
+            (-bounds, bounds),
+        ])
+
+        if intersects(car, Point(self.dest[0], self.dest[1])):
+            sub_agent_terminated = [True for _ in range(self.agent_num)]
+            sub_agent_reward = [[np.array(1000)] for _ in range(self.agent_num)]
+            self.agents = []
+        elif not within(car, field):
+            sub_agent_terminated = [True for _ in range(self.agent_num)]
+            sub_agent_reward = [[np.array(-100)] for _ in range(self.agent_num)]
+            self.agents = []
+        else:
+            sub_agent_terminated = [False for _ in range(self.agent_num)]
+            sub_agent_reward = self.get_reward()
 
         if self.render_mode == "human":
             self.render()
-        return self.state, step_reward, terminated, truncated, {}
 
+        return [self.state, sub_agent_reward, sub_agent_terminated, {}] # truncated
+
+    def get_reward(self):
+        car_location = self.car.hull.position
+        # car_location = np.mean(list(self.wheels.values()), axis=0)
+        dist = np.linalg.norm(np.array(car_location) - self.dest)
+        sub_agent_reward = [[np.array(dist * -0.01)] for _ in range(self.agent_num)]
+
+        return sub_agent_reward
+    
     def render(self):
         if self.render_mode is None:
             gym.logger.warn(
@@ -775,20 +836,22 @@ class CarRacing(gym.Env, EzPickle):
 
 
 if __name__ == "__main__":
-    a = np.array([0.0, 0.0, 0.0])
+    # a = np.array([0.0, 0.0, 0.0])
+
+    a = np.zeros((4,3))
 
     def register_input():
         global quit, restart
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    a[0] = -1.0
+                    a[:,0] = -1.0
                 if event.key == pygame.K_RIGHT:
-                    a[0] = +1.0
+                    a[:,0] = +1.0
                 if event.key == pygame.K_UP:
-                    a[1] = +1.0
+                    a[:,1] = +1.0
                 if event.key == pygame.K_DOWN:
-                    a[2] = +0.8  # set 1.0 for wheels to block to zero rotation
+                    a[:,2] = +0.8  # set 1.0 for wheels to block to zero rotation
                 if event.key == pygame.K_RETURN:
                     restart = True
                 if event.key == pygame.K_ESCAPE:
@@ -796,13 +859,13 @@ if __name__ == "__main__":
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
-                    a[0] = 0
+                    a[:,0] = 0
                 if event.key == pygame.K_RIGHT:
-                    a[0] = 0
+                    a[:,0] = 0
                 if event.key == pygame.K_UP:
-                    a[1] = 0
+                    a[:,1] = 0
                 if event.key == pygame.K_DOWN:
-                    a[2] = 0
+                    a[:,2] = 0
 
             if event.type == pygame.QUIT:
                 quit = True
@@ -818,6 +881,7 @@ if __name__ == "__main__":
         while True:
             register_input()
             s, r, terminated, truncated, info = env.step(a)
+            
             total_reward += r
             if steps % 200 == 0 or terminated or truncated:
                 print("\naction " + str([f"{x:+0.2f}" for x in a]))
