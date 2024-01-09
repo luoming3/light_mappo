@@ -21,7 +21,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from config import get_config
-from envs.env_wrappers import DummyVecEnv
+from envs.env_wrappers import DummyVecEnv, SubprocVecEnv
 
 """Train script for MPEs."""
 
@@ -45,7 +45,10 @@ def make_train_env(all_args):
 
         return init_env
 
-    return DummyVecEnv([get_env_fn(i) for i in range(all_args.n_rollout_threads)])
+    if all_args.n_rollout_threads == 1:
+        return DummyVecEnv([get_env_fn(0)])
+    else:
+        return SubprocVecEnv([get_env_fn(i) for i in range(all_args.n_rollout_threads)])
 
 
 def make_eval_env(all_args):
@@ -63,7 +66,10 @@ def make_eval_env(all_args):
 
         return init_env
 
-    return DummyVecEnv([get_env_fn(i) for i in range(all_args.n_eval_rollout_threads)])
+    if all_args.n_eval_rollout_threads == 1:
+        return DummyVecEnv([get_env_fn(0)])
+    else:
+        return SubprocVecEnv([get_env_fn(i) for i in range(all_args.n_eval_rollout_threads)])
 
 
 def parse_args(args, parser):
