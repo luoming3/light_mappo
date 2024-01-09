@@ -8,6 +8,7 @@ Modified from OpenAI Baselines code to work with multi-agent envs
 
 import numpy as np
 from abc import ABC, abstractmethod
+from multiprocessing import Process, Pipe
 
 
 class CloudpickleWrapper(object):
@@ -170,5 +171,99 @@ class DummyVecEnv():
         elif mode == "human":
             for env in self.envs:
                 env.render(mode=mode)
+        else:
+            raise NotImplementedError
+
+
+class SubprocVecEnv(ShareVecEnv):
+    def __init__(self, env_fns, spaces=None):
+        """
+        envs: list of gym environments to run in subprocesses
+        """
+        self.waiting = False
+        self.closed = False
+        nenvs = len(env_fns)
+        self.parent_pipes, self.child_pipes = zip(*[Pipe() for _ in range(nenvs)])
+        self.ps = [Process(target=worker, args=(parent_pipe, child_pipe, CloudpickleWrapper(env_fn)))
+                   for (parent_pipe, child_pipe, env_fn) in zip(self.parent_pipes, self.child_pipes, env_fns)]
+        for p in self.ps:
+            p.daemon = True  # if the main process crashes, we should not cause things to hang
+            p.start()
+        for pipe in self.child_pipes:
+            pipe.close()
+
+        self.parent_pipes[0].send(('get_spaces', None))
+        observation_space, share_observation_space, action_space = self.parent_pipes[0].recv()
+        ShareVecEnv.__init__(self, len(env_fns), observation_space, share_observation_space, action_space)
+
+    def step_async(self, actions):
+        for pipe, action in zip(self.parent_pipes, actions):
+            pipe.send(('step', action))
+        self.waiting = True
+
+    def step_wait(self):
+        results = [pipe.recv() for pipe in self.parent_pipes]
+        self.waiting = False
+        obs, rews, dones, infos = zip(*results)
+        return np.stack(obs), np.stack(rews), np.stack(dones), infos
+
+    def reset(self):
+        for pipe in self.parent_pipes:
+            pipe.send(('reset', None))
+        obs = [pipe.recv() for pipe in self.parent_pipes]
+        return np.stack(obs)
+
+    def close(self):
+        if self.closed:
+            return
+        if self.waiting:
+            for pipe in self.parent_pipes:
+                pipe.recv()
+        for pipe in self.parent_pipes:
+            pipe.send(('close', None))
+        for p in self.ps:
+            p.join()
+        self.closed = True
+
+    def render(self, mode="rgb_array"):
+        for pipe in self.parent_pipes:
+            pipe.send(('render', mode))
+        if mode == "rgb_array":   
+            frame = [pipe.recv() for pipe in self.parent_pipes]
+            return np.stack(frame) 
+
+
+def worker(parent_pipe, child_pipe, env_fn_wrapper):
+    '''
+    worker for multiprocessing
+    '''
+    parent_pipe.close()
+
+    # get env from CloudpickleWrapper
+    env = env_fn_wrapper.x()
+
+    while True:
+        cmd, data = child_pipe.recv()
+        if cmd == 'step':
+            ob, reward, done, info = env.step(data)
+            child_pipe.send((ob, reward, done, info))
+        elif cmd == 'reset':
+            ob = env.reset()
+            child_pipe.send((ob))
+        elif cmd == 'render':
+            if data == "rgb_array":
+                fr = env.render(mode=data)
+                child_pipe.send(fr)
+            elif data == "human":
+                env.render(mode=data)
+        elif cmd == 'reset_task':
+            ob = env.reset_task()
+            child_pipe.send(ob)
+        elif cmd == 'close':
+            env.close()
+            child_pipe.close()
+            break
+        elif cmd == 'get_spaces':
+            child_pipe.send((env.observation_space, env.share_observation_space, env.action_space))
         else:
             raise NotImplementedError
