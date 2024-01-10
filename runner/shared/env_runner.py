@@ -62,9 +62,6 @@ class EnvRunner(Runner):
                 # insert data into buffer
                 self.insert(data)
 
-                # reset the env when it is done
-                [self.envs.envs[i].reset() for (i, done) in enumerate(dones) if np.any(done)]
-
             # compute return and update network
             self.compute()
             train_infos = self.train()
@@ -358,6 +355,7 @@ class EnvRunner(Runner):
                     envs.render("human")
                 
                 if np.any(dones):
+                    all_frames = all_frames[:-1]
                     break
             
             average_episode_rewards = np.mean(np.sum(np.array(episode_rewards), axis=0))
