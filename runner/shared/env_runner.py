@@ -62,6 +62,9 @@ class EnvRunner(Runner):
                 # insert data into buffer
                 self.insert(data)
 
+                # reset the env when it is done
+                [self.envs.envs[i].reset() for (i, done) in enumerate(dones) if np.any(done)]
+
             # compute return and update network
             self.compute()
             train_infos = self.train()
@@ -99,7 +102,7 @@ class EnvRunner(Runner):
                 #         agent_k = 'agent%i/individual_rewards' % agent_id
                 #         env_infos[agent_k] = idv_rews
 
-                train_infos["average_episode_rewards"] = np.mean(self.buffer.rewards) * self.episode_length
+                train_infos["average_episode_rewards"] = np.mean(self.buffer.rewards)
                 print("average episode rewards is {}".format(train_infos["average_episode_rewards"]))
                 self.log_train(train_infos, total_num_steps)
                 # self.log_env(env_infos, total_num_steps)
