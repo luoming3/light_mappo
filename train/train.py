@@ -8,11 +8,12 @@
 # !/usr/bin/env python
 import sys
 import os
-import socket
 import setproctitle
 import numpy as np
 from pathlib import Path
 import torch
+import time
+
 
 # Get the parent directory of the current file
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
@@ -84,6 +85,7 @@ def parse_args(args, parser):
 
 
 def main(args):
+    t1 = time.time()
     parser = get_config()
     all_args = parse_args(args, parser)
 
@@ -185,6 +187,8 @@ def main(args):
 
     runner.writter.export_scalars_to_json(str(runner.log_dir + "/summary.json"))
     runner.writter.close()
+
+    print(f"train time: {time.time() - t1}")
 
 
 if __name__ == "__main__":
