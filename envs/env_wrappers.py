@@ -203,6 +203,12 @@ class SubprocVecEnv(ShareVecEnv):
         results = [pipe.recv() for pipe in self.parent_pipes]
         self.waiting = False
         obs, rews, dones, infos = zip(*results)
+
+        for (i, done) in enumerate(dones):
+            if np.any(done):
+                self.parent_pipes[i].send(('reset', None))
+                self.parent_pipes[i].recv()
+
         return np.stack(obs), np.stack(rews), np.stack(dones), infos
 
     def reset(self):
