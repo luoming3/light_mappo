@@ -121,15 +121,13 @@ class ShareVecEnv(ABC):
 
 
 # single env
-class DummyVecEnv():
+class DummyVecEnv(ShareVecEnv):
     def __init__(self, env_fns):
-        self.envs = [fn() for fn in env_fns]
-        env = self.envs[0]
-        self.num_envs = len(env_fns)
-        self.observation_space = env.observation_space
-        self.share_observation_space = env.share_observation_space
-        self.action_space = env.action_space
         self.actions = None
+        self.envs = [fn() for fn in env_fns]
+        num_envs = len(env_fns)
+        env = self.envs[0]
+        ShareVecEnv.__init__(self, num_envs, env.observation_space, env.share_observation_space, env.action_space)
 
     def step(self, actions):
         """
@@ -194,7 +192,7 @@ class SubprocVecEnv(ShareVecEnv):
 
         self.parent_pipes[0].send(('get_spaces', None))
         observation_space, share_observation_space, action_space = self.parent_pipes[0].recv()
-        ShareVecEnv.__init__(self, len(env_fns), observation_space, share_observation_space, action_space)
+        ShareVecEnv.__init__(self, nenvs, observation_space, share_observation_space, action_space)
 
     def step_async(self, actions):
         for pipe, action in zip(self.parent_pipes, actions):
