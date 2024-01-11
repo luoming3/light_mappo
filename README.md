@@ -76,12 +76,13 @@ In the train.py file, choose to comment out continuous environment or discrete e
 ### train
 
 1. modify *config.py* to adjust args
-2. `python train/train.py` (execute under the project directory)
+2. `python train/train.py` (under the project directory)
 
 ### render
 
-1. modify *script/render.sh*, select your model
-2. `bash script/render.sh` (execute under the project directory)
+1. modify *scripts/render.sh*, select your model path
+2. `bash scripts/render.sh` (under the project directory)
+    - get the gif in *scrips/result/run/gif*
 
 ## Related Efforts
 
