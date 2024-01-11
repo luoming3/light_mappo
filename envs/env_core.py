@@ -38,7 +38,7 @@ class EnvCore(object):
             0: np.array((x, y)),
             1: np.array((x + 2, y)),
             2: np.array((x + 2, y + 4)),
-            3: np.array((x, y + 4))
+            3: np.array((x, y + 4)),
         }
 
         # 初始速度
@@ -51,10 +51,11 @@ class EnvCore(object):
         sub_agent_obs = []
         for i in range(self.agent_num):
             sub_obs = np.reshape(
-                np.array([
-                    self.wheels[i], self.dest, self.speed,
-                    self.dest - self.wheels[i]
-                ]), self.obs_dim)
+                np.array(
+                    [self.wheels[i], self.dest, self.speed, self.dest - self.wheels[i]]
+                ),
+                self.obs_dim,
+            )
             sub_agent_obs.append(sub_obs)
         return sub_agent_obs
 
@@ -74,10 +75,12 @@ class EnvCore(object):
         # observations after actions
         sub_agent_obs = [
             np.reshape(
-                np.array([
-                    self.wheels[i], self.dest, self.speed,
-                    self.dest - self.wheels[i]
-                ]), self.obs_dim) for i in range(self.agent_num)
+                np.array(
+                    [self.wheels[i], self.dest, self.speed, self.dest - self.wheels[i]]
+                ),
+                self.obs_dim,
+            )
+            for i in range(self.agent_num)
         ]
 
         # information of each agent
@@ -100,9 +103,7 @@ class EnvCore(object):
             sub_agent_done = [False for _ in range(self.agent_num)]
             sub_agent_reward = self.get_reward()
 
-        return [
-            sub_agent_obs, sub_agent_reward, sub_agent_done, sub_agent_info
-        ]
+        return [sub_agent_obs, sub_agent_reward, sub_agent_done, sub_agent_info]
 
     def get_reward(self):
         car_location = np.mean(list(self.wheels.values()), axis=0)
@@ -111,22 +112,24 @@ class EnvCore(object):
 
         return sub_agent_reward
 
-    def render(self, mode='rgb_array'):
+    def render(self, mode="rgb_array"):
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        ax.set_xlim(-5,105)
-        ax.set_ylim(-1,101)
+        ax.set_xlim(-5, 105)
+        ax.set_ylim(-1, 101)
 
         # 方框大小
-        rect = patches.Rectangle((0, 0), W, L, linewidth=1, edgecolor='r', facecolor='none')
+        rect = patches.Rectangle(
+            (0, 0), W, L, linewidth=1, edgecolor="r", facecolor="none"
+        )
         # 目标
         cir = patches.Circle(self.dest, 1)
         ax.add_patch(rect)
         ax.add_patch(cir)
 
         # 绘制小车的位置
-        patch = patches.Polygon(list(self.wheels.values()),closed=True, fc='r', ec='r')
+        patch = patches.Polygon(list(self.wheels.values()), closed=True, fc="r", ec="r")
         ax.add_patch(patch)
 
         # 保存在内存中
@@ -134,7 +137,7 @@ class EnvCore(object):
         buffer = io.BytesIO()
 
         # 将图像保存到内存中
-        plt.savefig(buffer, format='png')
+        plt.savefig(buffer, format="png")
         plt.close(fig)  # 关闭图像以释放内存
 
         # 重置缓冲区的指针到开始位置
@@ -162,7 +165,7 @@ if __name__ == "__main__":
         all_frames.append(image)
         step = 0
         for _ in range(1000):
-            actions = np.random.random(size=(8, )) * 2 - 1
+            actions = np.random.random(size=(8,)) * 2 - 1
             result = env.step(actions=actions)
             all_frames.append(env.render())
             step += 1
@@ -173,5 +176,6 @@ if __name__ == "__main__":
         print(step)
 
     import os
-    gif_save_path = os.path.dirname(__file__) + '/' + "render.gif"
+
+    gif_save_path = os.path.dirname(__file__) + "/" + "render.gif"
     imageio.mimsave(gif_save_path, all_frames, duration=1)
