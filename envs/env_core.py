@@ -21,8 +21,9 @@ class EnvCore(object):
 
     def __init__(self):
         self.agent_num = 4  # number of agent
-        self.obs_dim = 8  # observation dimension of agents
+        self.obs_dim = 10  # observation dimension of agents
         self.action_dim = 2  # set the action dimension of agents
+        self.guide_point_num = 100  # number of guide point
 
     def reset(self):
         """
@@ -41,18 +42,24 @@ class EnvCore(object):
             3: np.array((x, y + 4)),
         }
 
+        self.car_center = (self.wheels[0] + self.wheels[2]) / 2
+
         # 初始速度
         self.speed = np.array((0, 0))
 
         # 目标位置
         self.dest = np.array((random.random() * W, random.random() * L))
 
+        # guide point
+        self.guide_points = self.get_guide_point()
+        nearest_point = self.next_guide_point()
+
         # 智能体观测集合
         sub_agent_obs = []
         for i in range(self.agent_num):
             sub_obs = np.reshape(
                 np.array(
-                    [self.wheels[i], self.dest, self.speed, self.dest - self.wheels[i]]
+                    [self.wheels[i], self.dest, self.speed, self.dest - self.wheels[i], nearest_point]
                 ),
                 self.obs_dim,
             )
@@ -71,12 +78,18 @@ class EnvCore(object):
         self.speed = np.clip((self.speed + action), -1, 1)
         for i in range(self.agent_num):
             self.wheels[i] = self.wheels[i] + self.speed
+        
+        # center point of car
+        self.car_center = (self.wheels[0] + self.wheels[2]) / 2
+
+        # get next guide point
+        next_guide_point = self.next_guide_point()
 
         # observations after actions
         sub_agent_obs = [
             np.reshape(
                 np.array(
-                    [self.wheels[i], self.dest, self.speed, self.dest - self.wheels[i]]
+                    [self.wheels[i], self.dest, self.speed, self.dest - self.wheels[i], next_guide_point]
                 ),
                 self.obs_dim,
             )
@@ -93,12 +106,15 @@ class EnvCore(object):
         # Check termination conditions
         if intersects(car, Point(self.dest[0], self.dest[1])):
             sub_agent_done = [True for _ in range(self.agent_num)]
-            sub_agent_reward = [[np.array(1000)] for _ in range(self.agent_num)]
+            sub_agent_reward = [[np.array(100)] for _ in range(self.agent_num)]
             self.agents = []
         elif not within(car, field):
             sub_agent_done = [True for _ in range(self.agent_num)]
             sub_agent_reward = [[np.array(-100)] for _ in range(self.agent_num)]
             self.agents = []
+        elif self.get_score(car):
+            sub_agent_done = [False for _ in range(self.agent_num)]
+            sub_agent_reward = [[np.array(10)] for _ in range(self.agent_num)]
         else:
             sub_agent_done = [False for _ in range(self.agent_num)]
             sub_agent_reward = self.get_reward()
@@ -125,6 +141,12 @@ class EnvCore(object):
         )
         # 目标
         cir = patches.Circle(self.dest, 1)
+
+        # guide point
+        if len(self.guide_points) > 0:
+            guide_x, guide_y = zip(*self.guide_points)
+            ax.scatter(guide_x, guide_y, color="y", s=10)
+
         ax.add_patch(rect)
         ax.add_patch(cir)
 
@@ -150,6 +172,38 @@ class EnvCore(object):
         buffer.close()
 
         return image
+    
+    def get_guide_point(self):
+        x1, y1 = self.car_center
+        x2, y2 = self.dest
+
+        # 生成插值点，并去除起点
+        x_values = np.linspace(x1, x2, self.guide_point_num)[1:]
+        y_values = np.linspace(y1, y2, self.guide_point_num)[1:]
+
+        # return guide points
+        return list(zip(x_values, y_values))
+
+    def get_score(self, car):
+        for i, point in enumerate(self.guide_points):
+            if intersects(car, Point(*point)):
+                self.guide_points = self.guide_points[i+1:]
+                return True
+
+        return False
+    
+    def next_guide_point(self):
+        while len(self.guide_points) > 0:
+            point = self.guide_points[0]
+            car_distance = np.linalg.norm(self.car_center - self.dest)
+            point_distance = np.linalg.norm(point - self.dest)
+
+            if point_distance < car_distance:
+                return point
+            else:
+                self.guide_points = np.delete(self.guide_points, 0, axis=0)
+
+        return self.dest
 
 
 if __name__ == "__main__":
@@ -165,7 +219,8 @@ if __name__ == "__main__":
         all_frames.append(image)
         step = 0
         for _ in range(1000):
-            actions = np.random.random(size=(8,)) * 2 - 1
+            # actions = np.random.random(size=(8,)) * 2 - 1
+            actions = np.expand_dims(env.dest - env.car_center, 0).repeat(env.agent_num, 0) / 10
             result = env.step(actions=actions)
             all_frames.append(env.render())
             step += 1
@@ -178,4 +233,4 @@ if __name__ == "__main__":
     import os
 
     gif_save_path = os.path.dirname(__file__) + "/" + "render.gif"
-    imageio.mimsave(gif_save_path, all_frames, duration=1)
+    imageio.mimsave(gif_save_path, all_frames, duration=1, loop=0)
