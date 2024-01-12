@@ -7,6 +7,14 @@ import numpy as np
 from shapely.geometry import Polygon, Point
 from shapely import intersects, within
 
+import matplotlib.pyplot as plt
+from matplotlib import patches
+import io
+import imageio
+import sys
+import os
+sys.path.append(r'/Users/winnie/Desktop/Project/light_mappo/')
+
 import gym
 from gym import spaces
 from envs.car_dynamics import Car
@@ -247,8 +255,17 @@ class CarRacing(gym.Env, EzPickle):
             # do nothing, left, right, gas, brake
 
         self.observation_space = spaces.Box(
-            low=0, high=255, shape=(STATE_H, STATE_W, 3), dtype=np.uint8
+            low=0, high=255, shape=(STATE_H, STATE_W, self.obs_dim), dtype=np.uint8
         )
+        # self.observation_space = spaces.Box(
+        #     low=0, high=255, shape=(self.obs_dim), dtype=np.uint8
+        # )
+        # share_obs_dim = 0
+        # for i in range(self.agent_num):
+        #     share_obs_dim += self.obs_dim
+        # self.signal_observation_space = spaces.Box(
+        #     low=0, high=255, shape=(share_obs_dim,), dtype=np.uint8
+        # )
 
         self.render_mode = render_mode
 
@@ -501,8 +518,27 @@ class CarRacing(gym.Env, EzPickle):
         self.new_lap = False
         self.road_poly = []
 
-        # 目标位置
-        self.dest = np.array((random.random() * PLAYFIELD, random.random() * PLAYFIELD))
+        # 目标位置和障碍物生成
+        bounds = PLAYFIELD
+        field = Polygon([
+            (bounds, bounds),
+            (bounds, -bounds),
+            (-bounds, -bounds),
+            (-bounds, bounds),
+        ])
+       
+        # self.obs1 = np.array((random.uniform(-bounds,bounds), random.uniform(-bounds,bounds)))
+        # while True:
+        #     self.obs2 = np.array((random.uniform(-bounds,bounds), random.uniform(-bounds,bounds)))
+        #     if np.linalg.norm(self.obs1 - self.obs2) > 50:
+        #         break
+        self.obs1 = np.array((-100, 0))
+        self.obs2 = np.array((100, -100))
+        while True:
+            self.dest = np.array((random.uniform(-bounds,bounds), random.uniform(-bounds,bounds)))
+            if self.dest[0]<self.obs1[0] and self.dest[1]>self.obs1[1]:
+            # if not ((self.dest[0]>self.obs1[0] and self.dest[1]>self.obs1[1]) or (self.dest[0]<self.obs2[0] and self.dest[1]<self.obs2[1])):
+                break
 
         if self.domain_randomize:
             randomize = True
@@ -599,6 +635,13 @@ class CarRacing(gym.Env, EzPickle):
             (-bounds, -bounds),
             (-bounds, bounds),
         ])
+        bounds = PLAYFIELD
+        x1, y1 = self.obs1
+        obs1_poly = [(bounds, bounds), (bounds, y1), (x1, y1), (x1, bounds)]
+        obs1 = Polygon(obs1_poly)
+        x2, y2 = self.obs2
+        obs2_poly = [(-bounds, -bounds), (-bounds, y2), (x2, y2), (x2, -bounds)]
+        obs2 = Polygon(obs2_poly)
 
         if intersects(car, Point(self.dest[0], self.dest[1])):
             sub_agent_terminated = [True for _ in range(self.agent_num)]
@@ -608,12 +651,17 @@ class CarRacing(gym.Env, EzPickle):
             sub_agent_terminated = [True for _ in range(self.agent_num)]
             sub_agent_reward = [[np.array(-100)] for _ in range(self.agent_num)]
             self.agents = []
+        elif within(car, obs1) or within(car, obs2):
+            sub_agent_terminated = [True for _ in range(self.agent_num)]
+            sub_agent_reward = [[np.array(-100)] for _ in range(self.agent_num)]
+            self.agents = []
         else:
             sub_agent_terminated = [False for _ in range(self.agent_num)]
             sub_agent_reward = self.get_reward()
 
         if self.render_mode == "human":
             self.render()
+        # print('!!!')
 
         return [self.state, sub_agent_reward, sub_agent_terminated, {}] # truncated
 
@@ -624,7 +672,16 @@ class CarRacing(gym.Env, EzPickle):
         sub_agent_reward = [[np.array(dist * -0.01)] for _ in range(self.agent_num)]
 
         return sub_agent_reward
-    
+
+    def _render_obs(self):
+        bounds = PLAYFIELD
+        x1, y1 = self.obs1
+        obs1_poly = [(bounds, bounds), (bounds, y1), (x1, y1), (x1, bounds)]
+        obs1 = Polygon(obs1_poly)
+        x2, y2 = self.obs2
+        obs2_poly = [(-bounds, -bounds), (-bounds, y2), (x2, y2), (x2, -bounds)]
+        obs2 = Polygon(obs2_poly)
+
     def render(self):
         if self.render_mode is None:
             gym.logger.warn(
@@ -726,6 +783,14 @@ class CarRacing(gym.Env, EzPickle):
             self._draw_colored_polygon(
                 self.surf, poly, self.grass_color, zoom, translation, angle
             )
+
+        # # draw obstacles
+        # x1, y1 = self.obs1
+        # obs1_poly = [(bounds, bounds), (bounds, y1), (x1, y1), (x1, bounds)]
+        # self._draw_colored_polygon(self.surf, obs1_poly, self.road_color, zoom, translation, angle)
+        # x2, y2 = self.obs2
+        # obs2_poly = [(-bounds, -bounds), (-bounds, y2), (x2, y2), (x2, -bounds)]
+        # self._draw_colored_polygon(self.surf, obs2_poly, self.road_color, zoom, translation, angle)
 
         # draw road
         for poly, color in self.road_poly:
@@ -834,6 +899,58 @@ class CarRacing(gym.Env, EzPickle):
             self.isopen = False
             pygame.quit()
 
+    def render_rgb(self, mode='rgb_array'):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        bounds = PLAYFIELD
+
+        # ax.set_xlim(-5,105)
+        # ax.set_ylim(-1,101)
+        ax.set_xlim(-bounds,bounds)
+        ax.set_ylim(-bounds,bounds)
+
+        # 方框大小
+        rect = patches.Rectangle((-bounds, -bounds), bounds * 2, bounds * 2, linewidth=1, edgecolor='r', facecolor='none')
+        # 目标
+        cir = patches.Circle(self.dest, 3)
+        ax.add_patch(rect)
+        ax.add_patch(cir)
+
+        # 绘制小车的位置
+        # patch = patches.Polygon(list(self.wheels.values()),closed=True, fc='r', ec='r')
+        wheels_pos = [np.array([w.position.x, w.position.y]) for w in self.car.wheels]
+        patch = patches.Polygon(wheels_pos,closed=True, fc='r', ec='r')
+        ax.add_patch(patch)
+
+        # 绘制障碍的位置
+        x1, y1 = self.obs1
+        obs1_poly = [(bounds, bounds), (bounds, y1), (x1, y1), (x1, bounds)]
+        obs1 = patches.Polygon(obs1_poly,closed=True, fc='c', ec='c')
+        ax.add_patch(obs1)
+        x2, y2 = self.obs2
+        obs2_poly = [(-bounds, -bounds), (-bounds, y2), (x2, y2), (x2, -bounds)]
+        obs2 = patches.Polygon(obs2_poly,closed=True, fc='c', ec='c')
+        ax.add_patch(obs2)
+        # print(obs1_poly, obs2_poly)
+
+        # 保存在内存中
+        # 创建一个内存缓冲区
+        buffer = io.BytesIO()
+
+        # 将图像保存到内存中
+        plt.savefig(buffer, format='png')
+        plt.close(fig)  # 关闭图像以释放内存
+
+        # 重置缓冲区的指针到开始位置
+        buffer.seek(0)
+
+        # 使用PIL从内存中读取图像
+        image = imageio.v2.imread(buffer)
+
+        # 关闭缓冲区
+        buffer.close()
+
+        return image
 
 if __name__ == "__main__":
     # a = np.array([0.0, 0.0, 0.0])
@@ -873,20 +990,32 @@ if __name__ == "__main__":
     env = CarRacing(render_mode="human")
 
     quit = False
-    while not quit:
+    all_frames = []
+    for _ in range(1):
+    # while not quit:
         env.reset()
-        total_reward = 0.0
+        total_reward = [0.0, 0.0, 0.0, 0.0]
         steps = 0
         restart = False
-        while True:
+        image = env.render_rgb()    
+        all_frames.append(image)
+        # while True:
+        for _ in range(500):
             register_input()
-            s, r, terminated, truncated, info = env.step(a)
-            
+            truncated = False
+            s, r, terminated, info = env.step(a)
+            # s, r, terminated, truncated, info = env.step(a)
+            all_frames.append(env.render_rgb())
             total_reward += r
-            if steps % 200 == 0 or terminated or truncated:
-                print("\naction " + str([f"{x:+0.2f}" for x in a]))
-                print(f"step {steps} total_reward {total_reward:+0.2f}")
+            # if steps % 200 == 0 or terminated or truncated:
+                # print("\naction " + str([f"{x:+0.2f}" for x in a]))
+                # print(f"step {steps} total_reward {total_reward:+0.2f}")
             steps += 1
-            if terminated or truncated or restart or quit:
-                break
+            # if terminated or truncated or restart or quit:
+            #     break
+
+    # import os
+    gif_save_path = os.path.dirname(__file__) + '/' + "render.gif"
+    imageio.mimsave(gif_save_path, all_frames, duration=1)
+
     env.close()

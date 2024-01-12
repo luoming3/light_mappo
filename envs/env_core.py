@@ -161,7 +161,7 @@ if __name__ == "__main__":
     all_frames = []
     for _ in range(episode):
         env.reset()
-        image = env.render()
+        image = env.render()    
         all_frames.append(image)
         step = 0
         for _ in range(1000):
