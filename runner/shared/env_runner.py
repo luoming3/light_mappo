@@ -99,7 +99,7 @@ class EnvRunner(Runner):
                 #         agent_k = 'agent%i/individual_rewards' % agent_id
                 #         env_infos[agent_k] = idv_rews
 
-                train_infos["average_episode_rewards"] = np.mean(self.buffer.rewards) * self.episode_length
+                train_infos["average_episode_rewards"] = np.mean(self.buffer.rewards)
                 print("average episode rewards is {}".format(train_infos["average_episode_rewards"]))
                 self.log_train(train_infos, total_num_steps)
                 # self.log_env(env_infos, total_num_steps)
@@ -355,6 +355,7 @@ class EnvRunner(Runner):
                     envs.render("human")
                 
                 if np.any(dones):
+                    all_frames = all_frames[:-1]
                     break
             
             average_episode_rewards = np.mean(np.sum(np.array(episode_rewards), axis=0))
