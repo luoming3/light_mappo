@@ -528,17 +528,25 @@ class CarRacing(gym.Env, EzPickle):
         ])
        
         # self.obs1 = np.array((random.uniform(-bounds,bounds), random.uniform(-bounds,bounds)))
+        flag = random.uniform(0,1)
+        # 4种随机生成obstacles的方式
+        if flag < 0.25:
+            self.gen_obs_cond1()
+        elif flag >= 0.25 and flag < 0.5:
+            self.gen_obs_cond2()
+        elif flag >= 0.5 and flag < 0.75:
+            self.gen_obs_cond3()
+        else:
+            self.gen_obs_cond4()
+            
+        self.gen_dest()
+
+        # self.obs1 = np.array((-100, 0))
+        # self.obs2 = np.array((100, -100))
         # while True:
-        #     self.obs2 = np.array((random.uniform(-bounds,bounds), random.uniform(-bounds,bounds)))
-        #     if np.linalg.norm(self.obs1 - self.obs2) > 50:
+        #     self.dest = np.array((random.uniform(-bounds,bounds), random.uniform(-bounds,bounds)))
+        #     if self.dest[0]<self.obs1[0] and self.dest[1]>self.obs1[1]:
         #         break
-        self.obs1 = np.array((-100, 0))
-        self.obs2 = np.array((100, -100))
-        while True:
-            self.dest = np.array((random.uniform(-bounds,bounds), random.uniform(-bounds,bounds)))
-            if self.dest[0]<self.obs1[0] and self.dest[1]>self.obs1[1]:
-            # if not ((self.dest[0]>self.obs1[0] and self.dest[1]>self.obs1[1]) or (self.dest[0]<self.obs2[0] and self.dest[1]<self.obs2[1])):
-                break
 
         if self.domain_randomize:
             randomize = True
@@ -563,6 +571,51 @@ class CarRacing(gym.Env, EzPickle):
             self.render()
         return self.step(None)[0]
         # return self.step(None)[0], {}
+    
+    def gen_obs_cond1(self):
+        bounds = PLAYFIELD
+        self.obstacle1 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds / 4), bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        self.obstacle2 = np.array((bounds / 2 + random.uniform(-bounds / 4, bounds / 4), -bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        x1, y1 = self.obstacle1
+        self.obstacle1_poly = [(bounds, bounds), (bounds, y1), (x1, y1), (x1, bounds)]
+        x2, y2 = self.obstacle2
+        self.obstacle2_poly = [(-bounds, -bounds), (-bounds, y2), (x2, y2), (x2, -bounds)]
+
+    def gen_obs_cond2(self):
+        bounds = PLAYFIELD
+        self.obstacle1 = np.array((bounds / 2 + random.uniform(-bounds / 4, bounds / 4), bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        self.obstacle2 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds / 4), -bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        x1, y1 = self.obstacle1
+        self.obstacle1_poly = [(-bounds, bounds), (-bounds, y1), (x1, y1), (x1, bounds)]
+        x2, y2 = self.obstacle2
+        self.obstacle2_poly = [(bounds, -bounds), (bounds, y2), (x2, y2), (x2, -bounds)]
+
+    def gen_obs_cond3(self):
+        bounds = PLAYFIELD
+        self.obstacle1 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds / 4), -bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        self.obstacle2 = np.array((bounds / 2 + random.uniform(-bounds / 4, bounds / 4), bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        x1, y1 = self.obstacle1
+        self.obstacle1_poly = [(-bounds, bounds), (-bounds, y1), (x1, y1), (x1, bounds)]
+        x2, y2 = self.obstacle2
+        self.obstacle2_poly = [(bounds, -bounds), (bounds, y2), (x2, y2), (x2, -bounds)]
+
+    def gen_obs_cond4(self):
+        bounds = PLAYFIELD
+        self.obstacle1 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds / 4), bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        self.obstacle2 = np.array((bounds / 2 + random.uniform(-bounds / 4, bounds / 4), -bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        x1, y1 = self.obstacle1
+        self.obstacle1_poly = [(-bounds, -bounds), (-bounds, y1), (x1, y1), (x1, -bounds)]
+        x2, y2 = self.obstacle2
+        self.obstacle2_poly = [(bounds, bounds), (bounds, y2), (x2, y2), (x2, bounds)]
+    
+    def gen_dest(self):
+        bounds = PLAYFIELD
+        obs1 = Polygon(self.obstacle1_poly)
+        obs2 = Polygon(self.obstacle2_poly)
+        while True:
+            self.dest = np.array((random.uniform(-bounds, bounds), random.uniform(-bounds, bounds)))
+            if (not within(Point(self.dest[0], self.dest[1]), obs1)) and (not within(Point(self.dest[0], self.dest[1]), obs2)):
+                break
 
     def step(self, action: Union[np.ndarray, int]):
         assert self.car is not None
@@ -635,13 +688,8 @@ class CarRacing(gym.Env, EzPickle):
             (-bounds, -bounds),
             (-bounds, bounds),
         ])
-        bounds = PLAYFIELD
-        x1, y1 = self.obs1
-        obs1_poly = [(bounds, bounds), (bounds, y1), (x1, y1), (x1, bounds)]
-        obs1 = Polygon(obs1_poly)
-        x2, y2 = self.obs2
-        obs2_poly = [(-bounds, -bounds), (-bounds, y2), (x2, y2), (x2, -bounds)]
-        obs2 = Polygon(obs2_poly)
+        obs1 = Polygon(self.obstacle1_poly)
+        obs2 = Polygon(self.obstacle2_poly)
 
         if intersects(car, Point(self.dest[0], self.dest[1])):
             sub_agent_terminated = [True for _ in range(self.agent_num)]
@@ -672,15 +720,6 @@ class CarRacing(gym.Env, EzPickle):
         sub_agent_reward = [[np.array(dist * -0.01)] for _ in range(self.agent_num)]
 
         return sub_agent_reward
-
-    def _render_obs(self):
-        bounds = PLAYFIELD
-        x1, y1 = self.obs1
-        obs1_poly = [(bounds, bounds), (bounds, y1), (x1, y1), (x1, bounds)]
-        obs1 = Polygon(obs1_poly)
-        x2, y2 = self.obs2
-        obs2_poly = [(-bounds, -bounds), (-bounds, y2), (x2, y2), (x2, -bounds)]
-        obs2 = Polygon(obs2_poly)
 
     def render(self):
         if self.render_mode is None:
@@ -923,13 +962,9 @@ class CarRacing(gym.Env, EzPickle):
         ax.add_patch(patch)
 
         # 绘制障碍的位置
-        x1, y1 = self.obs1
-        obs1_poly = [(bounds, bounds), (bounds, y1), (x1, y1), (x1, bounds)]
-        obs1 = patches.Polygon(obs1_poly,closed=True, fc='c', ec='c')
+        obs1 = patches.Polygon(self.obstacle1_poly,closed=True, fc='c', ec='c')
         ax.add_patch(obs1)
-        x2, y2 = self.obs2
-        obs2_poly = [(-bounds, -bounds), (-bounds, y2), (x2, y2), (x2, -bounds)]
-        obs2 = patches.Polygon(obs2_poly,closed=True, fc='c', ec='c')
+        obs2 = patches.Polygon(self.obstacle2_poly,closed=True, fc='c', ec='c')
         ax.add_patch(obs2)
         # print(obs1_poly, obs2_poly)
 
