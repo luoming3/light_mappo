@@ -8,10 +8,16 @@ from matplotlib import patches
 import io
 import imageio
 
+import os
+import sys
 
-L = 100
-W = 100
-field = Polygon([(0, 0), (0, L), (W, L), (W, 0)])
+# Get the parent directory of the current file
+parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
+
+# Append the parent directory to sys.path, otherwise the following import will fail
+sys.path.append(parent_dir)
+
+from envs.env_2d import map, Astar  # noqa: E402
 
 
 class EnvCore(object):
@@ -24,6 +30,9 @@ class EnvCore(object):
         self.obs_dim = 10  # observation dimension of agents
         self.action_dim = 2  # set the action dimension of agents
         self.guide_point_num = 100  # number of guide point
+        self.map = map.Map()  # 2d env map
+        self.width = self.map.x_range
+        self.height = self.map.y_range
 
     def reset(self):
         """
@@ -32,15 +41,16 @@ class EnvCore(object):
         """
 
         # 随机的 agent 位置
-        x = random.random() * (W / 2)
-        y = random.random() * (L / 2)
+        # x = random.random() * (self.map.x_range / 2)
+        # y = random.random() * (self.map.y_range / 2)
+        x, y = 5, 5
 
-        self.wheels = {
-            0: np.array((x, y)),
-            1: np.array((x + 2, y)),
-            2: np.array((x + 2, y + 4)),
-            3: np.array((x, y + 4)),
-        }
+        self.wheels = [
+            np.array((x, y)),
+            np.array((x + 1, y)),
+            np.array((x + 1, y + 1)),
+            np.array((x, y + 1)),
+        ]
 
         self.car_center = (self.wheels[0] + self.wheels[2]) / 2
 
@@ -48,7 +58,11 @@ class EnvCore(object):
         self.speed = np.array((0, 0))
 
         # 目标位置
-        self.dest = np.array((random.random() * W, random.random() * L))
+        # self.dest = np.array(
+        #     (random.random() * self.map.x_range,
+        #      random.random() * self.map.y_range)
+        # )
+        self.dest = np.array([45,25])
 
         # guide point
         self.guide_points = self.get_guide_point()
@@ -59,7 +73,13 @@ class EnvCore(object):
         for i in range(self.agent_num):
             sub_obs = np.reshape(
                 np.array(
-                    [self.wheels[i], self.dest, self.speed, self.dest - self.wheels[i], nearest_point]
+                    [
+                        self.wheels[i],
+                        self.dest,
+                        self.speed,
+                        self.dest - self.wheels[i],
+                        nearest_point,
+                    ]
                 ),
                 self.obs_dim,
             )
@@ -78,7 +98,7 @@ class EnvCore(object):
         self.speed = np.clip((self.speed + action), -1, 1)
         for i in range(self.agent_num):
             self.wheels[i] = self.wheels[i] + self.speed
-        
+
         # center point of car
         self.car_center = (self.wheels[0] + self.wheels[2]) / 2
 
@@ -89,7 +109,13 @@ class EnvCore(object):
         sub_agent_obs = [
             np.reshape(
                 np.array(
-                    [self.wheels[i], self.dest, self.speed, self.dest - self.wheels[i], next_guide_point]
+                    [
+                        self.wheels[i],
+                        self.dest,
+                        self.speed,
+                        self.dest - self.wheels[i],
+                        next_guide_point,
+                    ]
                 ),
                 self.obs_dim,
             )
@@ -101,14 +127,14 @@ class EnvCore(object):
 
         sub_agent_reward = []
         sub_agent_done = []
-        car = Polygon(self.wheels.values())
+        car = Polygon(self.wheels)
 
         # Check termination conditions
         if intersects(car, Point(self.dest[0], self.dest[1])):
             sub_agent_done = [True for _ in range(self.agent_num)]
-            sub_agent_reward = [[np.array(100)] for _ in range(self.agent_num)]
+            sub_agent_reward = [[np.array(1000)] for _ in range(self.agent_num)]
             self.agents = []
-        elif not within(car, field):
+        elif self.map.is_collision(car):
             sub_agent_done = [True for _ in range(self.agent_num)]
             sub_agent_reward = [[np.array(-100)] for _ in range(self.agent_num)]
             self.agents = []
@@ -122,9 +148,8 @@ class EnvCore(object):
         return [sub_agent_obs, sub_agent_reward, sub_agent_done, sub_agent_info]
 
     def get_reward(self):
-        car_location = np.mean(list(self.wheels.values()), axis=0)
-        dist = np.linalg.norm(car_location - self.dest)
-        sub_agent_reward = [[np.array(dist * -0.01)] for _ in range(self.agent_num)]
+        dist = np.linalg.norm(self.car_center - self.dest)
+        sub_agent_reward = [[np.array(-1)] for _ in range(self.agent_num)]
 
         return sub_agent_reward
 
@@ -132,12 +157,12 @@ class EnvCore(object):
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        ax.set_xlim(-5, 105)
-        ax.set_ylim(-1, 101)
+        ax.set_xlim(-5, self.width)
+        ax.set_ylim(-1, self.height)
 
         # 方框大小
         rect = patches.Rectangle(
-            (0, 0), W, L, linewidth=1, edgecolor="r", facecolor="none"
+            (0, 0), self.width, self.height, linewidth=1, edgecolor="r", facecolor="none"
         )
         # 目标
         cir = patches.Circle(self.dest, 1)
@@ -151,7 +176,7 @@ class EnvCore(object):
         ax.add_patch(cir)
 
         # 绘制小车的位置
-        patch = patches.Polygon(list(self.wheels.values()), closed=True, fc="r", ec="r")
+        patch = patches.Polygon(list(self.wheels), closed=True, fc="r", ec="r")
         ax.add_patch(patch)
 
         # 保存在内存中
@@ -172,17 +197,16 @@ class EnvCore(object):
         buffer.close()
 
         return image
-    
+
     def get_guide_point(self):
-        x1, y1 = self.car_center
-        x2, y2 = self.dest
-
-        # 生成插值点，并去除起点
-        x_values = np.linspace(x1, x2, self.guide_point_num)[1:]
-        y_values = np.linspace(y1, y2, self.guide_point_num)[1:]
-
+        start = tuple(self.car_center.astype(int).tolist())
+        end = tuple(self.dest.astype(int).tolist())
+        astar = Astar.AStar(start, end, "euclidean")
+        path, _ = astar.searching()
+ 
         # return guide points
-        return list(zip(x_values, y_values))
+        path.reverse()
+        return np.array(path[1:-1])
 
     def get_score(self, car):
         for i, point in enumerate(self.guide_points):
@@ -191,18 +215,18 @@ class EnvCore(object):
                 return True
 
         return False
-    
+
     def next_guide_point(self):
-        while len(self.guide_points) > 0:
-            point = self.guide_points[0]
-            car_distance = np.linalg.norm(self.car_center - self.dest)
-            point_distance = np.linalg.norm(point - self.dest)
+        while len(self.guide_points) > 1:
+            first_point = self.guide_points[0]
+            second_point = self.guide_points[1]
+            angle = (second_point - first_point).dot(self.car_center - first_point)
 
-            if point_distance < car_distance:
-                return point
+            # 夹角是钝角
+            if angle < 0:
+                return first_point
             else:
-                self.guide_points = np.delete(self.guide_points, 0, axis=0)
-
+                self.guide_points = self.guide_points[1:]
         return self.dest
 
 

@@ -2,6 +2,9 @@
 Env 2D
 """
 
+from shapely.geometry import Polygon, Point
+from shapely import intersects
+
 
 class Map:
     def __init__(self):
@@ -49,3 +52,9 @@ class Map:
 
     def move(self, point, motion):
         return (point[0] + motion[0], point[1] + motion[1])
+    
+    def is_collision(self, polygon:Polygon):
+        for point in self.obs:
+            if intersects(polygon, Point(*point)):
+                return True
+        return False
