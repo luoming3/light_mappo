@@ -27,7 +27,8 @@ FRICTION_LIMIT = (
 )  # friction ~= mass ~= size^2 (calculated implicitly using density)
 WHEEL_R = 27
 WHEEL_W = 14
-WHEELPOS = [(-55, +80), (+55, +80), (-55, -82), (+55, -82)]
+# WHEELPOS = [(-55, +80), (+55, +80), (-55, -82), (+55, -82)]
+WHEELPOS = [(-55, +80), (+55, +80), (+55, -82), (-55, -82)]
 HULL_POLY = [(-50, +70), (+50, +70), (+50, -70), (-50, -70)]
 
 # HULL_POLY1 = [(-60, +130), (+60, +130), (+60, +110), (-60, +110)]

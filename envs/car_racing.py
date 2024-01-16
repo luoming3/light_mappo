@@ -46,7 +46,7 @@ VIDEO_H = 400
 WINDOW_W = 1000
 WINDOW_H = 800
 
-SCALE = 6.0  # Track scale
+SCALE = 24.0  # Track scale
 TRACK_RAD = 900 / SCALE  # Track is heavily morphed circle with this radius
 PLAYFIELD = 2000 / SCALE  # Game over boundary
 FPS = 50  # Frames per second
@@ -519,15 +519,6 @@ class CarRacing(gym.Env, EzPickle):
         self.road_poly = []
 
         # 目标位置和障碍物生成
-        bounds = PLAYFIELD
-        field = Polygon([
-            (bounds, bounds),
-            (bounds, -bounds),
-            (-bounds, -bounds),
-            (-bounds, bounds),
-        ])
-       
-        # self.obs1 = np.array((random.uniform(-bounds,bounds), random.uniform(-bounds,bounds)))
         flag = random.uniform(0,1)
         # 4种随机生成obstacles的方式
         if flag < 0.25:
@@ -539,8 +530,6 @@ class CarRacing(gym.Env, EzPickle):
         else:
             self.gen_obs_cond4()
             
-        self.gen_dest()
-
         # self.obs1 = np.array((-100, 0))
         # self.obs2 = np.array((100, -100))
         # while True:
@@ -556,66 +545,97 @@ class CarRacing(gym.Env, EzPickle):
 
             self._reinit_colors(randomize)
 
-        while True:
-            success = self._create_track()
-            if success:
-                break
-            if self.verbose:
-                print(
-                    "retry to generate track (normal if there are not many"
-                    "instances of this message)"
-                )
-        self.car = Car(self.world, *self.track[0][1:4])
+        #   初始化car
+        self.gen_car()
 
-        if self.render_mode == "human":
-            self.render()
-        return self.step(None)[0]
+        # while True:
+        #     success = self._create_track()
+        #     if success:
+        #         break
+        #     if self.verbose:
+        #         print(
+        #             "retry to generate track (normal if there are not many"
+        #             "instances of this message)"
+        #         )
+        # self.car = Car(self.world, *self.track[0][1:4])
+
+        # if self.render_mode == "human":
+        #     self.render()
+        
         # return self.step(None)[0], {}
+        return self.step(None)[0]
     
     def gen_obs_cond1(self):
         bounds = PLAYFIELD
-        self.obstacle1 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds / 4), bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
-        self.obstacle2 = np.array((bounds / 2 + random.uniform(-bounds / 4, bounds / 4), -bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        self.obstacle1 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds / 4), bounds / 2 + random.uniform(-bounds * 1 / 3, bounds / 4)))
+        self.obstacle2 = np.array((bounds / 2 + random.uniform(-bounds / 4, bounds / 4), -bounds / 2 + random.uniform(-bounds / 4, bounds * 1 / 3)))
         x1, y1 = self.obstacle1
         self.obstacle1_poly = [(bounds, bounds), (bounds, y1), (x1, y1), (x1, bounds)]
         x2, y2 = self.obstacle2
         self.obstacle2_poly = [(-bounds, -bounds), (-bounds, y2), (x2, y2), (x2, -bounds)]
+        self.gen_dest_car1(x1, y1, x2, y2)
 
     def gen_obs_cond2(self):
         bounds = PLAYFIELD
-        self.obstacle1 = np.array((bounds / 2 + random.uniform(-bounds / 4, bounds / 4), bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
-        self.obstacle2 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds / 4), -bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        self.obstacle1 = np.array((bounds / 2 + random.uniform(-bounds / 4, bounds / 4), bounds / 2 + random.uniform(-bounds * 1 / 3, bounds / 4)))
+        self.obstacle2 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds / 4), -bounds / 2 + random.uniform(-bounds / 4, bounds * 1 / 3)))
         x1, y1 = self.obstacle1
         self.obstacle1_poly = [(-bounds, bounds), (-bounds, y1), (x1, y1), (x1, bounds)]
         x2, y2 = self.obstacle2
         self.obstacle2_poly = [(bounds, -bounds), (bounds, y2), (x2, y2), (x2, -bounds)]
+        self.gen_dest_car2(x1, y1, x2, y2)
 
     def gen_obs_cond3(self):
         bounds = PLAYFIELD
-        self.obstacle1 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds / 4), -bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
-        self.obstacle2 = np.array((bounds / 2 + random.uniform(-bounds / 4, bounds / 4), bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        self.obstacle1 = np.array((bounds / 2 + random.uniform(-bounds * 1 / 3, bounds / 4), bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        self.obstacle2 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds * 1 / 3), -bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
         x1, y1 = self.obstacle1
-        self.obstacle1_poly = [(-bounds, bounds), (-bounds, y1), (x1, y1), (x1, bounds)]
+        self.obstacle1_poly = [(bounds, -bounds), (bounds, y1), (x1, y1), (x1, -bounds)]
         x2, y2 = self.obstacle2
-        self.obstacle2_poly = [(bounds, -bounds), (bounds, y2), (x2, y2), (x2, -bounds)]
+        self.obstacle2_poly = [(-bounds, bounds), (-bounds, y2), (x2, y2), (x2, bounds)]
+        self.gen_dest_car2(x1, y1, x2, y2)
 
     def gen_obs_cond4(self):
         bounds = PLAYFIELD
-        self.obstacle1 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds / 4), bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
-        self.obstacle2 = np.array((bounds / 2 + random.uniform(-bounds / 4, bounds / 4), -bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        self.obstacle1 = np.array((-bounds / 2 + random.uniform(-bounds / 4, bounds * 1 / 3), bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
+        self.obstacle2 = np.array((bounds / 2 + random.uniform(-bounds * 1 / 3, bounds / 4), -bounds / 2 + random.uniform(-bounds / 4, bounds / 4)))
         x1, y1 = self.obstacle1
         self.obstacle1_poly = [(-bounds, -bounds), (-bounds, y1), (x1, y1), (x1, -bounds)]
         x2, y2 = self.obstacle2
         self.obstacle2_poly = [(bounds, bounds), (bounds, y2), (x2, y2), (x2, bounds)]
-    
-    def gen_dest(self):
+        self.gen_dest_car1(x1, y1, x2, y2)
+
+    def gen_dest_car1(self, x1, y1, x2, y2):
         bounds = PLAYFIELD
-        obs1 = Polygon(self.obstacle1_poly)
-        obs2 = Polygon(self.obstacle2_poly)
-        while True:
-            self.dest = np.array((random.uniform(-bounds, bounds), random.uniform(-bounds, bounds)))
-            if (not within(Point(self.dest[0], self.dest[1]), obs1)) and (not within(Point(self.dest[0], self.dest[1]), obs2)):
-                break
+        flag = random.uniform(0,1)
+        if flag < 0.5:
+            self.dest = np.array((random.uniform(-bounds, x1), random.uniform(y1, bounds)))
+            self.car_pos = np.array((random.uniform(x2, bounds), random.uniform(-bounds, y2)))
+        else:
+            self.dest = np.array((random.uniform(x2, bounds), random.uniform(-bounds, y2)))
+            self.car_pos = np.array((random.uniform(-bounds, x1), random.uniform(y1, bounds)))
+
+    def gen_dest_car2(self, x1, y1, x2, y2):
+        bounds = PLAYFIELD
+        flag = random.uniform(0,1)
+        if flag < 0.5:
+            self.dest = np.array((random.uniform(x1, bounds), random.uniform(y1, bounds)))
+            self.car_pos = np.array((random.uniform(-bounds, x2), random.uniform(-bounds, y2)))
+        else:
+            self.dest = np.array((random.uniform(-bounds, x2), random.uniform(-bounds, y2)))
+            self.car_pos = np.array((random.uniform(x1, bounds), random.uniform(y1, bounds)))
+
+    def gen_car(self):
+        # bounds = PLAYFIELD
+        # obs1 = Polygon(self.obstacle1_poly)
+        # obs2 = Polygon(self.obstacle2_poly)
+        # i = 0
+        # while True:
+        #     if (not within(Point(self.track[i][2], self.track[i][3]), obs1)) and (not within(Point(self.track[i][2], self.track[i][3]), obs2)):
+        #         break
+        #     i += 1
+        alpha = math.atan2(self.car_pos[1], self.car_pos[0])
+        self.car = Car(self.world, alpha, self.car_pos[0], self.car_pos[1])
 
     def step(self, action: Union[np.ndarray, int]):
         assert self.car is not None
@@ -654,25 +674,25 @@ class CarRacing(gym.Env, EzPickle):
         '''
         car_racing reward discarded
         '''
-        step_reward = 0
-        terminated = False
-        truncated = False
-        if action is not None:  # First step without action, called from reset()
-            self.reward -= 0.1
-            # We actually don't want to count fuel spent, we want car to be faster.
-            # self.reward -=  10 * self.car.fuel_spent / ENGINE_POWER
-            self.car.fuel_spent = 0.0
-            step_reward = self.reward - self.prev_reward
-            self.prev_reward = self.reward
-            if self.tile_visited_count == len(self.track) or self.new_lap:
-                # Truncation due to finishing lap
-                # This should not be treated as a failure
-                # but like a timeout
-                truncated = True
-            x, y = self.car.hull.position
-            if abs(x) > PLAYFIELD or abs(y) > PLAYFIELD:
-                terminated = True
-                step_reward = -100
+        # step_reward = 0
+        # terminated = False
+        # truncated = False
+        # if action is not None:  # First step without action, called from reset()
+        #     self.reward -= 0.1
+        #     # We actually don't want to count fuel spent, we want car to be faster.
+        #     # self.reward -=  10 * self.car.fuel_spent / ENGINE_POWER
+        #     self.car.fuel_spent = 0.0
+        #     step_reward = self.reward - self.prev_reward
+        #     self.prev_reward = self.reward
+        #     if self.tile_visited_count == len(self.track) or self.new_lap:
+        #         # Truncation due to finishing lap
+        #         # This should not be treated as a failure
+        #         # but like a timeout
+        #         truncated = True
+        #     x, y = self.car.hull.position
+        #     if abs(x) > PLAYFIELD or abs(y) > PLAYFIELD:
+        #         terminated = True
+        #         step_reward = -100
         '''
         car_racing reward discarded
         '''
@@ -707,9 +727,8 @@ class CarRacing(gym.Env, EzPickle):
             sub_agent_terminated = [False for _ in range(self.agent_num)]
             sub_agent_reward = self.get_reward()
 
-        if self.render_mode == "human":
-            self.render()
-        # print('!!!')
+        # if self.render_mode == "human":
+        #     self.render()
 
         return [self.state, sub_agent_reward, sub_agent_terminated, {}] # truncated
 
@@ -951,7 +970,7 @@ class CarRacing(gym.Env, EzPickle):
         # 方框大小
         rect = patches.Rectangle((-bounds, -bounds), bounds * 2, bounds * 2, linewidth=1, edgecolor='r', facecolor='none')
         # 目标
-        cir = patches.Circle(self.dest, 3)
+        cir = patches.Circle(self.dest, 1)
         ax.add_patch(rect)
         ax.add_patch(cir)
 
