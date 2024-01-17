@@ -185,31 +185,36 @@ class EnvCore(object):
         return self.dest
 
 
-if __name__ == "__main__":
+def test_env(times=10, render=False, mode='rgb_array'):
     env = EnvCore()
-    # print(env.reset())
 
     # test the validation of env
-    episode = 1
     all_frames = []
-    for _ in range(episode):
+    for _ in range(times):
         env.reset()
-        image = env.render()
-        all_frames.append(image)
+        if render:
+            image = env.render(mode=mode)
+            all_frames.append(image)
         step = 0
         for _ in range(1000):
-            # actions = np.random.random(size=(8,)) * 2 - 1
-            actions = np.expand_dims(env.dest - env.car_center, 0).repeat(env.agent_num, 0) / 10
+            actions = np.random.random(size=(8,)) * 2 - 1
+            # actions = np.expand_dims(env.dest - env.car_center, 0).repeat(env.agent_num, 0) / 10
             result = env.step(actions=actions)
-            all_frames.append(env.render())
+            if render:
+                all_frames.append(env.render()) 
             step += 1
 
             sub_agent_obs, done = result[1], result[2]
             if np.all(done):
                 break
-        print(step)
+        print(f"round step: {step}")
 
-    import os
+    if render and mode == 'rgb_array':
+        import os
 
-    gif_save_path = os.path.dirname(__file__) + "/" + "render.gif"
-    imageio.mimsave(gif_save_path, all_frames, duration=1, loop=0)
+        gif_save_path = os.path.dirname(__file__) + "/" + "render.gif"
+        imageio.mimsave(gif_save_path, all_frames, duration=1, loop=0)
+
+
+if __name__ == "__main__":
+    test_env(times=1000, render=False)
