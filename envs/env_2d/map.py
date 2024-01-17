@@ -5,6 +5,8 @@ Env 2D
 from shapely.geometry import Polygon, Point
 from shapely import intersects
 
+import random
+
 
 class Map:
     def __init__(self):
@@ -13,6 +15,8 @@ class Map:
         self.motions = [(-1, 0), (-1, 1), (0, 1), (1, 1),
                         (1, 0), (1, -1), (0, -1), (-1, -1)]
         self.obs = self.obs_map()
+        self.start = self.random_point(self.x_range, self.y_range)
+        self.end = self.random_point(self.x_range, self.y_range)
 
     def update_obs(self, obs):
         self.obs = obs
@@ -58,3 +62,9 @@ class Map:
             if intersects(polygon, Point(*point)):
                 return True
         return False
+
+    def random_point(self, x, y):
+        while True:
+            point = (random.randint(2, x-2), random.randint(2, y-2))
+            if point not in self.obs:
+                return point

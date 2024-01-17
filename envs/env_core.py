@@ -38,28 +38,21 @@ class EnvCore(object):
         """
 
         # 随机的 agent 位置
-        # x = random.random() * (self.map.x_range / 2)
-        # y = random.random() * (self.map.y_range / 2)
-        x, y = 5, 5
+        self.car_center = np.array(self.map.start)
 
+        car_width, car_length = 1, 2
         self.wheels = [
-            np.array((x, y)),
-            np.array((x + 1, y)),
-            np.array((x + 1, y + 1)),
-            np.array((x, y + 1)),
+            self.car_center + np.array([car_width / 2., car_length / 2.]),
+            self.car_center + np.array([-car_width / 2., car_length / 2.]),
+            self.car_center + np.array([-car_width / 2., -car_length / 2.]),
+            self.car_center + np.array([car_width / 2., -car_length / 2.]),
         ]
-
-        self.car_center = (self.wheels[0] + self.wheels[2]) / 2
 
         # 初始速度
         self.speed = np.array((0, 0))
 
         # 目标位置
-        # self.dest = np.array(
-        #     (random.random() * self.map.x_range,
-        #      random.random() * self.map.y_range)
-        # )
-        self.dest = np.array([45,25])
+        self.dest = np.array(self.map.end)
 
         # guide point
         self.guide_points = self.get_guide_point()
@@ -151,13 +144,14 @@ class EnvCore(object):
         return sub_agent_reward
 
     def render(self, mode="rgb_array"):
-        plot = plotting.Plotting(target=self.dest)
-        plot.plot_map()
-        plot.plot_car(self.wheels)
-        plot.plot_guide_point(self.guide_points)
-        image = plot.save_image()
+        if mode == 'rgb_array':
+            plot = plotting.Plotting(target=self.dest)
+            plot.plot_map()
+            plot.plot_car(self.wheels)
+            plot.plot_guide_point(self.guide_points)
+            image = plot.save_image()
 
-        return image
+            return image
 
     def get_guide_point(self):
         start = tuple(self.car_center.astype(int).tolist())
