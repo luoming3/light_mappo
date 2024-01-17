@@ -212,7 +212,7 @@ def main():
     path, visited = astar.searching()
 
     plot = plotting.Plotting(s_start, s_goal)
-    plot.animation(path, visited, "A*")  # animation
+    plot.animation(path, [], "A*")  # animation
 
     # path, visited = astar.searching_repeated_astar(2.5)               # initial weight e = 2.5
     # plot.animation_ara_star(path, visited, "Repeated A*")

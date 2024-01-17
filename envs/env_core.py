@@ -3,9 +3,6 @@ from shapely.geometry import Polygon, Point
 from shapely import intersects, within
 import random
 
-import matplotlib.pyplot as plt
-from matplotlib import patches
-import io
 import imageio
 
 import os
@@ -17,7 +14,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 # Append the parent directory to sys.path, otherwise the following import will fail
 sys.path.append(parent_dir)
 
-from envs.env_2d import map, Astar  # noqa: E402
+from envs.env_2d import map, plotting, Astar  # noqa: E402
 
 
 class EnvCore(object):
@@ -154,47 +151,11 @@ class EnvCore(object):
         return sub_agent_reward
 
     def render(self, mode="rgb_array"):
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
-        ax.set_xlim(-5, self.width)
-        ax.set_ylim(-1, self.height)
-
-        # 方框大小
-        rect = patches.Rectangle(
-            (0, 0), self.width, self.height, linewidth=1, edgecolor="r", facecolor="none"
-        )
-        # 目标
-        cir = patches.Circle(self.dest, 1)
-
-        # guide point
-        if len(self.guide_points) > 0:
-            guide_x, guide_y = zip(*self.guide_points)
-            ax.scatter(guide_x, guide_y, color="y", s=10)
-
-        ax.add_patch(rect)
-        ax.add_patch(cir)
-
-        # 绘制小车的位置
-        patch = patches.Polygon(list(self.wheels), closed=True, fc="r", ec="r")
-        ax.add_patch(patch)
-
-        # 保存在内存中
-        # 创建一个内存缓冲区
-        buffer = io.BytesIO()
-
-        # 将图像保存到内存中
-        plt.savefig(buffer, format="png")
-        plt.close(fig)  # 关闭图像以释放内存
-
-        # 重置缓冲区的指针到开始位置
-        buffer.seek(0)
-
-        # 使用PIL从内存中读取图像
-        image = imageio.v2.imread(buffer)
-
-        # 关闭缓冲区
-        buffer.close()
+        plot = plotting.Plotting(target=self.dest)
+        plot.plot_map()
+        plot.plot_car(self.wheels)
+        plot.plot_guide_point(self.guide_points)
+        image = plot.save_image()
 
         return image
 

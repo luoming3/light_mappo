@@ -2,9 +2,15 @@
 Plot tools 2D
 """
 
+import io
+import imageio
+import matplotlib.pyplot as plt
+from matplotlib import patches
+
+from shapely.geometry import Polygon
+
 import os
 import sys
-import matplotlib.pyplot as plt
 
 # Get the parent directory of the current file
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
@@ -16,10 +22,53 @@ from envs.env_2d import map  # noqa: E402
 
 
 class Plotting:
-    def __init__(self, xI, xG):
-        self.xI, self.xG = xI, xG
+    def __init__(self, xI=[], target=[]):
+        self.xI, self.xG = xI, target
         self.env = map.Map()
         self.obs = self.env.obs_map()
+        self.fig = plt.figure()
+        self.ax = self.fig.add_subplot(111)
+    
+    def plot_map(self, name="env_2d"):
+        obs_x = [x[0] for x in self.obs]
+        obs_y = [x[1] for x in self.obs]
+
+        self.ax.plot(obs_x, obs_y, "pk")
+        self.ax.plot(self.xG[0], self.xG[1], "gs")
+        self.ax.set_title(name)
+        self.ax.axis("equal")
+
+    def plot_car(self, wheels:list):
+        car = patches.Polygon(wheels, closed=True, fc="r", ec="r")
+        self.ax.add_patch(car)
+
+    def plot_guide_point(self, guide_points):
+        if len(guide_points) > 0:
+            guide_x, guide_y = zip(*guide_points)
+            self.ax.scatter(guide_x, guide_y, marker="*", color="y", s=10)
+    
+    def save_image(self, path=None, buffer=True):
+        if buffer or path is not None:
+            # 保存在内存中
+            # 创建一个内存缓冲区
+            buffer = io.BytesIO()
+
+            # 将图像保存到内存中
+            plt.savefig(buffer, format="png")
+            plt.close(self.fig)  # 关闭图像以释放内存
+
+            # 重置缓冲区的指针到开始位置
+            buffer.seek(0)
+
+            # 使用PIL从内存中读取图像
+            image = imageio.v2.imread(buffer)
+
+            # 关闭缓冲区
+            buffer.close()
+
+            return image
+        else:
+            raise NotImplementedError
 
     def update_obs(self, obs):
         self.obs = obs
