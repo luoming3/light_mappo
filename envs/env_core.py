@@ -38,7 +38,9 @@ class EnvCore(object):
         """
 
         # 随机的 agent 位置
-        self.car_center = np.array(self.map.start)
+        self.car_center = np.array(self.map.random_point())
+        # 目标位置
+        self.dest = np.array(self.map.random_point())
 
         car_width, car_length = 1, 2
         self.wheels = [
@@ -50,9 +52,6 @@ class EnvCore(object):
 
         # 初始速度
         self.speed = np.array((0, 0))
-
-        # 目标位置
-        self.dest = np.array(self.map.end)
 
         # guide point
         self.guide_points = self.get_guide_point()
@@ -186,12 +185,14 @@ class EnvCore(object):
 
 
 def test_env(times=10, render=False, mode='rgb_array'):
+    '''
+    test the validation of env
+    '''
     env = EnvCore()
 
-    # test the validation of env
-    all_frames = []
     for i in range(times):
         env.reset()
+        all_frames = []
         if render:
             image = env.render(mode=mode)
             all_frames.append(image)
@@ -219,4 +220,4 @@ def test_env(times=10, render=False, mode='rgb_array'):
 
 
 if __name__ == "__main__":
-    test_env(times=10, render=False)
+    test_env(times=10, render=True)
