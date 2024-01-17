@@ -190,7 +190,7 @@ def test_env(times=10, render=False, mode='rgb_array'):
 
     # test the validation of env
     all_frames = []
-    for _ in range(times):
+    for i in range(times):
         env.reset()
         if render:
             image = env.render(mode=mode)
@@ -207,14 +207,16 @@ def test_env(times=10, render=False, mode='rgb_array'):
             sub_agent_obs, done = result[1], result[2]
             if np.all(done):
                 break
-        print(f"round step: {step}")
 
-    if render and mode == 'rgb_array':
-        import os
+        if render and mode == 'rgb_array':
+            import os
 
-        gif_save_path = os.path.dirname(__file__) + "/" + "render.gif"
-        imageio.mimsave(gif_save_path, all_frames, duration=1, loop=0)
+            image_dir = os.path.dirname(__file__) + "/" + "image"
+            if not os.path.exists(image_dir):
+                os.makedirs(image_dir)
+            gif_save_path = image_dir + f"/{i}_{step}.gif"
+            imageio.mimsave(gif_save_path, all_frames, duration=1, loop=0)
 
 
 if __name__ == "__main__":
-    test_env(times=1000, render=False)
+    test_env(times=10, render=False)
