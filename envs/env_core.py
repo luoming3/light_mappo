@@ -192,15 +192,12 @@ def test_env(times=10, render=False, mode='rgb_array'):
 
     for i in range(times):
         env.reset()
-<<<<<<< HEAD
+
         all_frames = []
         if render:
             image = env.render(mode=mode)
             all_frames.append(image)
-=======
-        image = env.render()    
-        all_frames.append(image)
->>>>>>> env-box2d
+
         step = 0
         for _ in range(1000):
             actions = np.random.random(size=(8,)) * 2 - 1
