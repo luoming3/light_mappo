@@ -15,7 +15,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from envs.env_2d import map, plotting, Astar  # noqa: E402
-from envs.car_racing import CarRacing
+from envs.env_2d.car_racing import CarRacing
 
 
 class EnvCore(object):

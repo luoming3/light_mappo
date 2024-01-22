@@ -13,11 +13,16 @@ import io
 import imageio
 import sys
 import os
-sys.path.append(r'/Users/winnie/Desktop/Project/light_mappo/')
+
+# Get the parent directory of the current file
+parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
+
+# Append the parent directory to sys.path, otherwise the following import will fail
+sys.path.append(parent_dir)
 
 import gym
 from gym import spaces
-from envs.car_dynamics import Car
+from envs.env_2d.car_dynamics import Car
 # from gym.envs.box2d.car_dynamics import Car
 from gym.error import DependencyNotInstalled, InvalidAction
 from gym.utils import EzPickle
