@@ -504,6 +504,7 @@ class CarRacing(gym.Env, EzPickle):
         *,
         seed: Optional[int] = None,
         options: Optional[dict] = None,
+        car_pos=None
     ):
         super().reset(seed=seed)
         self._destroy()
@@ -517,18 +518,19 @@ class CarRacing(gym.Env, EzPickle):
         self.t = 0.0
         self.new_lap = False
         self.road_poly = []
+        self.car_pos = car_pos
 
         # 目标位置和障碍物生成
-        flag = random.uniform(0,1)
-        # 4种随机生成obstacles的方式
-        if flag < 0.25:
-            self.gen_obs_cond1()
-        elif flag >= 0.25 and flag < 0.5:
-            self.gen_obs_cond2()
-        elif flag >= 0.5 and flag < 0.75:
-            self.gen_obs_cond3()
-        else:
-            self.gen_obs_cond4()
+        # flag = random.uniform(0,1)
+        # # 4种随机生成obstacles的方式
+        # if flag < 0.25:
+        #     self.gen_obs_cond1()
+        # elif flag >= 0.25 and flag < 0.5:
+        #     self.gen_obs_cond2()
+        # elif flag >= 0.5 and flag < 0.75:
+        #     self.gen_obs_cond3()
+        # else:
+        #     self.gen_obs_cond4()
             
         # self.obs1 = np.array((-100, 0))
         # self.obs2 = np.array((100, -100))
@@ -660,16 +662,16 @@ class CarRacing(gym.Env, EzPickle):
 
         # self.state = self._render("state_pixels")
 
-        sub_agent_obs = []
-        for i in range(self.agent_num):
-            w = self.car.wheels[i]
+        # sub_agent_obs = []
+        # for i in range(self.agent_num):
+        #     w = self.car.wheels[i]
 
-            sub_obs = np.reshape(
-                [np.array([w.position.x,w.position.y]),self.dest,np.array([w.omega,w.phase]),
-                 self.dest-np.array([w.position.x,w.position.y])],self.obs_dim)
+        #     sub_obs = np.reshape(
+        #         [np.array([w.position.x,w.position.y]),self.dest,np.array([w.omega,w.phase]),
+        #          self.dest-np.array([w.position.x,w.position.y])],self.obs_dim)
 
-            sub_agent_obs.append(sub_obs)
-        self.state = sub_agent_obs
+        #     sub_agent_obs.append(sub_obs)
+        # self.state = sub_agent_obs
 
         '''
         car_racing reward discarded
@@ -699,38 +701,38 @@ class CarRacing(gym.Env, EzPickle):
         
         sub_agent_reward = []
         sub_agent_terminated = []
-        wheels_pos = ((w.position.x, w.position.y) for w in self.car.wheels)
-        car = Polygon(wheels_pos)
-        bounds = PLAYFIELD
-        field = Polygon([
-            (bounds, bounds),
-            (bounds, -bounds),
-            (-bounds, -bounds),
-            (-bounds, bounds),
-        ])
-        obs1 = Polygon(self.obstacle1_poly)
-        obs2 = Polygon(self.obstacle2_poly)
+        # wheels_pos = ((w.position.x, w.position.y) for w in self.car.wheels)
+        # car = Polygon(wheels_pos)
+        # bounds = PLAYFIELD
+        # field = Polygon([
+        #     (bounds, bounds),
+        #     (bounds, -bounds),
+        #     (-bounds, -bounds),
+        #     (-bounds, bounds),
+        # ])
+        # obs1 = Polygon(self.obstacle1_poly)
+        # obs2 = Polygon(self.obstacle2_poly)
 
-        if intersects(car, Point(self.dest[0], self.dest[1])):
-            sub_agent_terminated = [True for _ in range(self.agent_num)]
-            sub_agent_reward = [[np.array(1000)] for _ in range(self.agent_num)]
-            self.agents = []
-        elif not within(car, field):
-            sub_agent_terminated = [True for _ in range(self.agent_num)]
-            sub_agent_reward = [[np.array(-100)] for _ in range(self.agent_num)]
-            self.agents = []
-        elif within(car, obs1) or within(car, obs2):
-            sub_agent_terminated = [True for _ in range(self.agent_num)]
-            sub_agent_reward = [[np.array(-100)] for _ in range(self.agent_num)]
-            self.agents = []
-        else:
-            sub_agent_terminated = [False for _ in range(self.agent_num)]
-            sub_agent_reward = self.get_reward()
+        # if intersects(car, Point(self.dest[0], self.dest[1])):
+        #     sub_agent_terminated = [True for _ in range(self.agent_num)]
+        #     sub_agent_reward = [[np.array(1000)] for _ in range(self.agent_num)]
+        #     self.agents = []
+        # elif not within(car, field):
+        #     sub_agent_terminated = [True for _ in range(self.agent_num)]
+        #     sub_agent_reward = [[np.array(-100)] for _ in range(self.agent_num)]
+        #     self.agents = []
+        # elif within(car, obs1) or within(car, obs2):
+        #     sub_agent_terminated = [True for _ in range(self.agent_num)]
+        #     sub_agent_reward = [[np.array(-100)] for _ in range(self.agent_num)]
+        #     self.agents = []
+        # else:
+        #     sub_agent_terminated = [False for _ in range(self.agent_num)]
+        #     sub_agent_reward = self.get_reward()
 
         # if self.render_mode == "human":
         #     self.render()
 
-        return [self.state, sub_agent_reward, sub_agent_terminated, {}] # truncated
+        return [[], sub_agent_reward, sub_agent_terminated, {}] # truncated
 
     def get_reward(self):
         car_location = self.car.hull.position
