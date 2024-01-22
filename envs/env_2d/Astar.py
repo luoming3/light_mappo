@@ -129,18 +129,23 @@ class AStar:
         return [(s[0] + u[0], s[1] + u[1]) for u in self.u_set]
 
     def cost(self, s_start, s_goal):
-        """
+        """ 
         Calculate Cost for this motion
         :param s_start: starting node
         :param s_goal: end node
         :return:  Cost for this motion
         :note: Cost function could be more complicate!
         """
-
-        if self.is_collision(s_start, s_goal):
+        # is collision
+        if s_goal in self.obs:
             return math.inf
+        
+        dist = math.hypot(s_goal[0] - s_start[0], s_goal[1] - s_start[1])
 
-        return math.hypot(s_goal[0] - s_start[0], s_goal[1] - s_start[1])
+        if s_goal in self.Env.risky_filed:
+            return dist + self.Env.danger_dist
+
+        return dist
 
     def is_collision(self, s_start, s_end):
         """
@@ -206,7 +211,7 @@ class AStar:
 
 def main():
     s_start = (5, 5)
-    s_goal = (45, 25)
+    s_goal = (45, 45)
 
     astar = AStar(s_start, s_goal, "euclidean")
     path, visited = astar.searching()

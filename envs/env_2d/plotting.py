@@ -25,7 +25,7 @@ class Plotting:
     def __init__(self, xI=[], target=[]):
         self.xI, self.xG = xI, target
         self.env = map.Map()
-        self.obs = self.env.obs_map()
+        self.obs = self.env.obs
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111)
     

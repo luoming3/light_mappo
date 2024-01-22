@@ -11,10 +11,11 @@ import random
 class Map:
     def __init__(self):
         self.x_range = 51  # size of background
-        self.y_range = 31
+        self.y_range = 51
         self.motions = [(-1, 0), (-1, 1), (0, 1), (1, 1),
                         (1, 0), (1, -1), (0, -1), (-1, -1)]
-        self.obs = self.obs_map()
+        self.danger_dist = 5
+        self.obs, self.risky_filed = self.obs_map()
 
     def update_obs(self, obs):
         self.obs = obs
@@ -28,29 +29,43 @@ class Map:
         x = self.x_range
         y = self.y_range
         obs = set()
+        risky_filed = set()
 
         for i in range(x):
-            obs.add((i, 0))  # bottom boundary
+            point = (i, 0)
+            obs.add(point)  # bottom boundary
+            risky_filed.update(self.get_risky_point(point))
         for i in range(x):
-            obs.add((i, y - 1))  # top boundary
+            point = (i, y - 1)
+            obs.add(point)  # top boundary
+            risky_filed.update(self.get_risky_point(point))
         for i in range(y):
-            obs.add((0, i))  # left boundary
+            point = (0, i)
+            obs.add(point)  # left boundary
+            risky_filed.update(self.get_risky_point(point))
         for i in range(y):
-            obs.add((x - 1, i))  # right boundary
+            point = (x - 1, i)
+            obs.add(point)  # right boundary
+            risky_filed.update(self.get_risky_point(point))
 
         # obstacle_1
-        for i in range(10, 21):
-            obs.add((i, 15))
-        for i in range(15):
-            obs.add((20, i))
+        # for i in range(10, 21):
+        #     obs.add((i, 15))
+        for i in range(self.y_range // 2):
+            point = (self.x_range // 3, i)
+            obs.add(point)
+            risky_filed.update(self.get_risky_point(point))
         # obstacle_2
-        for i in range(15, 30):
-            obs.add((30, i))
+        for i in range(self.y_range // 2, self.y_range):
+            point = (self.x_range // 3 * 2, i)
+            obs.add(point)
+            risky_filed.update(self.get_risky_point(point))
         # obstacle_3
-        for i in range(16):
-            obs.add((40, i))
-
-        return obs
+        # for i in range(16):
+        #     obs.add((40, i))
+        risky_filed.symmetric_difference(obs)
+        
+        return obs, risky_filed
 
     def move(self, point, motion):
         return (point[0] + motion[0], point[1] + motion[1])
@@ -66,3 +81,12 @@ class Map:
             point = (random.randint(2, self.x_range-2), random.randint(2, self.y_range-2))
             if point not in self.obs:
                 return point
+    
+    def get_risky_point(self, point):
+        danger_zone = set()
+        for i in range(self.danger_dist * 2 + 1):
+            x0 = point[0] + self.danger_dist - i
+            for j in range(self.danger_dist * 2 + 1):
+                x1 = point[1] + self.danger_dist - j
+                danger_zone.add((x0, x1))
+        return danger_zone
