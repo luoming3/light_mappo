@@ -1,8 +1,8 @@
 import gym
 from gym import spaces
 import numpy as np
-from envs.env_core import EnvCore
-
+# from envs.env_core import EnvCore
+from envs.car_racing import CarRacing
 
 class ContinuousActionEnv(object):
     """
@@ -11,7 +11,8 @@ class ContinuousActionEnv(object):
     """
 
     def __init__(self):
-        self.env = EnvCore()
+        # self.env = EnvCore()
+        self.env = CarRacing(render_mode="human")
         self.num_agent = self.env.agent_num
 
         self.signal_obs_dim = self.env.obs_dim
@@ -30,19 +31,19 @@ class ContinuousActionEnv(object):
         share_obs_dim = 0
         total_action_space = []
         for agent in range(self.num_agent):
-            # physical action space
-            u_action_space = spaces.Box(
-                low=-1,
-                high=1,
-                shape=(self.signal_action_dim,),
-                dtype=np.float32,
-            )
+            # # physical action space
+            # u_action_space = spaces.Box(
+            #     low=-1,
+            #     high=1,
+            #     shape=(self.signal_action_dim,),
+            #     dtype=np.float32,
+            # )
 
-            if self.movable:
-                total_action_space.append(u_action_space)
+            # if self.movable:
+            #     total_action_space.append(u_action_space)
 
-            # total action space
-            self.action_space.append(total_action_space[0])
+            # # total action space
+            # self.action_space.append(total_action_space[0])
 
             # observation space
             share_obs_dim += self.signal_obs_dim
@@ -54,6 +55,8 @@ class ContinuousActionEnv(object):
                     dtype=np.float32,
                 )
             )  # [-inf,inf]
+
+            self.action_space.append(self.env.action_space)
 
         self.share_observation_space = [
             spaces.Box(
@@ -86,9 +89,9 @@ class ContinuousActionEnv(object):
 
     def render(self, mode="rgb_array"):
         if mode == "rgb_array":
-            return self.env.render(mode)
+            return self.env.render_rgb(mode)
         elif mode == "human":
-            self.env.render(mode)
+            self.env.render_rgb(mode)
         else:
             raise NotImplementedError
 
