@@ -1,8 +1,8 @@
 import gym
 from gym import spaces
 import numpy as np
-# from envs.env_core import EnvCore
-from envs.car_racing import CarRacing
+from envs.env_core import EnvCore
+
 
 class ContinuousActionEnv(object):
     """
@@ -11,8 +11,7 @@ class ContinuousActionEnv(object):
     """
 
     def __init__(self):
-        # self.env = EnvCore()
-        self.env = CarRacing(render_mode="human")
+        self.env = EnvCore()
         self.num_agent = self.env.agent_num
 
         self.signal_obs_dim = self.env.obs_dim
@@ -29,21 +28,9 @@ class ContinuousActionEnv(object):
         self.share_observation_space = []
 
         share_obs_dim = 0
-        total_action_space = []
         for agent in range(self.num_agent):
-            # # physical action space
-            # u_action_space = spaces.Box(
-            #     low=-1,
-            #     high=1,
-            #     shape=(self.signal_action_dim,),
-            #     dtype=np.float32,
-            # )
-
-            # if self.movable:
-            #     total_action_space.append(u_action_space)
-
-            # # total action space
-            # self.action_space.append(total_action_space[0])
+            # physical action space
+            self.action_space.append(self.env.car_env.action_space)
 
             # observation space
             share_obs_dim += self.signal_obs_dim
@@ -55,8 +42,6 @@ class ContinuousActionEnv(object):
                     dtype=np.float32,
                 )
             )  # [-inf,inf]
-
-            self.action_space.append(self.env.action_space)
 
         self.share_observation_space = [
             spaces.Box(

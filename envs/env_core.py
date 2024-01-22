@@ -26,7 +26,7 @@ class EnvCore(object):
     def __init__(self):
         self.agent_num = 4  # number of agent
         self.obs_dim = 10  # observation dimension of agents
-        self.action_dim = 2  # set the action dimension of agents
+        self.action_dim = 3  # set the action dimension of agents
         self.guide_point_num = 100  # number of guide point
         self.map = map.Map()  # 2d env map
         self.width = self.map.x_range
