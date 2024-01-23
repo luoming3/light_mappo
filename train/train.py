@@ -8,11 +8,12 @@
 # !/usr/bin/env python
 import sys
 import os
-import socket
 import setproctitle
 import numpy as np
 from pathlib import Path
 import torch
+import time
+
 
 # Get the parent directory of the current file
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
@@ -21,7 +22,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from config import get_config
-from envs.env_wrappers import DummyVecEnv
+from envs.env_wrappers import DummyVecEnv, SubprocVecEnv
 
 """Train script for MPEs."""
 
@@ -45,7 +46,10 @@ def make_train_env(all_args):
 
         return init_env
 
-    return DummyVecEnv([get_env_fn(i) for i in range(all_args.n_rollout_threads)])
+    if all_args.n_rollout_threads == 1:
+        return DummyVecEnv([get_env_fn(0)])
+    else:
+        return SubprocVecEnv([get_env_fn(i) for i in range(all_args.n_rollout_threads)])
 
 
 def make_eval_env(all_args):
@@ -63,7 +67,10 @@ def make_eval_env(all_args):
 
         return init_env
 
-    return DummyVecEnv([get_env_fn(i) for i in range(all_args.n_eval_rollout_threads)])
+    if all_args.n_eval_rollout_threads == 1:
+        return DummyVecEnv([get_env_fn(0)])
+    else:
+        return SubprocVecEnv([get_env_fn(i) for i in range(all_args.n_eval_rollout_threads)])
 
 
 def parse_args(args, parser):
@@ -78,6 +85,7 @@ def parse_args(args, parser):
 
 
 def main(args):
+    t1 = time.time()
     parser = get_config()
     all_args = parse_args(args, parser)
 
@@ -179,6 +187,8 @@ def main(args):
 
     runner.writter.export_scalars_to_json(str(runner.log_dir + "/summary.json"))
     runner.writter.close()
+
+    print(f"train time: {time.time() - t1}")
 
 
 if __name__ == "__main__":
