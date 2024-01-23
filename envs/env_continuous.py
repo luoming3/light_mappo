@@ -74,9 +74,9 @@ class ContinuousActionEnv(object):
 
     def render(self, mode="rgb_array"):
         if mode == "rgb_array":
-            return self.env.render_rgb(mode)
+            return self.env.render(mode)
         elif mode == "human":
-            self.env.render_rgb(mode)
+            self.env.render(mode)
         else:
             raise NotImplementedError
 
