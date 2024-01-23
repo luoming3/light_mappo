@@ -77,7 +77,7 @@ class EnvCore(object):
         # The default parameter situation is to input a list with two elements, because the action dimension is 5, so each element shape = (5, )
         """
         self.car_env.step(actions)
-        self.car_center = self.car_env.car_pos
+        self.car_center = self.car_env.car.hull.position
 
         # get next guide point
         next_guide_point = self.next_guide_point()
