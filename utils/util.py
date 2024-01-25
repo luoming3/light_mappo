@@ -1,6 +1,8 @@
 import numpy as np
 import math
 import torch
+import time
+
 
 def check(input):
     if type(input) == np.ndarray:
@@ -70,3 +72,22 @@ def tile_images(img_nhwc):
     img_HhWwc = img_HWhwc.transpose(0, 2, 1, 3, 4)
     img_Hh_Ww_c = img_HhWwc.reshape(H*h, W*w, c)
     return img_Hh_Ww_c
+
+
+def timethis(func):
+    def func_wrapper(*args, **kwargs):
+        time_start = time.perf_counter()
+        result = func(*args, **kwargs)
+        time_end = time.perf_counter()
+        time_spend = time_end - time_start
+        print('%s cost time: %.6f s' % (func.__name__, time_spend))
+        return result
+    return func_wrapper
+
+
+@timethis
+def main():
+    time.sleep(1)
+
+if __name__ == "__main__":
+    main()
