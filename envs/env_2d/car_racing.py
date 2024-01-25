@@ -275,13 +275,16 @@ class CarRacing(gym.Env, EzPickle):
         self.render_mode = render_mode
 
     def _destroy(self):
-        if not self.road:
+        # if not self.road:
+        #     return
+        # for t in self.road:
+        #     self.world.DestroyBody(t)
+        # self.road = []
+        # assert self.car is not None
+        if self.car is None:
             return
-        for t in self.road:
-            self.world.DestroyBody(t)
-        self.road = []
-        assert self.car is not None
-        self.car.destroy()
+        else:
+            self.car.destroy()
 
     def _init_colors(self):
         if self.domain_randomize:
