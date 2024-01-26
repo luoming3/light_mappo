@@ -143,11 +143,11 @@ def main(args):
         os.makedirs(str(run_dir))
 
     setproctitle.setproctitle(
-        str(all_args.algorithm_name)
+        str(all_args.experiment_name)
+        + "-"
+        +str(all_args.algorithm_name)
         + "-"
         + str(all_args.env_name)
-        + "-"
-        + str(all_args.experiment_name)
         + "@"
         + str(all_args.user_name)
     )
