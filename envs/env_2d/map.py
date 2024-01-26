@@ -51,15 +51,15 @@ class Map:
         # obstacle_1
         # for i in range(10, 21):
         #     obs.add((i, 15))
-        for i in range(self.y_range // 2):
-            point = (self.x_range // 3, i)
-            obs.add(point)
-            risky_filed.update(self.get_risky_point(point))
-        # obstacle_2
-        for i in range(self.y_range // 2, self.y_range):
-            point = (self.x_range // 3 * 2, i)
-            obs.add(point)
-            risky_filed.update(self.get_risky_point(point))
+        # for i in range(self.y_range // 2):
+        #     point = (self.x_range // 3, i)
+        #     obs.add(point)
+        #     risky_filed.update(self.get_risky_point(point))
+        # # obstacle_2
+        # for i in range(self.y_range // 2, self.y_range):
+        #     point = (self.x_range // 3 * 2, i)
+        #     obs.add(point)
+        #     risky_filed.update(self.get_risky_point(point))
         # obstacle_3
         # for i in range(16):
         #     obs.add((40, i))

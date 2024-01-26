@@ -25,7 +25,7 @@ class EnvCore(object):
 
     def __init__(self):
         self.agent_num = 4  # number of agent
-        self.obs_dim = 10  # observation dimension of agents
+        self.obs_dim = 12  # observation dimension of agents
         self.action_dim = 3  # set the action dimension of agents
         self.guide_point_num = 100  # number of guide point
         self.map = map.Map()  # 2d env map
@@ -40,9 +40,12 @@ class EnvCore(object):
         """
 
         # 随机的 agent 位置
-        self.car_center = np.array(self.map.random_point()).astype(float)
+        # self.car_center = np.array(self.map.random_point()).astype(float)
+        self.car_center = np.array([10., 10.])
         # 目标位置
-        self.dest = np.array(self.map.random_point())
+        # self.dest = np.array(self.map.random_point())
+        self.dest = np.array([30., 30.])
+        self.last_dist = np.linalg.norm(self.car_center - self.dest)
         # reset car env
         self.car_env.reset(car_pos=self.car_center)
 
@@ -51,21 +54,7 @@ class EnvCore(object):
         nearest_point = self.next_guide_point()
 
         # 智能体观测集合
-        sub_agent_obs = []
-        for i in range(self.agent_num):
-            w = self.car_env.car.wheels[i]
-
-            sub_obs = np.reshape(
-                [
-                    np.array([w.position.x, w.position.y]),
-                    self.dest,
-                    np.array([w.omega, w.phase]),
-                    self.dest - np.array([w.position.x, w.position.y]),
-                    nearest_point
-                ], self.obs_dim
-            )
-
-            sub_agent_obs.append(sub_obs)
+        sub_agent_obs = self.get_sub_agent_obs(nearest_point)
 
         return sub_agent_obs
 
@@ -80,24 +69,10 @@ class EnvCore(object):
         self.car_center = self.car_env.car.hull.position
 
         # get next guide point
-        next_guide_point = self.next_guide_point()
+        nearest_point = self.next_guide_point()
 
         # observations after actions
-        sub_agent_obs = []
-        for i in range(self.agent_num):
-            w = self.car_env.car.wheels[i]
-
-            sub_obs = np.reshape(
-                [
-                    np.array([w.position.x, w.position.y]),
-                    self.dest,
-                    np.array([w.omega, w.phase]),
-                    self.dest - np.array([w.position.x, w.position.y]),
-                    next_guide_point
-                ], self.obs_dim
-            )
-
-            sub_agent_obs.append(sub_obs)
+        sub_agent_obs = self.get_sub_agent_obs(nearest_point)
 
         # information of each agent
         sub_agent_info = [{} for _ in range(self.agent_num)]
@@ -127,7 +102,9 @@ class EnvCore(object):
 
     def get_reward(self):
         dist = np.linalg.norm(self.car_center - self.dest)
-        sub_agent_reward = [[np.array(-1)] for _ in range(self.agent_num)]
+        diff = (self.last_dist - dist)
+        sub_agent_reward = [[diff if diff > 0 else -2.] for _ in range(self.agent_num)]
+        self.last_dist = dist
 
         return sub_agent_reward
 
@@ -173,6 +150,27 @@ class EnvCore(object):
                 self.guide_points = self.guide_points[1:]
         return self.dest
 
+    def get_sub_agent_obs(self, nearest_point):
+        sub_agent_obs = []
+        for i in range(self.agent_num):
+            w = self.car_env.car.wheels[i]
+            w_position = np.array([w.position.x, w.position.y])
+
+            sub_obs = np.reshape(
+                [
+                    w_position,
+                    self.car_center,
+                    self.car_center - w_position,
+                    np.array([w.omega, w.phase]),
+                    self.dest - w_position,
+                    nearest_point
+                ], self.obs_dim
+            )
+
+            sub_agent_obs.append(sub_obs)
+
+        return sub_agent_obs
+
 
 def test_env(times=10, render=False, mode='rgb_array'):
     '''
@@ -193,6 +191,7 @@ def test_env(times=10, render=False, mode='rgb_array'):
             # actions = np.random.random(size=(env.agent_num,)) * 2 - 1
             # actions = np.expand_dims(env.dest - env.car_center, 0).repeat(env.agent_num, 0) / 10
             action_space = env.car_env.action_space
+            # actions = np.array([[0.5, 1., 0.], [-0.5, 1., 0.], [0., 0., 0.], [0., 0., 0.]])
             actions = np.array([action_space.sample() for i in range(env.agent_num)])
             result = env.step(actions=actions)
             if render:
@@ -205,11 +204,14 @@ def test_env(times=10, render=False, mode='rgb_array'):
 
         if render and mode == 'rgb_array':
             import os
+            import time
 
             image_dir = os.path.dirname(__file__) + "/" + "image"
             if not os.path.exists(image_dir):
                 os.makedirs(image_dir)
-            gif_save_path = image_dir + f"/{i}_{step}.gif"
+            
+            time_now = time.strftime("%Y-%m-%d %H:%M:%S")
+            gif_save_path = image_dir + f"/{time_now}_{step}.gif"
             imageio.mimsave(gif_save_path, all_frames, duration=1, loop=0)
 
 
