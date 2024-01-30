@@ -40,11 +40,9 @@ class EnvCore(object):
         """
 
         # 随机的 agent 位置
-        # self.car_center = np.array(self.map.random_point()).astype(float)
-        self.car_center = np.array([10., 10.])
+        self.car_center = np.array(self.map.random_point()).astype(float)
         # 目标位置
-        # self.dest = np.array(self.map.random_point())
-        self.dest = np.array([30., 30.])
+        self.dest = np.array(self.map.random_point())
         self.last_dist = np.linalg.norm(self.car_center - self.dest)
         # reset car env
         self.car_env.reset(car_pos=self.car_center)

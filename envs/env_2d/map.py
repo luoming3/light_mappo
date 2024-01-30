@@ -41,31 +41,13 @@ class Map:
         obstacles.add(box(minx=0, miny=y, maxx=x, maxy=y+0.01))
 
         # obstacle_1
-<<<<<<< HEAD
-        # for i in range(10, 21):
-        #     obs.add((i, 15))
-        # for i in range(self.y_range // 2):
-        #     point = (self.x_range // 3, i)
-        #     obs.add(point)
-        #     risky_filed.update(self.get_risky_point(point))
-        # # obstacle_2
-        # for i in range(self.y_range // 2, self.y_range):
-        #     point = (self.x_range // 3 * 2, i)
-        #     obs.add(point)
-        #     risky_filed.update(self.get_risky_point(point))
-        # obstacle_3
-        # for i in range(16):
-        #     obs.add((40, i))
-        risky_filed.symmetric_difference(obs)
-=======
         obstacle_1 = box(minx=x//3, miny=0, maxx=x//3+1, maxy=y//2)
         obstacles.add(obstacle_1)
 
         # obstacle_2
         obstacle_2 = box(minx=x//3*2, miny=y//2, maxx=x//3*2+1, maxy=y)
         obstacles.add(obstacle_2)
->>>>>>> main-simple
-        
+     
         return obstacles
 
     def move(self, point, motion):
