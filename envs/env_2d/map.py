@@ -11,8 +11,6 @@ class Map:
     def __init__(self, width=51, height=51):
         self.x_range = width
         self.y_range = height
-        self.motions = [(-1, 0), (-1, 1), (0, 1), (1, 1),
-                        (1, 0), (1, -1), (0, -1), (-1, -1)]
 
         self.obstacles = self.obs_map()
         self.obs_bounds = self.get_obs_bounds()
@@ -32,13 +30,13 @@ class Map:
         obstacles = set()
    
         # left boundary
-        obstacles.add(box(minx=-0.01, miny=0, maxx=0, maxy=y))
+        obstacles.add(box(minx=-1, miny=0, maxx=0, maxy=y))
         # bottom boundary
-        obstacles.add(box(minx=0, miny=-0.01, maxx=x, maxy=0))
+        obstacles.add(box(minx=0, miny=-1, maxx=x, maxy=0))
         # right boundary
-        obstacles.add(box(minx=x, miny=0, maxx=x+0.01, maxy=y+0.01))
+        obstacles.add(box(minx=x, miny=0, maxx=x+1, maxy=y))
         # top boundary
-        obstacles.add(box(minx=0, miny=y, maxx=x, maxy=y+0.01))
+        obstacles.add(box(minx=0, miny=y, maxx=x, maxy=y+1))
 
         # obstacle_1
         obstacle_1 = box(minx=x//3, miny=0, maxx=x//3+1, maxy=y//2)
