@@ -48,7 +48,7 @@ class EnvCore(object):
         self.car_env.reset(car_pos=self.car_center)
 
         # guide point
-        self.guide_points = self.get_guide_point()
+        self.guide_points = self.get_guide_point(step=4)
         nearest_point = self.next_guide_point()
 
         # 智能体观测集合
@@ -120,7 +120,7 @@ class EnvCore(object):
 
             return image
 
-    def get_guide_point(self):
+    def get_guide_point(self, step=1):
         start = tuple(self.car_center.astype(int).tolist())
         end = tuple(self.dest.astype(int).tolist())
         astar = Astar.AStar(start, end, "euclidean")
@@ -128,7 +128,7 @@ class EnvCore(object):
  
         # return guide points
         path.reverse()
-        return np.array(path[1:-1])
+        return np.array(path[step:-1:step])
 
     def get_score(self, car):
         for i, point in enumerate(self.guide_points):
