@@ -27,23 +27,21 @@ FRICTION_LIMIT = (
 )  # friction ~= mass ~= size^2 (calculated implicitly using density)
 WHEEL_R = 27
 WHEEL_W = 14
-# WHEELPOS = [(-55, +80), (+55, +80), (-55, -82), (+55, -82)]
 WHEELPOS = [(-55, +80), (+55, +80), (+55, -82), (-55, -82)]
-HULL_POLY = [(-50, +70), (+50, +70), (+50, -70), (-50, -70)]
-
-# HULL_POLY1 = [(-60, +130), (+60, +130), (+60, +110), (-60, +110)]
-# HULL_POLY2 = [(-15, +120), (+15, +120), (+20, +20), (-20, 20)]
-# HULL_POLY3 = [
-#     (+25, +20),
-#     (+50, -10),
-#     (+50, -40),
-#     (+20, -90),
-#     (-20, -90),
-#     (-50, -40),
-#     (-50, -10),
-#     (-25, +20),
-# ]
-# HULL_POLY4 = [(-50, -120), (+50, -120), (+50, -90), (-50, -90)]
+# HULL_POLY = [(-50, +70), (+50, +70), (+50, -70), (-50, -70)]
+HULL_POLY1 = [(-60, +130), (+60, +130), (+60, +110), (-60, +110)]
+HULL_POLY2 = [(-15, +120), (+15, +120), (+20, +20), (-20, 20)]
+HULL_POLY3 = [
+    (+25, +20),
+    (+50, -10),
+    (+50, -40),
+    (+20, -90),
+    (-20, -90),
+    (-50, -40),
+    (-50, -10),
+    (-25, +20),
+]
+HULL_POLY4 = [(-50, -120), (+50, -120), (+50, -90), (-50, -90)]
 WHEEL_COLOR = (0, 0, 0)
 WHEEL_WHITE = (77, 77, 77)
 MUD_COLOR = (102, 102, 0)
@@ -58,34 +56,28 @@ class Car:
             fixtures=[
                 fixtureDef(
                     shape=polygonShape(
-                        vertices=[(x * SIZE, y * SIZE) for x, y in HULL_POLY]
+                        vertices=[(x * SIZE, y * SIZE) for x, y in HULL_POLY1]
                     ),
                     density=1.0,
                 ),
-                # fixtureDef(
-                #     shape=polygonShape(
-                #         vertices=[(x * SIZE, y * SIZE) for x, y in HULL_POLY1]
-                #     ),
-                #     density=1.0,
-                # ),
-                # fixtureDef(
-                #     shape=polygonShape(
-                #         vertices=[(x * SIZE, y * SIZE) for x, y in HULL_POLY2]
-                #     ),
-                #     density=1.0,
-                # ),
-                # fixtureDef(
-                #     shape=polygonShape(
-                #         vertices=[(x * SIZE, y * SIZE) for x, y in HULL_POLY3]
-                #     ),
-                #     density=1.0,
-                # ),
-                # fixtureDef(
-                #     shape=polygonShape(
-                #         vertices=[(x * SIZE, y * SIZE) for x, y in HULL_POLY4]
-                #     ),
-                #     density=1.0,
-                # ),
+                fixtureDef(
+                    shape=polygonShape(
+                        vertices=[(x * SIZE, y * SIZE) for x, y in HULL_POLY2]
+                    ),
+                    density=1.0,
+                ),
+                fixtureDef(
+                    shape=polygonShape(
+                        vertices=[(x * SIZE, y * SIZE) for x, y in HULL_POLY3]
+                    ),
+                    density=1.0,
+                ),
+                fixtureDef(
+                    shape=polygonShape(
+                        vertices=[(x * SIZE, y * SIZE) for x, y in HULL_POLY4]
+                    ),
+                    density=1.0,
+                ),
             ],
         )
         self.hull.color = (0.8, 0.0, 0.0)
@@ -152,7 +144,7 @@ class Car:
         gas = np.clip(gas, 0, 1)
         # for w in self.wheels[2:4]:
         #     diff = gas - w.gas
-        #     if any(diff) > 0.1:
+        #     if diff > 0.1:
         #         diff = 0.1  # gradually increase, but stop immediately
         #     w.gas += diff
         

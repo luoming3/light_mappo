@@ -14,6 +14,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from envs.env_2d import map, plotting  # noqa: E402
+from utils.util import timethis  # noqa: E402
 
 
 class AStar:
@@ -25,9 +26,10 @@ class AStar:
         self.heuristic_type = heuristic_type
 
         self.Env = map.Map()  # class Map
+        self.obstacles = self.Env.obs_bounds
+        self.risky_dist = 5
 
         self.u_set = self.Env.motions  # feasible input set
-        self.obs = self.Env.obs  # position of obstacles
 
         self.OPEN = []  # priority queue / OPEN set
         self.CLOSED = []  # CLOSED set / VISITED order
@@ -137,16 +139,30 @@ class AStar:
         :note: Cost function could be more complicate!
         """
         # is collision
-        if s_goal in self.obs:
+        if self.is_collision(s_start, s_goal):
             return math.inf
         
         dist = math.hypot(s_goal[0] - s_start[0], s_goal[1] - s_start[1])
 
-        if s_goal in self.Env.risky_filed:
-            return dist + self.Env.danger_dist
+        # is risky
+        if self.is_risky(s_goal):
+            return dist + self.risky_dist
 
         return dist
+    
+    def is_risky(self, s_end):
+        minx = s_end[0] - self.risky_dist
+        miny = s_end[1] - self.risky_dist
+        maxx = s_end[0] + self.risky_dist
+        maxy = s_end[1] + self.risky_dist
+        rect = (minx, miny, maxx, maxy)
 
+        for obs in self.obstacles:
+            if is_intersects(rect ,obs):
+                return True
+
+        return False
+    
     def is_collision(self, s_start, s_end):
         """
         check if the line segment (s_start, s_end) is collision.
@@ -154,12 +170,10 @@ class AStar:
         :param s_end: end node
         :return: True: is collision / False: not collision
         """
-        safe_field = set()
-        [safe_field.add(self.Env.move(s_end, motion)) for motion in self.Env.motions]
-
-        for point in safe_field:
-            if point in self.obs:
+        for obs in self.obstacles:
+            if is_point_in_rectangle(s_end, obs):
                 return True
+
         return False
 
     def f_value(self, s):
@@ -209,6 +223,27 @@ class AStar:
             return math.hypot(goal[0] - s[0], goal[1] - s[1])
 
 
+def is_point_in_rectangle(point, rectangle):
+    '''
+    判断点是否在矩形内
+    '''
+    x, y = point
+    min_x, min_y, max_x, max_y = rectangle
+    return min_x <= x <= max_x and min_y <= y <= max_y
+
+
+def is_intersects(rect1, rect2):
+    '''
+    判断两个矩形是否相交
+    '''
+    min_x1, min_y1, max_x1, max_y1 = rect1
+    min_x2, min_y2, max_x2, max_y2 = rect2
+
+    return not (max_x1 < min_x2 or max_y1 < min_y2 or
+            min_x1 > max_x2 or min_y1 > max_y2)
+
+
+@timethis
 def main():
     s_start = (5, 5)
     s_goal = (45, 45)
@@ -217,14 +252,11 @@ def main():
     path, visited = astar.searching()
 
     plot = plotting.Plotting(s_start, s_goal)
-    plot.animation(path, [], "A*")  # animation
+    plot.animation(path, visited, "A*")  # animation
 
     # path, visited = astar.searching_repeated_astar(2.5)               # initial weight e = 2.5
     # plot.animation_ara_star(path, visited, "Repeated A*")
 
 
 if __name__ == '__main__':
-    import time
-    t1 = time.time()
     main()
-    print(f"spend time: {time.time() - t1}")

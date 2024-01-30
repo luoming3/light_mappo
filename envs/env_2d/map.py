@@ -2,20 +2,20 @@
 Env 2D
 """
 
-from shapely.geometry import Polygon, Point
-from shapely import intersects
+from shapely.geometry import Polygon, Point, box
 
 import random
 
 
 class Map:
-    def __init__(self):
-        self.x_range = 51  # size of background
-        self.y_range = 51
+    def __init__(self, width=51, height=51):
+        self.x_range = width
+        self.y_range = height
         self.motions = [(-1, 0), (-1, 1), (0, 1), (1, 1),
                         (1, 0), (1, -1), (0, -1), (-1, -1)]
-        self.danger_dist = 5
-        self.obs, self.risky_filed = self.obs_map()
+
+        self.obstacles = self.obs_map()
+        self.obs_bounds = self.get_obs_bounds()
 
     def update_obs(self, obs):
         self.obs = obs
@@ -28,27 +28,20 @@ class Map:
 
         x = self.x_range
         y = self.y_range
-        obs = set()
-        risky_filed = set()
 
-        for i in range(x):
-            point = (i, 0)
-            obs.add(point)  # bottom boundary
-            risky_filed.update(self.get_risky_point(point))
-        for i in range(x):
-            point = (i, y - 1)
-            obs.add(point)  # top boundary
-            risky_filed.update(self.get_risky_point(point))
-        for i in range(y):
-            point = (0, i)
-            obs.add(point)  # left boundary
-            risky_filed.update(self.get_risky_point(point))
-        for i in range(y):
-            point = (x - 1, i)
-            obs.add(point)  # right boundary
-            risky_filed.update(self.get_risky_point(point))
+        obstacles = set()
+   
+        # left boundary
+        obstacles.add(box(minx=-0.01, miny=0, maxx=0, maxy=y))
+        # bottom boundary
+        obstacles.add(box(minx=0, miny=-0.01, maxx=x, maxy=0))
+        # right boundary
+        obstacles.add(box(minx=x, miny=0, maxx=x+0.01, maxy=y+0.01))
+        # top boundary
+        obstacles.add(box(minx=0, miny=y, maxx=x, maxy=y+0.01))
 
         # obstacle_1
+<<<<<<< HEAD
         # for i in range(10, 21):
         #     obs.add((i, 15))
         # for i in range(self.y_range // 2):
@@ -64,23 +57,33 @@ class Map:
         # for i in range(16):
         #     obs.add((40, i))
         risky_filed.symmetric_difference(obs)
+=======
+        obstacle_1 = box(minx=x//3, miny=0, maxx=x//3+1, maxy=y//2)
+        obstacles.add(obstacle_1)
+
+        # obstacle_2
+        obstacle_2 = box(minx=x//3*2, miny=y//2, maxx=x//3*2+1, maxy=y)
+        obstacles.add(obstacle_2)
+>>>>>>> main-simple
         
-        return obs, risky_filed
+        return obstacles
 
     def move(self, point, motion):
         return (point[0] + motion[0], point[1] + motion[1])
     
     def is_collision(self, polygon:Polygon):
-        for point in self.obs:
-            if intersects(polygon, Point(*point)):
+        for obs in self.obstacles:
+            if polygon.intersects(obs):
                 return True
+
         return False
 
     def random_point(self):
         while True:
             point = (random.randint(2, self.x_range-2), random.randint(2, self.y_range-2))
-            if point not in self.obs:
-                return point
+            for obs in self.obstacles:
+                if not obs.intersects(Point(*point)):
+                    return point
     
     def get_risky_point(self, point):
         danger_zone = set()
@@ -90,3 +93,10 @@ class Map:
                 x1 = point[1] + self.danger_dist - j
                 danger_zone.add((x0, x1))
         return danger_zone
+
+    def get_obs_bounds(self):
+        obs_bounds = set()
+        for obs in self.obstacles:
+            obs_bounds.add(obs.bounds)
+
+        return obs_bounds

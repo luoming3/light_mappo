@@ -7,8 +7,6 @@ import imageio
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
-from shapely.geometry import Polygon
-
 import os
 import sys
 
@@ -25,15 +23,13 @@ class Plotting:
     def __init__(self, xI=[], target=[]):
         self.xI, self.xG = xI, target
         self.env = map.Map()
-        self.obs = self.env.obs
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111)
     
     def plot_map(self, name="env_2d"):
-        obs_x = [x[0] for x in self.obs]
-        obs_y = [x[1] for x in self.obs]
+        for obs in self.env.obstacles:
+            self.ax.add_patch(patches.Polygon(obs.exterior.coords, color="k"))
 
-        self.ax.plot(obs_x, obs_y, "pk")
         self.ax.plot(self.xG[0], self.xG[1], "gs")
         self.ax.set_title(name)
         self.ax.axis("equal")
@@ -113,14 +109,14 @@ class Plotting:
         plt.show()
 
     def plot_grid(self, name):
-        obs_x = [x[0] for x in self.obs]
-        obs_y = [x[1] for x in self.obs]
+        # plot obstacle
+        for obs in self.env.obstacles:
+            self.ax.add_patch(patches.Polygon(obs.exterior.coords, color="k"))
 
-        plt.plot(self.xI[0], self.xI[1], "bs")
-        plt.plot(self.xG[0], self.xG[1], "gs")
-        plt.plot(obs_x, obs_y, "sk")
-        plt.title(name)
-        plt.axis("equal")
+        self.ax.plot(self.xI[0], self.xI[1], "bs")
+        self.ax.plot(self.xG[0], self.xG[1], "gs")
+        self.ax.set_title(name)
+        self.ax.axis("equal")
 
     def plot_visited(self, visited, cl='gray'):
         if self.xI in visited:
