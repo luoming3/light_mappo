@@ -43,16 +43,16 @@ class EnvCore(object):
         self.car_center = np.array(self.map.random_point()).astype(float)
         # 目标位置
         self.dest = np.array(self.map.random_point())
-        self.last_dist = np.linalg.norm(self.car_center - self.dest)
+        self.last_position = self.car_center
         # reset car env
         self.car_env.reset(car_pos=self.car_center)
 
         # guide point
         self.guide_points = self.get_guide_point(step=4)
-        nearest_point = self.next_guide_point()
+        self.nearest_point = self.next_guide_point()
 
         # 智能体观测集合
-        sub_agent_obs = self.get_sub_agent_obs(nearest_point)
+        sub_agent_obs = self.get_sub_agent_obs(self.nearest_point)
 
         return sub_agent_obs
 
@@ -64,13 +64,13 @@ class EnvCore(object):
         # The default parameter situation is to input a list with two elements, because the action dimension is 5, so each element shape = (5, )
         """
         self.car_env.step(actions)
-        self.car_center = self.car_env.car.hull.position
+        self.car_center = np.array(self.car_env.car.hull.position)
 
         # get next guide point
-        nearest_point = self.next_guide_point()
+        self.nearest_point = self.next_guide_point()
 
         # observations after actions
-        sub_agent_obs = self.get_sub_agent_obs(nearest_point)
+        sub_agent_obs = self.get_sub_agent_obs(self.nearest_point)
 
         # information of each agent
         sub_agent_info = [{} for _ in range(self.agent_num)]
@@ -102,10 +102,11 @@ class EnvCore(object):
         return intersects(car, Point(self.dest[0], self.dest[1]))
 
     def get_reward(self):
-        dist = np.linalg.norm(self.car_center - self.dest)
-        diff = (self.last_dist - dist)
+        last_dist = np.linalg.norm(self.nearest_point - self.last_position)
+        cur_dist = np.linalg.norm(self.nearest_point - self.car_center)
+        diff = last_dist - cur_dist
         sub_agent_reward = [[diff if diff > 0 else -2.] for _ in range(self.agent_num)]
-        self.last_dist = dist
+        self.last_position = self.car_center
 
         return sub_agent_reward
 
@@ -163,7 +164,7 @@ class EnvCore(object):
                     self.car_center,
                     self.car_center - w_position,
                     np.array([w.omega, w.phase]),
-                    self.dest - w_position,
+                    nearest_point - w_position,
                     nearest_point
                 ], self.obs_dim
             )
