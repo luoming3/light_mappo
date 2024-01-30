@@ -20,8 +20,15 @@ The original MAPPO code was too complex in terms of environment encapsulation, s
 Simply download the code, create a Conda environment, and then run the code, adding packages as needed. Specific packages will be added later.
 
 ```
-conda create -n marl python=3.11.3
+conda create -n marl python=3.8.18
 conda activate marl
+ 
+# cuda 10.1
+conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=10.1 -c pytorch
+ 
+# cuda 11.0
+conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=11.0 -c pytorch
+ 
 pip install -r requirements.txt
 ```
 
