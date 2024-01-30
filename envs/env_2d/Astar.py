@@ -29,7 +29,9 @@ class AStar:
         self.obstacles = self.Env.obs_bounds
         self.risky_dist = 5
 
-        self.u_set = self.Env.motions  # feasible input set
+        # feasible input set
+        self.u_set = [(-1, 0), (-1, 1), (0, 1), (1, 1),
+                      (1, 0), (1, -1), (0, -1), (-1, -1)]
 
         self.OPEN = []  # priority queue / OPEN set
         self.CLOSED = []  # CLOSED set / VISITED order
