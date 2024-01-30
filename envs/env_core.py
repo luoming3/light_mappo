@@ -1,7 +1,6 @@
 import numpy as np
 from shapely.geometry import Polygon, Point
-from shapely import intersects, within
-import random
+from shapely import intersects
 
 import imageio
 
@@ -16,6 +15,7 @@ sys.path.append(parent_dir)
 
 from envs.env_2d import map, plotting, Astar  # noqa: E402
 from envs.env_2d.car_racing import CarRacing
+from utils.util import timethis
 
 
 class EnvCore(object):
@@ -108,7 +108,7 @@ class EnvCore(object):
         car = Polygon(wheels_pos)
 
         # Check termination conditions
-        if intersects(car, Point(self.dest[0], self.dest[1])):
+        if self.is_target(car):
             sub_agent_done = [True for _ in range(self.agent_num)]
             sub_agent_reward = [[np.array(1000)] for _ in range(self.agent_num)]
             self.agents = []
@@ -124,6 +124,9 @@ class EnvCore(object):
             sub_agent_reward = self.get_reward()
 
         return [sub_agent_obs, sub_agent_reward, sub_agent_done, sub_agent_info]
+
+    def is_target(self, car):
+        return intersects(car, Point(self.dest[0], self.dest[1]))
 
     def get_reward(self):
         dist = np.linalg.norm(self.car_center - self.dest)
@@ -174,6 +177,7 @@ class EnvCore(object):
         return self.dest
 
 
+@timethis
 def test_env(times=10, render=False, mode='rgb_array'):
     '''
     test the validation of env
@@ -214,4 +218,4 @@ def test_env(times=10, render=False, mode='rgb_array'):
 
 
 if __name__ == "__main__":
-    test_env(times=10, render=True)
+    test_env(times=5, render=True)
