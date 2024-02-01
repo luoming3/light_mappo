@@ -110,6 +110,8 @@ class EnvCore(object):
         # guide point reward
         if car.intersects(Point(self.nearest_point)):
             reward += 10
+            # remove the nearest point
+            self.guide_points = self.guide_points[1:]
 
         # update variables
         self.last_position = self.car_center
