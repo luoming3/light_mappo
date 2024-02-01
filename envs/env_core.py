@@ -89,26 +89,32 @@ class EnvCore(object):
             sub_agent_done = [True for _ in range(self.agent_num)]
             sub_agent_reward = [[np.array(-100)] for _ in range(self.agent_num)]
             self.agents = []
-        elif self.get_score(car):
-            sub_agent_done = [False for _ in range(self.agent_num)]
-            sub_agent_reward = [[np.array(10)] for _ in range(self.agent_num)]
         else:
             sub_agent_done = [False for _ in range(self.agent_num)]
-            sub_agent_reward = self.get_reward()
+            sub_agent_reward = self.get_reward(car)
 
         return [sub_agent_obs, sub_agent_reward, sub_agent_done, sub_agent_info]
 
     def is_target(self, car):
         return intersects(car, Point(self.dest[0], self.dest[1]))
 
-    def get_reward(self):
+    def get_reward(self, car):
+        reward = 0
+
+        # movement reward
         last_dist = np.linalg.norm(self.nearest_point - self.last_position)
         cur_dist = np.linalg.norm(self.nearest_point - self.car_center)
         diff = last_dist - cur_dist
-        sub_agent_reward = [[diff if diff > 0 else -2.] for _ in range(self.agent_num)]
+        reward += diff
+
+        # guide point reward
+        if car.intersects(Point(self.nearest_point)):
+            reward += 10
+
+        # update variables
         self.last_position = self.car_center
 
-        return sub_agent_reward
+        return [[reward if reward > 0 else -2.] for _ in range(self.agent_num)]
 
     def render(self, mode="rgb_array"):
         if mode == 'rgb_array':
@@ -130,14 +136,6 @@ class EnvCore(object):
         # return guide points
         path.reverse()
         return np.array(path[step:-1:step])
-
-    def get_score(self, car):
-        for i, point in enumerate(self.guide_points):
-            if intersects(car, Point(*point)):
-                self.guide_points = self.guide_points[i+1:]
-                return True
-
-        return False
 
     def next_guide_point(self):
         while len(self.guide_points) > 1:
