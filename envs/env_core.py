@@ -173,7 +173,7 @@ class EnvCore(object):
 
 
 @timethis
-def test_env(times=10, render=False, mode='rgb_array'):
+def env_test(times=10, render=False, mode='rgb_array'):
     '''
     test the validation of env
     '''
@@ -188,6 +188,7 @@ def test_env(times=10, render=False, mode='rgb_array'):
             all_frames.append(image)
 
         step = 0
+        episode_reward = 0
         for _ in range(1000):
             # actions = np.random.random(size=(env.agent_num,)) * 2 - 1
             # actions = np.expand_dims(env.dest - env.car_center, 0).repeat(env.agent_num, 0) / 10
@@ -199,7 +200,8 @@ def test_env(times=10, render=False, mode='rgb_array'):
                 all_frames.append(env.render()) 
             step += 1
 
-            sub_agent_obs, done = result[1], result[2]
+            reward, done = result[1], result[2]
+            episode_reward += reward[0][0]
             if np.all(done):
                 break
 
@@ -211,10 +213,10 @@ def test_env(times=10, render=False, mode='rgb_array'):
             if not os.path.exists(image_dir):
                 os.makedirs(image_dir)
             
-            time_now = time.strftime("%Y-%m-%d %H:%M:%S")
-            gif_save_path = image_dir + f"/{time_now}_{step}.gif"
+            time_now = int(time.time() * 1000)
+            gif_save_path = image_dir + f"/{time_now}_{step}_{episode_reward:.2f}.gif"
             imageio.mimsave(gif_save_path, all_frames, duration=1, loop=0)
 
 
 if __name__ == "__main__":
-    test_env(times=5, render=True)
+    env_test(times=5, render=True)
