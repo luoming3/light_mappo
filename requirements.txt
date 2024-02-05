@@ -1,6 +1,5 @@
 absl_py==2.0.0
-Box2d==2.3.2
-Box2d-kengz==2.3.3
+Box2d==2.3.10
 gym==0.26.2
 imageio==2.33.1
 matplotlib==3.8.2
