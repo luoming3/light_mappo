@@ -1,11 +1,5 @@
 absl_py==2.0.0
-<<<<<<< HEAD
 Box2d==2.3.10
-=======
-box2d==2.3.2
-box2d-py==2.3.5
-box2d-kengz==2.3.3
->>>>>>> c24c25d (use python 3.8.18)
 gym==0.26.2
 imageio==2.33.1
 matplotlib==3.7.4
