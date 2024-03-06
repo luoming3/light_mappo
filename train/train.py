@@ -13,6 +13,7 @@ import numpy as np
 from pathlib import Path
 import torch
 import time
+import pprint
 
 
 # Get the parent directory of the current file
@@ -170,6 +171,9 @@ def main(args):
         "device": device,
         "run_dir": run_dir,
     }
+
+    pprint.pprint(config)
+    pprint.pprint(vars(all_args))
 
     # run experiments
     if all_args.share_policy:
