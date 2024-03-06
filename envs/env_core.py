@@ -25,7 +25,7 @@ class EnvCore(object):
 
     def __init__(self):
         self.agent_num = 4  # number of agent
-        self.obs_dim = 12  # observation dimension of agents
+        self.obs_dim = 14  # observation dimension of agents
         self.action_dim = 3  # set the action dimension of agents
         self.guide_point_num = 100  # number of guide point
         self.map = map.Map()  # 2d env map
@@ -50,7 +50,7 @@ class EnvCore(object):
         # guide point
         self.guide_points = self.get_guide_point(step=4)
         self.nearest_point = self.next_guide_point()
-
+        self.steps = 0
         # 智能体观测集合
         sub_agent_obs = self.get_sub_agent_obs(self.nearest_point)
 
@@ -65,7 +65,7 @@ class EnvCore(object):
         """
         self.car_env.step(actions)
         self.car_center = np.array(self.car_env.car.hull.position)
-
+        #print(actions)
         # get next guide point
         self.nearest_point = self.next_guide_point()
 
@@ -85,14 +85,18 @@ class EnvCore(object):
             sub_agent_done = [True for _ in range(self.agent_num)]
             sub_agent_reward = [[np.array(1000)] for _ in range(self.agent_num)]
             self.agents = []
-        elif self.map.is_collision(car):
+        #elif self.map.is_collision(car):
+        #    sub_agent_done = [True for _ in range(self.agent_num)]
+        #    sub_agent_reward = [[np.array(-1)] for _ in range(self.agent_num)]
+        #    self.agents = []
+        elif self.steps >= 1000:
             sub_agent_done = [True for _ in range(self.agent_num)]
-            sub_agent_reward = [[np.array(-100)] for _ in range(self.agent_num)]
+            sub_agent_reward = [[np.array(0)] for _ in range(self.agent_num)]
             self.agents = []
         else:
             sub_agent_done = [False for _ in range(self.agent_num)]
             sub_agent_reward = self.get_reward(car)
-
+        self.steps += 1
         return [sub_agent_obs, sub_agent_reward, sub_agent_done, sub_agent_info]
 
     def is_target(self, car):
@@ -105,7 +109,7 @@ class EnvCore(object):
         last_dist = np.linalg.norm(self.nearest_point - self.last_position)
         cur_dist = np.linalg.norm(self.nearest_point - self.car_center)
         diff = last_dist - cur_dist
-        reward += diff
+        #reward += diff
 
         # guide point reward
         if car.intersects(Point(self.nearest_point)):
@@ -116,7 +120,7 @@ class EnvCore(object):
         # update variables
         self.last_position = self.car_center
 
-        return [[reward if reward > 0 else -2.] for _ in range(self.agent_num)]
+        return [[reward if reward > 1 else 0.] for _ in range(self.agent_num)]
 
     def render(self, mode="rgb_array"):
         if mode == 'rgb_array':
@@ -150,22 +154,37 @@ class EnvCore(object):
                 return first_point
             else:
                 self.guide_points = self.guide_points[1:]
+        if len(self.guide_points) == 1:
+            return self.guide_points[0]
+        return self.dest
+
+    def second_guide_point(self):
+        while len(self.guide_points) > 1:
+            first_point = self.guide_points[0]
+            second_point = self.guide_points[1]
+            angle = (second_point - first_point).dot(self.car_center - first_point)
+
+            # 夹角是钝角
+            if angle < 0:
+                return second_point
         return self.dest
 
     def get_sub_agent_obs(self, nearest_point):
         sub_agent_obs = []
+        second_point = self.second_guide_point()
         for i in range(self.agent_num):
             w = self.car_env.car.wheels[i]
             w_position = np.array([w.position.x, w.position.y])
 
             sub_obs = np.reshape(
                 [
-                    w_position,
-                    self.car_center,
                     self.car_center - w_position,
-                    np.array([w.omega, w.phase]),
+                    np.array([w.omega, w.joint.angle]),
                     nearest_point - w_position,
-                    nearest_point
+                    nearest_point - self.car_center,
+                    second_point - w_position,
+                    second_point - self.car_center,
+                    np.array([self.car_env.car.hull.angle,0])
                 ], self.obs_dim
             )
 

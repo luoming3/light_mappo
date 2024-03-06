@@ -6,7 +6,7 @@ num_agents=4
 algo="mappo"  # default="mappo", choices=["rmappo", "mappo"]
 exp="check"
 seed=1
-model_dir="/Users/winnie/Desktop/Project/light_mappo/results/MyEnv/MyEnv/mappo/check/run4/models"  # TODO: path to your model dir
+model_dir="C:\Users\developer\Videos\light_mappo\results\MyEnv\MyEnv\mappo\check\run13\models"  # TODO: path to your model dir
 
 current_dir=$(cd $(dirname $0); pwd)
 

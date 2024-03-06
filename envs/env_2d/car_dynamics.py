@@ -20,7 +20,7 @@ except ImportError:
     raise DependencyNotInstalled("box2D is not installed, run `pip install gym[box2d]`")
 
 SIZE = 0.02
-ENGINE_POWER = 100000000 * SIZE * SIZE
+ENGINE_POWER = 10000000 * SIZE * SIZE
 WHEEL_MOMENT_OF_INERTIA = 4000 * SIZE * SIZE
 FRICTION_LIMIT = (
     1000000 * SIZE * SIZE
