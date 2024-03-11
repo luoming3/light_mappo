@@ -4,6 +4,7 @@ import numpy as np
 from itertools import chain
 import torch
 from tensorboardX import SummaryWriter
+from pathlib import Path
 
 from utils.separated_buffer import SeparatedReplayBuffer
 from utils.util import update_linear_schedule
@@ -31,6 +32,7 @@ class Runner(object):
         self.episode_length = self.all_args.episode_length
         self.n_rollout_threads = self.all_args.n_rollout_threads
         self.n_eval_rollout_threads = self.all_args.n_eval_rollout_threads
+        self.n_render_rollout_threads = self.all_args.n_render_rollout_threads
         self.use_linear_lr_decay = self.all_args.use_linear_lr_decay
         self.hidden_size = self.all_args.hidden_size
         self.use_render = self.all_args.use_render
@@ -48,7 +50,10 @@ class Runner(object):
         # if self.use_wandb:
         #     self.save_dir = str(wandb.run.dir)
         # else:
-        self.run_dir = config["run_dir"]
+        if self.model_dir is not None:
+            self.run_dir = Path(self.model_dir).parent
+        else:
+            self.run_dir = config["run_dir"]
         self.log_dir = str(self.run_dir / "logs")
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
@@ -153,8 +158,6 @@ class Runner(object):
     def restore(self, model_dir=None):
         if model_dir:
             self.model_dir = model_dir
-        else:
-            self.model_dir = self.save_dir
         
         for agent_id in range(self.num_agents):
             policy_actor_state_dict = torch.load(str(self.model_dir) + "/actor_agent" + str(agent_id) + ".pt")

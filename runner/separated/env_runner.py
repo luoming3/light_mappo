@@ -318,24 +318,26 @@ class EnvRunner(Runner):
 
     @torch.no_grad()
     def render(self):
+        import imageio
+
         all_frames = []
         for episode in range(self.all_args.render_episodes):
             episode_rewards = []
             obs = self.envs.reset()
             if self.all_args.save_gifs:
-                image = self.envs.render("rgb_array")[0][0]
+                image = self.envs.render("rgb_array")[0]
                 all_frames.append(image)
 
             rnn_states = np.zeros(
                 (
-                    self.n_rollout_threads,
+                    self.n_render_rollout_threads,
                     self.num_agents,
                     self.recurrent_N,
                     self.hidden_size,
                 ),
                 dtype=np.float32,
             )
-            masks = np.ones((self.n_rollout_threads, self.num_agents, 1), dtype=np.float32)
+            masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
 
             for step in range(self.episode_length):
                 calc_start = time.time()
@@ -364,18 +366,20 @@ class EnvRunner(Runner):
                     elif self.envs.action_space[agent_id].__class__.__name__ == "Discrete":
                         action_env = np.squeeze(np.eye(self.envs.action_space[agent_id].n)[action], 1)
                     else:
-                        raise NotImplementedError
+                        action_env = np.tanh(action)
+                        # raise NotImplementedError
 
                     temp_actions_env.append(action_env)
                     rnn_states[:, agent_id] = _t2n(rnn_state)
 
                 # [envs, agents, dim]
                 actions_env = []
-                for i in range(self.n_rollout_threads):
+                for i in range(self.n_render_rollout_threads):
                     one_hot_action_env = []
                     for temp_action_env in temp_actions_env:
                         one_hot_action_env.append(temp_action_env[i])
                     actions_env.append(one_hot_action_env)
+                actions_env = np.array(actions_env)
 
                 # Obser reward and next obs
                 obs, rewards, dones, infos = self.envs.step(actions_env)
@@ -385,25 +389,28 @@ class EnvRunner(Runner):
                     ((dones == True).sum(), self.recurrent_N, self.hidden_size),
                     dtype=np.float32,
                 )
-                masks = np.ones((self.n_rollout_threads, self.num_agents, 1), dtype=np.float32)
+                masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
                 masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
 
                 if self.all_args.save_gifs:
-                    image = self.envs.render("rgb_array")[0][0]
+                    image = self.envs.render("rgb_array")[0]
                     all_frames.append(image)
                     calc_end = time.time()
                     elapsed = calc_end - calc_start
                     if elapsed < self.all_args.ifi:
                         time.sleep(self.all_args.ifi - elapsed)
+                
+                if np.any(dones):
+                    print(f"render episode step: {step+1}")
+                    break
 
             episode_rewards = np.array(episode_rewards)
             for agent_id in range(self.num_agents):
                 average_episode_rewards = np.mean(np.sum(episode_rewards[:, :, agent_id], axis=0))
                 print("eval average episode rewards of agent%i: " % agent_id + str(average_episode_rewards))
 
-        if self.all_args.save_gifs:
-            imageio.mimsave(
-                str(self.gif_dir) + "/render.gif",
-                all_frames,
-                duration=self.all_args.ifi,
-            )
+            if self.all_args.save_gifs:
+                imageio.mimsave(str(self.gif_dir) + '/' + str(episode) + '_' + '{:.2f}'.format(average_episode_rewards) + '.gif',
+                                all_frames,
+                                duration=self.all_args.ifi,
+                                loop=0)

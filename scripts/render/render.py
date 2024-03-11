@@ -5,6 +5,7 @@ import setproctitle
 import numpy as np
 from pathlib import Path
 import torch
+import pprint
 
 # Get the parent directory of the current file
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
@@ -121,6 +122,8 @@ def main(args):
         "device": device,
         "run_dir": run_dir
     }
+
+    pprint.pprint(vars(all_args))
 
     # run experiments
     if all_args.share_policy:
