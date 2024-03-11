@@ -45,7 +45,7 @@ class Map:
         # obstacle_2
         obstacle_2 = box(minx=x//3*2, miny=y//2, maxx=x//3*2+1, maxy=y)
         obstacles.add(obstacle_2)
-        
+     
         return obstacles
 
     def move(self, point, motion):
