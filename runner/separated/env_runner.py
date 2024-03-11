@@ -169,6 +169,7 @@ class EnvRunner(Runner):
             for temp_action_env in temp_actions_env:
                 one_hot_action_env.append(temp_action_env[i])
             actions_env.append(one_hot_action_env)
+        actions_env = np.array(actions_env)
 
         values = np.array(values).transpose(1, 0, 2)
         actions = np.array(actions).transpose(1, 0, 2)
@@ -288,6 +289,7 @@ class EnvRunner(Runner):
                 for eval_temp_action_env in eval_temp_actions_env:
                     eval_one_hot_action_env.append(eval_temp_action_env[i])
                 eval_actions_env.append(eval_one_hot_action_env)
+            eval_actions_env = np.array(eval_actions_env)
 
             # Obser reward and next obs
             eval_obs, eval_rewards, eval_dones, eval_infos = self.eval_envs.step(eval_actions_env)
