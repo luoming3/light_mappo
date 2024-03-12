@@ -120,7 +120,7 @@ class EnvCore(object):
         # update variables
         self.last_position = self.car_center
 
-        return [[reward if reward > 1 else 0.] for _ in range(self.agent_num)]
+        return [[reward if reward > 1 else -0.00001] for _ in range(self.agent_num)]
 
     def render(self, mode="rgb_array"):
         if mode == 'rgb_array':
