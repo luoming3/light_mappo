@@ -27,32 +27,32 @@ class Map:
         x = self.x_range
         y = self.y_range
 
-        obstacles = set()
-   
+        obstacles = []
+
         # left boundary
-        obstacles.add(box(minx=-1, miny=0, maxx=0, maxy=y))
+        obstacles.append(box(minx=-1, miny=0, maxx=0, maxy=y))
         # bottom boundary
-        obstacles.add(box(minx=0, miny=-1, maxx=x, maxy=0))
+        obstacles.append(box(minx=0, miny=-1, maxx=x, maxy=0))
         # right boundary
-        obstacles.add(box(minx=x, miny=0, maxx=x+1, maxy=y))
+        obstacles.append(box(minx=x, miny=0, maxx=x+1, maxy=y))
         # top boundary
-        obstacles.add(box(minx=0, miny=y, maxx=x, maxy=y+1))
+        obstacles.append(box(minx=0, miny=y, maxx=x, maxy=y+1))
 
         # obstacle_1
         obstacle_1 = box(minx=x//3, miny=0, maxx=x//3+1, maxy=y//2)
-        obstacles.add(obstacle_1)
+        obstacles.append(obstacle_1)
 
         # obstacle_2
         obstacle_2 = box(minx=x//3*2, miny=y//2, maxx=x//3*2+1, maxy=y)
-        obstacles.add(obstacle_2)
-     
+        obstacles.append(obstacle_2)
+
         return obstacles
 
     def move(self, point, motion):
         return (point[0] + motion[0], point[1] + motion[1])
     
     def is_collision(self, polygon:Polygon):
-        for obs in self.obstacles:
+        for obs in self.obstacles[:-2]:
             if polygon.intersects(obs):
                 return True
 

@@ -33,16 +33,6 @@ try:
 except ImportError:
     raise DependencyNotInstalled("box2D is not installed, run `pip install gym[box2d]`")
 
-try:
-    # As pygame is necessary for using the environment (reset and step) even without a render mode
-    #   therefore, pygame is a necessary import for the environment.
-    import pygame
-    from pygame import gfxdraw
-except ImportError:
-    raise DependencyNotInstalled(
-        "pygame is not installed, run `pip install gym[box2d]`"
-    )
-
 
 STATE_W = 96  # less than Atari 160x192
 STATE_H = 96
