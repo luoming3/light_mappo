@@ -362,7 +362,6 @@ class EnvRunner(Runner):
             print("average episode rewards is: " + str(average_episode_rewards))
 
             if self.all_args.save_gifs:
-                imageio.mimsave(str(self.gif_dir) + '/' + str(episode) + '_' + '{:.2f}'.format(average_episode_rewards) + '.gif',
-                                all_frames,
-                                duration=self.all_args.ifi,
-                                loop=0)
+                image_path = str(self.gif_dir) + '/' + str(episode) + '_' + '{:.2f}'.format(average_episode_rewards) + '.gif'
+                print(image_path)
+                imageio.mimsave(image_path, all_frames, duration=self.all_args.ifi, loop=0)
