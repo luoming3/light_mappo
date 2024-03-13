@@ -85,6 +85,10 @@ def timethis(func):
     return func_wrapper
 
 
+def _t2n(x):
+    return x.detach().cpu().numpy()
+
+
 @timethis
 def main():
     time.sleep(1)
