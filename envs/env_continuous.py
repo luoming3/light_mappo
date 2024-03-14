@@ -82,3 +82,11 @@ class ContinuousActionEnv(object):
 
     def seed(self, seed):
         pass
+
+    def step_asyn(self, actions):
+        """
+        envvironment step asynchronously
+        """
+        results = self.env.step_asyn(actions)
+        obs, rews, dones, infos = results
+        return np.stack(obs), np.stack(rews), np.stack(dones), infos

@@ -344,6 +344,8 @@ class EnvRunner(Runner):
                 masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
                 masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
 
+                print(f"{time.time() - calc_start}")
+
                 if self.all_args.save_gifs:
                     image = envs.render("rgb_array")[0]  # TODO: support parallel env setting
                     all_frames.append(image)

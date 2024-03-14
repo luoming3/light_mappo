@@ -6,6 +6,7 @@ import imageio
 
 import os
 import sys
+import random
 
 # Get the parent directory of the current file
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
@@ -16,6 +17,13 @@ sys.path.append(parent_dir)
 from envs.env_2d import map, plotting, Astar  # noqa: E402
 from envs.env_2d.car_racing import CarRacing
 from utils.util import timethis
+
+
+
+DELAY = [0, 5]
+FPS = 50
+EXEC_INTERVAL = 0.4
+TIMESTEP_INTERVAL = FPS * EXEC_INTERVAL
 
 
 class EnvCore(object):
@@ -32,6 +40,9 @@ class EnvCore(object):
         self.width = self.map.x_range
         self.height = self.map.y_range
         self.car_env = CarRacing()
+        self.cur_step = 0
+        self.step_map = {i: [i] for i in range(self.agent_num)}
+        self.last_actions = np.zeros([self.agent_num, self.action_dim])
 
     def reset(self):
         """
@@ -191,6 +202,25 @@ class EnvCore(object):
             sub_agent_obs.append(sub_obs)
 
         return sub_agent_obs
+    
+    def agent_iter(self):
+        step_agents = self.step_map.pop(self.cur_step, [])
+
+        for agent in step_agents:
+            next_step = self.cur_step + TIMESTEP_INTERVAL
+            self.step_map[next_step] = []
+            self.step_map[next_step].append(agent)
+
+        self.cur_step += 1
+        return step_agents
+    
+    def step_asyn(self, actions):
+        step_agents = self.agent_iter()
+
+        for agent in step_agents:
+            self.last_actions[agent] = actions[agent]
+        
+        return self.step(self.last_actions)
 
 
 @timethis
