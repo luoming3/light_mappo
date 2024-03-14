@@ -15,11 +15,10 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from envs.env_2d import map, plotting, Astar  # noqa: E402
-from envs.env_2d.car_racing import CarRacing
+from envs.env_2d.car_racing import CarRacing, FPS
 from utils.util import timethis
 
 DELAY = [0, 5]
-FPS = 50
 EXEC_INTERVAL = 0.2
 TIMESTEP_INTERVAL = FPS * EXEC_INTERVAL
 
