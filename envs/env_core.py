@@ -243,7 +243,7 @@ def env_test(times=10, render=False, mode="rgb_array"):
 
         step = 0
         episode_reward = 0
-        for _ in range(1000):
+        for _ in range(256):
             # actions = np.random.random(size=(env.agent_num,)) * 2 - 1
             # actions = np.expand_dims(env.dest - env.car_center, 0).repeat(env.agent_num, 0) / 10
             action_space = env.car_env.action_space
@@ -261,13 +261,13 @@ def env_test(times=10, render=False, mode="rgb_array"):
 
         if render and mode == "rgb_array":
             import os
-            import time
+            from datetime import datetime
 
             image_dir = os.path.dirname(__file__) + "/" + "image"
             if not os.path.exists(image_dir):
                 os.makedirs(image_dir)
 
-            time_now = int(time.time() * 1000)
+            time_now = datetime.now().strftime("%Y%m%d%H%M%S")
             gif_save_path = image_dir + f"/{time_now}_{step}_{episode_reward:.2f}.gif"
             imageio.mimsave(gif_save_path, all_frames, duration=1, loop=0)
 
