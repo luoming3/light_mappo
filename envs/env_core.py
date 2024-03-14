@@ -18,11 +18,9 @@ from envs.env_2d import map, plotting, Astar  # noqa: E402
 from envs.env_2d.car_racing import CarRacing
 from utils.util import timethis
 
-
-
 DELAY = [0, 5]
 FPS = 50
-EXEC_INTERVAL = 0.4
+EXEC_INTERVAL = 0.2
 TIMESTEP_INTERVAL = FPS * EXEC_INTERVAL
 
 
@@ -76,7 +74,7 @@ class EnvCore(object):
         """
         self.car_env.step(actions)
         self.car_center = np.array(self.car_env.car.hull.position)
-        #print(actions)
+        # print(actions)
         # get next guide point
         self.nearest_point = self.next_guide_point()
 
@@ -96,7 +94,7 @@ class EnvCore(object):
             sub_agent_done = [True for _ in range(self.agent_num)]
             sub_agent_reward = [[np.array(1000)] for _ in range(self.agent_num)]
             self.agents = []
-        #elif self.map.is_collision(car):
+        # elif self.map.is_collision(car):
         #    sub_agent_done = [True for _ in range(self.agent_num)]
         #    sub_agent_reward = [[np.array(-1)] for _ in range(self.agent_num)]
         #    self.agents = []
@@ -120,7 +118,7 @@ class EnvCore(object):
         last_dist = np.linalg.norm(self.nearest_point - self.last_position)
         cur_dist = np.linalg.norm(self.nearest_point - self.car_center)
         diff = last_dist - cur_dist
-        #reward += diff
+        # reward += diff
 
         # guide point reward
         if car.intersects(Point(self.nearest_point)):
@@ -134,7 +132,7 @@ class EnvCore(object):
         return [[reward if reward > 1 else -0.00001] for _ in range(self.agent_num)]
 
     def render(self, mode="rgb_array"):
-        if mode == 'rgb_array':
+        if mode == "rgb_array":
             plot = plotting.Plotting(target=self.dest)
             plot.plot_map()
             wheels = [(w.position.x, w.position.y) for w in self.car_env.car.wheels]
@@ -149,7 +147,7 @@ class EnvCore(object):
         end = tuple(self.dest.astype(int).tolist())
         astar = Astar.AStar(start, end, "euclidean")
         path, _ = astar.searching()
- 
+
         # return guide points
         path.reverse()
         return np.array(path[step:-1:step])
@@ -195,14 +193,15 @@ class EnvCore(object):
                     nearest_point - self.car_center,
                     second_point - w_position,
                     second_point - self.car_center,
-                    np.array([self.car_env.car.hull.angle,0])
-                ], self.obs_dim
+                    np.array([self.car_env.car.hull.angle, 0]),
+                ],
+                self.obs_dim,
             )
 
             sub_agent_obs.append(sub_obs)
 
         return sub_agent_obs
-    
+
     def agent_iter(self):
         step_agents = self.step_map.pop(self.cur_step, [])
 
@@ -213,21 +212,21 @@ class EnvCore(object):
 
         self.cur_step += 1
         return step_agents
-    
+
     def step_asyn(self, actions):
         step_agents = self.agent_iter()
 
         for agent in step_agents:
             self.last_actions[agent] = actions[agent]
-        
+
         return self.step(self.last_actions)
 
 
 @timethis
-def env_test(times=10, render=False, mode='rgb_array'):
-    '''
+def env_test(times=10, render=False, mode="rgb_array"):
+    """
     test the validation of env
-    '''
+    """
     env = EnvCore()
 
     for i in range(times):
@@ -248,7 +247,7 @@ def env_test(times=10, render=False, mode='rgb_array'):
             actions = np.array([action_space.sample() for i in range(env.agent_num)])
             result = env.step(actions=actions)
             if render:
-                all_frames.append(env.render()) 
+                all_frames.append(env.render())
             step += 1
 
             reward, done = result[1], result[2]
@@ -256,14 +255,14 @@ def env_test(times=10, render=False, mode='rgb_array'):
             if np.all(done):
                 break
 
-        if render and mode == 'rgb_array':
+        if render and mode == "rgb_array":
             import os
             import time
 
             image_dir = os.path.dirname(__file__) + "/" + "image"
             if not os.path.exists(image_dir):
                 os.makedirs(image_dir)
-            
+
             time_now = int(time.time() * 1000)
             gif_save_path = image_dir + f"/{time_now}_{step}_{episode_reward:.2f}.gif"
             imageio.mimsave(gif_save_path, all_frames, duration=1, loop=0)
