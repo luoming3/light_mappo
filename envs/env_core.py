@@ -21,6 +21,8 @@ from utils.util import timethis
 DELAY = [0, 5]
 EXEC_INTERVAL = 0.2
 TIMESTEP_INTERVAL = FPS * EXEC_INTERVAL
+RANDOM_NOISE = True
+NOISE_MAX_VALUE = 1
 
 
 class EnvCore(object):
@@ -206,6 +208,9 @@ class EnvCore(object):
 
         for agent in step_agents:
             next_step = self.cur_step + TIMESTEP_INTERVAL
+            if RANDOM_NOISE:
+                next_step += random.randint(0, NOISE_MAX_VALUE)
+            
             self.step_map[next_step] = []
             self.step_map[next_step].append(agent)
 
