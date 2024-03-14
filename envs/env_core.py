@@ -19,7 +19,7 @@ from envs.env_2d.car_racing import CarRacing, FPS
 from utils.util import timethis
 
 DELAY = [0, 5]
-EXEC_INTERVAL = 0.2
+EXEC_INTERVAL = 0.02  # time interval of agent action, second 
 TIMESTEP_INTERVAL = FPS * EXEC_INTERVAL
 RANDOM_NOISE = True
 NOISE_MAX_VALUE = 1
