@@ -19,10 +19,11 @@ from envs.env_2d.car_racing import CarRacing, FPS
 from utils.util import timethis
 
 DELAY = [0, 5]
-EXEC_INTERVAL = 0.02  # time interval between two actions, second 
+EXEC_INTERVAL = 0.02  # time interval between two actions, second
 TIMESTEP_INTERVAL = FPS * EXEC_INTERVAL
 RANDOM_NOISE = True
-NOISE_MAX_VALUE = 1
+NOISE_MAX_VALUE = 2
+NOISE_RATIO = 0.2
 
 
 class EnvCore(object):
@@ -40,7 +41,7 @@ class EnvCore(object):
         self.height = self.map.y_range
         self.car_env = CarRacing()
         self.cur_step = 0
-        self.step_map = {0: list(range(self.agent_num))}
+        self.step_map = {0: [0], 5: [1], 10: [2], 15: [3]}
         self.last_actions = np.zeros([self.agent_num, self.action_dim])
 
     def reset(self):
@@ -209,8 +210,13 @@ class EnvCore(object):
         for agent in step_agents:
             next_step = self.cur_step + TIMESTEP_INTERVAL
             if RANDOM_NOISE:
-                next_step += random.randint(0, NOISE_MAX_VALUE)
-            
+                noise = (
+                    np.random.randint(1, NOISE_MAX_VALUE + 1)
+                    if np.random.rand() < NOISE_RATIO
+                    else 0
+                )
+                next_step += noise
+
             if next_step in self.step_map:
                 self.step_map[next_step].append(agent)
             else:
