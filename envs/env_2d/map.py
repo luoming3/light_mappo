@@ -8,7 +8,9 @@ import random
 
 
 class Map:
-    def __init__(self, width=51, height=51):
+    def __init__(self, width=51, height=51, seed=None):
+        if seed:
+            random.seed(seed)
         self.x_range = width
         self.y_range = height
 

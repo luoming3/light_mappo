@@ -30,12 +30,12 @@ class EnvCore(object):
     # 环境中的智能体
     """
 
-    def __init__(self):
+    def __init__(self, seed=1):
         self.agent_num = 4  # number of agent
         self.obs_dim = 14  # observation dimension of agents
         self.action_dim = 3  # set the action dimension of agents
         self.guide_point_num = 100  # number of guide point
-        self.map = map.Map()  # 2d env map
+        self.map = map.Map(seed=seed)  # 2d env map
         self.width = self.map.x_range
         self.height = self.map.y_range
         self.car_env = CarRacing()
@@ -245,7 +245,7 @@ def env_test(times=10, render=False, mode="rgb_array"):
 
         step = 0
         episode_reward = 0
-        for _ in range(256):
+        for _ in range(32):
             # actions = np.random.random(size=(env.agent_num,)) * 2 - 1
             # actions = np.expand_dims(env.dest - env.car_center, 0).repeat(env.agent_num, 0) / 10
             action_space = env.car_env.action_space
