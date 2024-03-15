@@ -40,7 +40,7 @@ class EnvCore(object):
         self.height = self.map.y_range
         self.car_env = CarRacing()
         self.cur_step = 0
-        self.step_map = {i: [i] for i in range(self.agent_num)}
+        self.step_map = {0: list(range(self.agent_num))}
         self.last_actions = np.zeros([self.agent_num, self.action_dim])
 
     def reset(self):
@@ -211,8 +211,10 @@ class EnvCore(object):
             if RANDOM_NOISE:
                 next_step += random.randint(0, NOISE_MAX_VALUE)
             
-            self.step_map[next_step] = []
-            self.step_map[next_step].append(agent)
+            if next_step in self.step_map:
+                self.step_map[next_step].append(agent)
+            else:
+                self.step_map[next_step] = [agent]
 
         self.cur_step += 1
         return step_agents
