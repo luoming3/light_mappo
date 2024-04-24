@@ -30,6 +30,7 @@ docker build -t isaac-sim:2023.1.0-ubuntu20.04-noetic -f Dockerfile.2023.1.0-ubu
 1. `docker run -d -it --gpus all -p ${expose_port}:80 isaac-sim:2023.1.0-ubuntu20.04-noetic`
     - modify the expose_port
 2. Access `http://172.16.2.197:${expose_port}/vnc.html` with Chrome
+    - default vncpasswd is `123456`
 3. fix 'Failed to execute default Terminal Emulator.'
     - select *Applications > Settings > Preferred Applications > Utilities > Terminal Emulator* to Xfce Terminal
 4. open isaac sim
