@@ -271,3 +271,22 @@ def worker(parent_pipe, child_pipe, env_fn_wrapper):
             child_pipe.send((env.observation_space, env.share_observation_space, env.action_space))
         else:
             raise NotImplementedError
+
+class IsaacSimEnv(ShareVecEnv):
+    def __init__(self, num_envs, observation_space, share_observation_space, action_space):
+        super().__init__(num_envs, observation_space, share_observation_space, action_space)
+
+    def step(self, actions):
+        pass
+
+    def step_async(self, actions):
+        pass
+
+    def step_wait(self, actions):
+        pass
+
+    def reset(self):
+        pass
+
+    def render(self, mode="rgb_array"):
+        pass
