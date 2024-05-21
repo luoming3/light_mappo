@@ -25,6 +25,8 @@ sys.path.append(parent_dir)
 from config import get_config
 from envs.env_wrappers import DummyVecEnv, SubprocVecEnv, IsaacSimEnv
 
+from envs.isaac_sim import init_simulation_app
+
 """Train script for MPEs."""
 
 
@@ -187,6 +189,7 @@ def main(args):
     else:
         from runner.separated.env_runner import EnvRunner as Runner
 
+    simulation_app = init_simulation_app()
     runner = Runner(config)
     runner.run()
 
@@ -199,6 +202,7 @@ def main(args):
     runner.writter.close()
 
     print(f"train time: {time.time() - t1}")
+    simulation_app.close()
 
 
 if __name__ == "__main__":
