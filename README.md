@@ -17,6 +17,8 @@ The original MAPPO code was too complex in terms of environment encapsulation, s
 
 ## Installation
 
+### 2d environment
+
 Simply download the code, create a Conda environment, and then run the code, adding packages as needed. Specific packages will be added later.
 
 ```
@@ -30,6 +32,25 @@ conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=10
 conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=11.0 -c pytorch
  
 pip install -r requirements.txt
+```
+### 3d environment
+
+For isaac sim environment, the following code should be used.
+
+```sh
+cd path_to_isaac_sim_workspace_folder
+conda env create -f environment.yml
+conda activate isaac-sim
+
+# set up environment variables
+source setup_conda_env.sh
+
+# install cuda 12.1
+conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+
+# install box2d==2.3.10 (if it requires swig, install swig in "sudo apt install swig")
+pip install https://github.com/pybox2d/pybox2d/archive/refs/tags/2.3.10.tar.gz
+pip install -r requirements_3_10.txt
 ```
 
 ## Usage
