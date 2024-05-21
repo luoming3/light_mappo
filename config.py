@@ -217,6 +217,7 @@ def get_config():
     )
 
     # env parameters
+    parser.add_argument("--env_type", type=str, default="isaac_sim", choices=["isaac_sim", "box2d"])
     parser.add_argument("--env_name", type=str, default="MyEnv", help="specify the name of environment")
     parser.add_argument(
         "--use_obs_instead_of_state",
