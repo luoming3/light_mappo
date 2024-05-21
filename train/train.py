@@ -23,7 +23,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from config import get_config
-from envs.env_wrappers import DummyVecEnv, SubprocVecEnv
+from envs.env_wrappers import DummyVecEnv, SubprocVecEnv, IsaacSimEnv
 
 """Train script for MPEs."""
 
@@ -46,6 +46,9 @@ def make_train_env(all_args):
             return env
 
         return init_env
+    
+    if all_args.env_type == "isaac_sim":
+        return IsaacSimEnv(get_env_fn(0), all_args.n_rollout_threads)
 
     if all_args.n_rollout_threads == 1:
         return DummyVecEnv([get_env_fn(0)])
@@ -67,6 +70,9 @@ def make_eval_env(all_args):
             return env
 
         return init_env
+    
+    if all_args.env_type == "isaac_sim":
+        return IsaacSimEnv(get_env_fn(0), all_args.n_eval_rollout_threads)
 
     if all_args.n_eval_rollout_threads == 1:
         return DummyVecEnv([get_env_fn(0)])
