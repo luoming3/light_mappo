@@ -273,20 +273,48 @@ def worker(parent_pipe, child_pipe, env_fn_wrapper):
             raise NotImplementedError
 
 class IsaacSimEnv(ShareVecEnv):
-    def __init__(self, num_envs, observation_space, share_observation_space, action_space):
-        super().__init__(num_envs, observation_space, share_observation_space, action_space)
+    def __init__(self, env_fns, num_envs):
+        self.env = env_fns()
+        self.num_envs = num_envs
+        super().__init__(num_envs,
+                         self.env.observation_space,
+                         self.env.share_observation_space,
+                         self.env.action_space)
 
     def step(self, actions):
-        pass
+        self.step_async(actions)
+        return self.step_wait()
 
     def step_async(self, actions):
-        pass
+        self.actions = actions
 
     def step_wait(self, actions):
-        pass
+        obs, rews, dones, infos = self.env.step(actions)
+
+        reset_indices = []
+        for (i, done) in enumerate(dones):
+            if 'bool' in done.__class__.__name__:
+                if done:
+                    reset_indices.append(i)
+            else:
+                if np.any(done):
+                    reset_indices.append(i)
+        self.env.reset(reset_indices)
+
+        return obs, rews, dones, infos
 
     def reset(self):
-        pass
+        obs = self.reset()
+        return np.array(obs)
 
     def render(self, mode="rgb_array"):
-        pass
+        if mode == "rgb_array":
+            return np.array(self.env.render(mode=mode))
+        elif mode == "human":
+            for env in self.envs:
+                env.render(mode=mode)
+        else:
+            raise NotImplementedError
+
+    def close(self):
+        self.env.close()
