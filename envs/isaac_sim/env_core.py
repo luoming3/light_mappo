@@ -14,8 +14,7 @@ sys.path.append(parent_dir)
 
 from envs.env_2d import map, plotting, Astar  # noqa: E402
 from envs.env_core import EnvCore as Env2d
-from isaac_sim import get_world
-from isaac_sim import set_up_scene
+from isaac_sim.utils.scene import get_world, set_up_scene
 
 
 class EnvCore(Env2d):
