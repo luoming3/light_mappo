@@ -63,8 +63,7 @@ class ContinuousActionEnv(object):
         """
 
         results = self.env.step(actions)
-        obs, rews, dones, infos = results
-        return np.stack(obs), np.stack(rews), np.stack(dones), infos
+        return results
 
     def reset(self):
         obs = self.env.reset()

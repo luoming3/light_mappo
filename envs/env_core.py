@@ -94,7 +94,7 @@ class EnvCore(object):
             sub_agent_done = [False for _ in range(self.agent_num)]
             sub_agent_reward = self.get_reward(car)
 
-        return [sub_agent_obs, sub_agent_reward, sub_agent_done, sub_agent_info]
+        return [np.stack(sub_agent_obs), np.stack(sub_agent_reward), np.stack(sub_agent_done), sub_agent_info]
 
     def is_target(self, car):
         return intersects(car, Point(self.dest[0], self.dest[1]))
