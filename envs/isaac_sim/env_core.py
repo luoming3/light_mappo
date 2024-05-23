@@ -23,7 +23,7 @@ class EnvCore(Env2d):
         # isaac sim environment
         self.world = get_world()
         self.env_num = 2  # TODO: setting in config.py
-        self.scene = set_up_scene(self.env_num)
+        self.scene = self.world.scene
 
         self.agent_num = 4  # number of agent
         self.obs_dim = 12  # observation dimension of agents
@@ -81,12 +81,12 @@ class EnvCore(Env2d):
         return observations whose dim is (env_num, agent_num, obs_spaces)
         '''
         car = self.scene.get_object("car_view")
-        jetbot_view = self.scene.get_objcet("jetbot_chassis_view")
+        jetbot_view = self.scene.get_object("jetbot_chassis_view")
 
         observations = []
-        positoins, orientations = car.get_joint_velocities()
+        positions, orientations = car.get_world_poses()
         # only need x,y axis
-        car_positon = positoins[:, 0:2]
+        car_positon = positions[:, 0:2]
         # only need x,y axis
         linear_velocities = jetbot_view.get_linear_velocities()[:, 0:2]
         # only need z axis

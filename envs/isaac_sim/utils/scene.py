@@ -57,7 +57,7 @@ def set_up_scene(env_num=1):
     )
 
     cars = ArticulationView(prim_paths_expr="/World/envs/.*/car", name="car_view", reset_xform_properties=False)
-    jetbot_view = RigidPrimView(prim_paths_expr="/World/envs/env_*/car/jetbot_.*/chassis", name="jetbot_chassis_prims", reset_xform_properties=False)
+    jetbot_view = RigidPrimView(prim_paths_expr="/World/envs/env_*/car/jetbot_.*/chassis", name="jetbot_chassis_view", reset_xform_properties=False)
 
     # add car ArticulationView for control
     scene.add(cars)
