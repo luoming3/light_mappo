@@ -166,6 +166,12 @@ def main(args):
     torch.cuda.manual_seed_all(all_args.seed)
     np.random.seed(all_args.seed)
 
+    # create SimulationApp for import isaac sim modules
+    simulation_app = init_simulation_app()
+    from envs.isaac_sim.utils.scene import set_up_scene
+
+    set_up_scene(all_args.n_rollout_threads)
+
     # env init
     envs = make_train_env(all_args)
     eval_envs = make_eval_env(all_args) if all_args.use_eval else None
@@ -189,7 +195,6 @@ def main(args):
     else:
         from runner.separated.env_runner import EnvRunner as Runner
 
-    simulation_app = init_simulation_app()
     runner = Runner(config)
     runner.run()
 
