@@ -32,6 +32,7 @@ class EnvCore(object):
         self.width = self.map.x_range
         self.height = self.map.y_range
         self.car_env = CarRacing()
+        self.action_space = self.car_env.action_space
 
     def reset(self):
         """

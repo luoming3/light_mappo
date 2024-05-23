@@ -31,7 +31,7 @@ class ContinuousActionEnv(object):
         share_obs_dim = 0
         for agent in range(self.num_agent):
             # physical action space
-            self.action_space.append(self.env.car_env.action_space)
+            self.action_space.append(self.env.action_space)
 
             # observation space
             share_obs_dim += self.signal_obs_dim

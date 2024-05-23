@@ -1,4 +1,5 @@
 import numpy as np
+from gym import spaces
 
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.prims import RigidPrimView
@@ -14,7 +15,7 @@ sys.path.append(parent_dir)
 
 from envs.env_2d import map, plotting, Astar  # noqa: E402
 from envs.env_core import EnvCore as Env2d
-from isaac_sim.utils.scene import get_world, set_up_scene
+from envs.isaac_sim.utils.scene import get_world, set_up_scene
 
 
 class EnvCore(Env2d):
@@ -32,6 +33,10 @@ class EnvCore(Env2d):
         self.width = self.map.x_range
         self.height = self.map.y_range
         self.env_indices = [i for i in range(self.env_num)]
+        self.action_space = spaces.Box(
+            np.array([-10, -10]).astype(np.float32),
+            np.array([+10, +10]).astype(np.float32),
+        )  # left_wheel velocity and right_wheel velocity
 
     # TODO
     def reset(self, indeics=[]):
