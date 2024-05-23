@@ -282,8 +282,7 @@ class IsaacSimEnv(ShareVecEnv):
                          self.env.action_space)
 
     def step(self, actions):
-        self.step_async(actions)
-        return self.step_wait()
+        return self.step_wait(actions)
 
     def step_async(self, actions):
         self.actions = actions
@@ -304,7 +303,7 @@ class IsaacSimEnv(ShareVecEnv):
         return obs, rews, dones, infos
 
     def reset(self):
-        obs = self.reset()
+        obs = self.env.reset()
         return np.array(obs)
 
     def render(self, mode="rgb_array"):
