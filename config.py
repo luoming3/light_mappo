@@ -169,9 +169,9 @@ def get_config():
     parser.add_argument("--seed", type=int, default=1, help="Random seed for numpy/torch")
     parser.add_argument(
         "--cuda",
-        action="store_false",
-        default=True,
-        help="by default True, will use GPU to train; or else will use CPU;",
+        action="store_true",
+        default=False,
+        help="by default False, will use CPU to train; or else will use GPU;",
     )
     parser.add_argument(
         "--cuda_deterministic",
@@ -445,7 +445,7 @@ def get_config():
     parser.add_argument(
         "--use_eval",
         action="store_true",
-        default=True,
+        default=False,
         help="by default, do not start evaluation. If set`, start evaluation alongside with training.",
     )
     parser.add_argument(
