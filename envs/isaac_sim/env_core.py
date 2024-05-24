@@ -25,7 +25,8 @@ class EnvCore(object):
         # isaac sim environment
         self.world = get_world()
         self.env_num = 2  # TODO: setting in config.py
-        self.scene = self.world.scene
+        self.car_view = self.world.scene.get_object("car_view")
+        self.jetbot_view = self.world.scene.get_object("jetbot_chassis_view")
 
         self.agent_num = 4  # number of agent
         self.obs_dim = 10  # observation dimension of agents
@@ -41,11 +42,12 @@ class EnvCore(object):
         if len(indices) == 0:
             indices = self.env_indices
 
-        car_position = np.random.randint(low=0, high=6, size=(len(indices), 2))
+        indices_len = len(indices)
+        car_position = np.random.randint(low=0, high=6, size=(indices_len, 2))
         self.car_position = np.concatenate(
             (
                 car_position,
-                np.zeros(shape=(self.env_num,1))
+                np.zeros(shape=(indices_len,1))
             ),
             axis=1
         )
@@ -53,33 +55,56 @@ class EnvCore(object):
         self._reset_idx(positions=self.car_position, orientations=None, indices=indices)
 
         # reset targets' positions
-        self.dest[indices] = np.random.randint(low=0, high=6, size=(len(indices), 2))
+        self.dest[indices] = np.random.randint(low=0, high=6, size=(indices_len, 2))
 
         # observations, shape is (env_num, agent_num, obs_dim)
         observations = self.get_observations()
 
         return observations
 
-    # TODO
     def step(self, actions):
         '''
-        return [[obs, reward, done, info], [obs, reward, done, info], ...] which contains all envs' info
+        return obs, reward, done, info which contains all envs' info where
+            shape:
+                obs: (self.env_num, self.agent_num, self.obs_dim)
+                reward: (self.env_num, self.agent_num, 1)
+                done: (self.env_num, self.agent_num)
+                info: (self.env_num, self.agent_num)
         '''
+        previous_car_position= self.car_view.get_world_poses()[0][:, 0:2]
+
         self.set_actions(actions)
         self.world.step(render=False)
 
-        result = []
-        for i in range(self.env_num):
-            sub_agent_obs = []
-            sub_agent_reward = []
-            sub_agent_done = []
-            sub_agent_info = []
-            for i in range(self.agent_num):
-                sub_agent_obs.append(np.random.random(size=(self.obs_dim,)))
-                sub_agent_reward.append([np.random.rand()])
-                sub_agent_done.append(False)
-                sub_agent_info.append({})
-            result.append([sub_agent_obs, sub_agent_reward, sub_agent_done, sub_agent_info])
+        current_car_position = self.car_view.get_world_poses()[0][:, 0:2]
+        goal_world_position = self.dest
+
+        previous_dist_to_goal = np.linalg.norm(goal_world_position - previous_car_position, axis=1)
+        current_dist_to_goal = np.linalg.norm(goal_world_position - current_car_position, axis=1)
+
+        # running
+        env_reward = (previous_dist_to_goal - current_dist_to_goal).reshape(self.env_num, -1)
+        env_done = np.zeros((self.env_num, 1), dtype=bool)
+        
+        # arrival
+        arrival_indices = np.where(current_dist_to_goal < 0.2)
+        env_done[arrival_indices] = True
+        env_reward[arrival_indices] = 10
+
+        # failure
+        failure_indices = np.where(current_dist_to_goal > 10)
+        env_done[failure_indices] = True
+        env_reward[failure_indices] = 0
+
+        env_obs = self.get_observations()
+        env_info = [[{}] * self.agent_num for _ in range(self.env_num)]
+        
+        result = (
+            env_obs,
+            np.expand_dims(env_reward.repeat(self.agent_num, axis=1), 2),
+            env_done.repeat(self.agent_num, axis=1),
+            np.array(env_info)
+        )
 
         return result
 
@@ -87,8 +112,8 @@ class EnvCore(object):
         '''
         return observations whose dim is (env_num, agent_num, obs_spaces)
         '''
-        car = self.scene.get_object("car_view")
-        jetbot_view = self.scene.get_object("jetbot_chassis_view")
+        car = self.car_view
+        jetbot_view = self.jetbot_view
 
         positions, _ = car.get_world_poses()
         # only need x,y axis
@@ -126,14 +151,10 @@ class EnvCore(object):
 
         return observations
     
-    # TODO
     def set_actions(self, actions):
-        cars = self.scene.get_object("car_view")
-        cars.set_joint_velocities(
-            velocities=np.array(
-                [[10., 10., 10., 10., 10., 10., 10., 10.],
-                [-10., -10., -10., -10., -10., -10., -10., -10.]]
-            ), 
+        actions = actions.reshape(self.env_num, -1)
+        self.car_view.set_joint_velocities(
+            velocities=actions, 
             joint_indices=np.arange(4,12)  # revoluted joint indices
         )
 
@@ -146,8 +167,7 @@ class EnvCore(object):
             positions: Optional[Union[np.ndarray, torch.Tensor]] = None,
             orientations: Optional[Union[np.ndarray, torch.Tensor]] = None,
             indices: Optional[Union[np.ndarray, list, torch.Tensor]] = None,):
-        car = self.scene.get_object("car_view")
-        car.set_world_poses(positions, orientations, indices)
+        self.car_view.set_world_poses(positions, orientations, indices)
 
     def _reset_idx(
             self,
@@ -157,6 +177,5 @@ class EnvCore(object):
         """
         Reset the articulations to their default states
         """
-        cars = self.scene.get_object("car_view")
-        cars.set_world_poses(positions, orientations, indices)
-        cars.set_velocities(np.zeros(6), indices=indices)
+        self.car_view.set_world_poses(positions, orientations, indices)
+        self.car_view.set_velocities(np.zeros(6), indices=indices)

@@ -288,8 +288,7 @@ class IsaacSimEnv(ShareVecEnv):
         self.actions = actions
 
     def step_wait(self, actions):
-        results = self.env.step(actions)
-        obs, rews, dones, infos = map(np.array, zip(*results))
+        obs, rews, dones, infos = self.env.step(actions)
 
         reset_indices = []
         for (i, done) in enumerate(dones):
