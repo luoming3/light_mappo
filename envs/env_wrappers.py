@@ -298,7 +298,9 @@ class IsaacSimEnv(ShareVecEnv):
             else:
                 if np.any(done):
                     reset_indices.append(i)
-        self.env.reset(reset_indices)
+                
+        if reset_indices:
+            self.env.reset(reset_indices)
 
         return obs, rews, dones, infos
 
