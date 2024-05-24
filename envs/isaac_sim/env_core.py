@@ -37,6 +37,7 @@ class EnvCore(object):
             np.array([+10, +10]).astype(np.float32),
         )  # left_wheel velocity and right_wheel velocity
         self.dest = np.zeros(shape=(self.env_num, 2))
+        self.steps = np.zeros(shape=(self.env_num, 1))
 
     def reset(self, indices=[]):
         if len(indices) == 0:
@@ -59,6 +60,8 @@ class EnvCore(object):
 
         # observations, shape is (env_num, agent_num, obs_dim)
         observations = self.get_observations()
+
+        self.steps[indices] = 0
 
         return observations
 
@@ -96,6 +99,11 @@ class EnvCore(object):
         env_done[failure_indices] = True
         env_reward[failure_indices] = 0
 
+        # truncation
+        truncation_indices = np.where(self.steps==1000)
+        env_done[truncation_indices] = True
+        env_reward[truncation_indices] = 0
+
         env_obs = self.get_observations()
         env_info = [[{}] * self.agent_num for _ in range(self.env_num)]
         
@@ -105,6 +113,8 @@ class EnvCore(object):
             env_done.repeat(self.agent_num, axis=1),
             np.array(env_info)
         )
+        
+        self.steps += 1
 
         return result
 
