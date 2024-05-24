@@ -187,5 +187,16 @@ class EnvCore(object):
         """
         Reset the articulations to their default states
         """
-        self.car_view.set_world_poses(positions, orientations, indices)
-        self.car_view.set_velocities(np.zeros(6), indices=indices)
+        default_orientations = self.car_view._default_state.orientations[indices]
+        default_joints_positions = self.car_view._default_joints_state.positions[indices]
+        default_joints_velocities = self.car_view._default_joints_state.velocities[indices]
+        default_joints_efforts = self.car_view._default_joints_state.efforts[indices]
+        default_joints_positions = self.car_view._default_joints_state.positions[indices]
+        default_gains_kps = self.car_view._default_kps[indices]
+        default_gains_kds = self.car_view._default_kds[indices]
+
+        self.car_view.set_world_poses(positions, default_orientations, indices)
+        self.car_view.set_joint_positions(positions=default_joints_positions, indices=indices)
+        self.car_view.set_joint_velocities(velocities=default_joints_velocities, indices=indices)
+        self.car_view.set_joint_efforts(efforts=default_joints_efforts, indices=indices)
+        self.car_view.set_gains(kps=default_gains_kps, kds=default_gains_kds, indices=indices)
