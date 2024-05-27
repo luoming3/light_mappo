@@ -1,4 +1,4 @@
-FROM isaac-sim:2023.1.0-ubuntu20.04
+FROM isaac-sim:2023.1.0-ubuntu22.04
 
 # Avoid warnings by switching to noninteractive for the build process
 ENV DEBIAN_FRONTEND=noninteractive
@@ -38,9 +38,9 @@ RUN echo '#!/bin/sh' >> ~/.vnc/xstartup \
 WORKDIR /app
 
 # Install ROS Noetic
-COPY ros-noetic-desktop.sh ros-noetic-desktop.sh
-RUN chmod +x ros-noetic-desktop.sh
-RUN bash ros-noetic-desktop.sh
+# COPY ros-noetic-desktop.sh ros-noetic-desktop.sh
+# RUN chmod +x ros-noetic-desktop.sh
+# RUN bash ros-noetic-desktop.sh
 
 COPY start-vnc.sh start-vnc.sh
 RUN chmod +x start-vnc.sh

@@ -10,11 +10,17 @@ cd ~/git && git clone https://github.com/NVIDIA-Omniverse/IsaacSim-dockerfiles.g
 # log in to NGC
 docker login nvcr.io
 
-# build isaac sim image
+# build isaac sim image for ubuntu20.04
 docker build --pull -t \
   isaac-sim:2023.1.0-ubuntu20.04 \
   --build-arg ISAACSIM_VERSION=2023.1.0 \
   --file Dockerfile.2023.1.0-ubuntu20.04 .
+
+# build isaac sim image for ubuntu22.04
+docker build --pull -t \
+  isaac-sim:2023.1.0-ubuntu22.04 \
+  --build-arg ISAACSIM_VERSION=2023.1.0 \
+  --file Dockerfile.2023.1.0-ubuntu22.04 .
 ```
 
 ### 1.2. build isaacsim-vnc-ros image
@@ -22,7 +28,11 @@ docker build --pull -t \
 under the `your_project_path/envs/isaac_sim/docker/vnc_isaac_sim` folder:
 
 ```sh
+# ubuntu20.04
 docker build -t isaac-sim:2023.1.0-ubuntu20.04-noetic -f Dockerfile.2023.1.0-ubuntu20.04-noetic .
+
+# ubuntu22.04
+docker build -t isaac-sim:2023.1.0-ubuntu22.04-vnc -f Dockerfile.2023.1.0-ubuntu22.04-vnc .
 ```
 
 ## 2. usage
