@@ -48,7 +48,7 @@ class EnvCore(object):
         self.car_position = np.concatenate(
             (
                 car_position,
-                np.zeros(shape=(indices_len,1))
+                self.car_view._default_state.positions[indices, 2:3]
             ),
             axis=1
         )
