@@ -200,3 +200,4 @@ class EnvCore(object):
         self.car_view.set_joint_velocities(velocities=default_joints_velocities, indices=indices)
         self.car_view.set_joint_efforts(efforts=default_joints_efforts, indices=indices)
         self.car_view.set_gains(kps=default_gains_kps, kds=default_gains_kds, indices=indices)
+        self.car_view.set_velocities(np.zeros(6), indices=indices)
