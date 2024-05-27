@@ -44,7 +44,7 @@ class EnvCore(object):
             indices = self.env_indices
 
         indices_len = len(indices)
-        car_position = np.random.randint(low=0, high=6, size=(indices_len, 2))
+        car_position = get_random_positions(indices_len)
         self.car_position = np.concatenate(
             (
                 car_position,
@@ -56,7 +56,7 @@ class EnvCore(object):
         self._reset_idx(positions=self.car_position, orientations=None, indices=indices)
 
         # reset targets' positions
-        self.dest[indices] = np.random.randint(low=0, high=6, size=(indices_len, 2))
+        self.dest[indices] = get_random_positions(indices_len)
 
         # observations, shape is (env_num, agent_num, obs_dim)
         observations = self.get_observations()
@@ -100,7 +100,7 @@ class EnvCore(object):
         env_reward[failure_indices] = 0
 
         # truncation
-        truncation_indices = np.where(self.steps==1000)
+        truncation_indices = np.where(self.steps==2048)
         env_done[truncation_indices] = True
         env_reward[truncation_indices] = 0
 
@@ -201,3 +201,6 @@ class EnvCore(object):
         self.car_view.set_joint_efforts(efforts=default_joints_efforts, indices=indices)
         self.car_view.set_gains(kps=default_gains_kps, kds=default_gains_kds, indices=indices)
         self.car_view.set_velocities(np.zeros(6), indices=indices)
+    
+def get_random_positions(indices_len):
+    return np.random.randint(low=[0, 0], high=[4, 5], size=(indices_len, 2))
