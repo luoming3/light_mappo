@@ -50,6 +50,8 @@ conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvi
 
 # install box2d==2.3.10 (if it requires swig, install swig in "sudo apt install swig")
 pip install https://github.com/pybox2d/pybox2d/archive/refs/tags/2.3.10.tar.gz
+# install requirements
+cd path_to_light_mappo_folder
 pip install -r requirements_3_10.txt
 ```
 
