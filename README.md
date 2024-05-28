@@ -1,21 +1,16 @@
 # light_mappo
 
-Lightweight version of MAPPO to help you quickly migrate to your local environment.
-
-- [Video (in Chinese)](https://www.bilibili.com/video/BV1bd4y1L73N)  
-This is a translated English version. Please click [here](README_CN.md) for the orginal Chinese readme.
-
-## Table of Contents
-
-- [Background](#Background)
-- [Installation](#Installation)
-- [Usage](#Usage)
-
-## Background
-
-The original MAPPO code was too complex in terms of environment encapsulation, so this project directly extracts and encapsulates the environment. This makes it easier to transfer the MAPPO code to your own project.
-
 ## Installation
+
+### conda
+
+```sh
+mkdir -p ~/miniconda3
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
+bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+rm -rf ~/miniconda3/miniconda.sh
+source ~/.bashrc && ~/miniconda3/bin/conda init bash
+```
 
 ### 2d environment
 
@@ -113,19 +108,4 @@ In the train.py file, choose to comment out continuous environment or discrete e
 1. modify *scripts/render.sh*, select your model path
 2. `bash scripts/render.sh` (under the project directory)
     - get the gif in *scrips/result/run/gif*
-
-## Related Efforts
-
-- [on-policy](https://github.com/marlbenchmark/on-policy) - 💌 Learn the author implementation of MAPPO.
-
-## Maintainers
-
-[@tinyzqh](https://github.com/tinyzqh).
-
-## Translator
-[@tianyu-z](https://github.com/tianyu-z)
-
-## License
-
-[MIT](LICENSE) © tinyzqh
 
