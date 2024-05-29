@@ -197,7 +197,6 @@ class EnvCore(object):
         default_joints_positions = self.car_view._default_joints_state.positions[indices]
         default_joints_velocities = self.car_view._default_joints_state.velocities[indices]
         default_joints_efforts = self.car_view._default_joints_state.efforts[indices]
-        default_joints_positions = self.car_view._default_joints_state.positions[indices]
         default_gains_kps = self.car_view._default_kps[indices]
         default_gains_kds = self.car_view._default_kds[indices]
 
