@@ -21,7 +21,7 @@ from envs.isaac_sim.utils.scene import get_world, set_up_scene
 
 
 class EnvCore(object):
-    def __init__(self) -> None:
+    def __init__(self, device=None) -> None:
         # isaac sim environment
         self.world = get_world()
         self.env_num = 2  # TODO: setting in config.py
@@ -36,27 +36,31 @@ class EnvCore(object):
             np.array([-10, -10]).astype(np.float32),
             np.array([+10, +10]).astype(np.float32),
         )  # left_wheel velocity and right_wheel velocity
-        self.dest = np.zeros(shape=(self.env_num, 2))
-        self.steps = np.zeros(shape=(self.env_num, 1))
+        if device is None:
+            self.device = "cuda:0"
+        else:
+            self.device = device
+        self.dest = torch.zeros(size=(self.env_num, 2), device=self.device)
+        self.steps = torch.zeros(size=(self.env_num, 1), dtype=int, device=self.device)
 
     def reset(self, indices=[]):
         if len(indices) == 0:
             indices = self.env_indices
 
         indices_len = len(indices)
-        car_position = get_random_positions(indices_len)
-        self.car_position = np.concatenate(
+        car_position = self.get_random_positions(indices_len)
+        self.car_position = torch.cat(
             (
                 car_position,
                 self.car_view._default_state.positions[indices, 2:3]
             ),
-            axis=1
+            dim=1
         )
         # reset cars' position and velocity
         self._reset_idx(positions=self.car_position, orientations=None, indices=indices)
 
         # reset targets' positions
-        self.dest[indices] = get_random_positions(indices_len)
+        self.dest[indices] = self.get_random_positions(indices_len)
 
         # observations, shape is (env_num, agent_num, obs_dim)
         observations = self.get_observations()
@@ -82,36 +86,36 @@ class EnvCore(object):
         current_car_position = self.car_view.get_world_poses()[0][:, 0:2]
         goal_world_position = self.dest
 
-        previous_dist_to_goal = np.linalg.norm(goal_world_position - previous_car_position, axis=1)
-        current_dist_to_goal = np.linalg.norm(goal_world_position - current_car_position, axis=1)
+        previous_dist_to_goal = torch.norm(goal_world_position - previous_car_position, p=2, dim=1)
+        current_dist_to_goal = torch.norm(goal_world_position - current_car_position, p=2, dim=1)
 
         # running
         env_reward = (previous_dist_to_goal - current_dist_to_goal).reshape(self.env_num, -1)
-        env_done = np.zeros((self.env_num, 1), dtype=bool)
+        env_done = torch.zeros((self.env_num, 1), dtype=bool, device=self.device)
         
         # arrival
-        arrival_indices = np.where(current_dist_to_goal < 0.2)
+        arrival_indices = torch.where(current_dist_to_goal < 0.2)
         env_done[arrival_indices] = True
-        env_reward[arrival_indices] = 10
+        env_reward[arrival_indices] = 10.
 
         # failure
-        failure_indices = np.where(current_dist_to_goal > 10)
+        failure_indices = torch.where(current_dist_to_goal > 10)
         env_done[failure_indices] = True
-        env_reward[failure_indices] = 0
+        env_reward[failure_indices] = 0.
 
         # truncation
-        truncation_indices = np.where(self.steps==2048)
+        truncation_indices = torch.where(self.steps==2048)
         env_done[truncation_indices] = True
-        env_reward[truncation_indices] = 0
+        env_reward[truncation_indices] = 0.
 
         env_obs = self.get_observations()
         env_info = [[{}] * self.agent_num for _ in range(self.env_num)]
         
         result = (
             env_obs,
-            np.expand_dims(env_reward.repeat(self.agent_num, axis=1), 2),
-            env_done.repeat(self.agent_num, axis=1),
-            np.array(env_info)
+            torch.unsqueeze(env_reward.repeat(1, self.agent_num), 2),
+            env_done.repeat(1, self.agent_num),
+            env_info
         )
         
         self.steps += 1
@@ -127,8 +131,8 @@ class EnvCore(object):
 
         positions, _ = car.get_world_poses()
         # only need x,y axis
-        car_position = positions[:, 0:2]
-        car_position = np.expand_dims(car_position, 1).repeat(self.agent_num, axis=1)
+        car_position = torch.unsqueeze(positions[:, 0:2], 1)
+        car_position = car_position.repeat(1, self.agent_num, 1)
         
         # only need x,y axis
         jetbot_linear_velocities = jetbot_view.get_linear_velocities()[:, 0:2]
@@ -145,9 +149,9 @@ class EnvCore(object):
         jetbot_orientation = jetbot_orientation[:, 3]
         jetbot_orientation = jetbot_orientation.reshape(self.env_num, self.agent_num, 1)
 
-        dest_position = np.expand_dims(self.dest, 1).repeat(self.agent_num, axis=1)
+        dest_position = torch.unsqueeze(self.dest, 1).repeat(1, self.agent_num, 1)
 
-        observations = np.concatenate(
+        observations = torch.cat(
             (
                 dest_position,
                 car_position,
@@ -156,16 +160,18 @@ class EnvCore(object):
                 jetbot_position,
                 jetbot_orientation
             ),
-            axis=2
+            dim=2
         )
 
         return observations
     
     def set_actions(self, actions):
+        actions = torch.from_numpy(actions)
         actions = actions.reshape(self.env_num, -1)
+        revolution_joint_indices = torch.arange(4, 12)
         self.car_view.set_joint_velocities(
             velocities=actions, 
-            joint_indices=np.arange(4,12)  # revoluted joint indices
+            joint_indices=revolution_joint_indices  # revoluted joint indices
         )
 
     # TODO
@@ -200,7 +206,12 @@ class EnvCore(object):
         self.car_view.set_joint_velocities(velocities=default_joints_velocities, indices=indices)
         self.car_view.set_joint_efforts(efforts=default_joints_efforts, indices=indices)
         self.car_view.set_gains(kps=default_gains_kps, kds=default_gains_kds, indices=indices)
-        self.car_view.set_velocities(np.zeros(6), indices=indices)
+        self.car_view.set_velocities(torch.zeros(6, device=self.device), indices=indices)
     
-def get_random_positions(indices_len):
-    return np.random.randint(low=[0, 0], high=[4, 5], size=(indices_len, 2))
+    def get_random_positions(self, indices_len):
+        # return np.random.randint(low=[0, 0], high=[4, 5], size=(indices_len, 2))
+        low = [0, 0]
+        high = [4, 5]
+        tensor1 = torch.randint(low[0], high[0], size=(indices_len, 1), device=self.device)
+        tensor2 = torch.randint(low[1], high[1], size=(indices_len, 1), device=self.device)
+        return torch.cat((tensor1, tensor2), dim=1).to(torch.float32)

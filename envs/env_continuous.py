@@ -71,7 +71,7 @@ class ContinuousActionEnv(object):
 
     def reset(self, indices=[]):
         obs = self.env.reset(indices)
-        return np.stack(obs)
+        return obs
 
     def close(self):
         pass

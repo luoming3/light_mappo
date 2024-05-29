@@ -9,6 +9,8 @@ Modified from OpenAI Baselines code to work with multi-agent envs
 import numpy as np
 from abc import ABC, abstractmethod
 from multiprocessing import Process, Pipe
+from utils.util import _t2n
+import torch
 
 
 class CloudpickleWrapper(object):
@@ -292,21 +294,17 @@ class IsaacSimEnv(ShareVecEnv):
 
         reset_indices = []
         for (i, done) in enumerate(dones):
-            if 'bool' in done.__class__.__name__:
-                if done:
-                    reset_indices.append(i)
-            else:
-                if np.any(done):
-                    reset_indices.append(i)
+            if torch.any(done):
+                reset_indices.append(i)
                 
         if reset_indices:
             self.env.reset(reset_indices)
 
-        return obs, rews, dones, infos
+        return _t2n(obs), _t2n(rews), _t2n(dones), np.array(infos)
 
     def reset(self):
         obs = self.env.reset([])
-        return np.array(obs)
+        return _t2n(obs)
 
     def render(self, mode="rgb_array"):
         if mode == "rgb_array":

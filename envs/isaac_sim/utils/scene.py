@@ -15,7 +15,7 @@ def get_world():
     global _world
     if World._world_initialized:
         return _world
-    _world = World(stage_units_in_meters=1.0)
+    _world = World(stage_units_in_meters=1.0, backend="torch", device="cuda:0")
 
     return _world
 
