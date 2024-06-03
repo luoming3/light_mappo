@@ -288,11 +288,12 @@ class EnvRunner(Runner):
         for episode in range(self.all_args.render_episodes):
             obs = envs.reset()
             all_frames = []
-            if self.all_args.save_gifs:
-                image = envs.render("rgb_array")[0]
-                all_frames.append(image)
-            else:
-                envs.render("human")
+            if self.all_args.env_type != 'isaac_sim':
+                if self.all_args.save_gifs:
+                    image = envs.render("rgb_array")[0]
+                    all_frames.append(image)
+                else:
+                    envs.render("human")
 
             rnn_states = np.zeros(
                 (
@@ -344,15 +345,16 @@ class EnvRunner(Runner):
                 masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
                 masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
 
-                if self.all_args.save_gifs:
-                    image = envs.render("rgb_array")[0]  # TODO: support parallel env setting
-                    all_frames.append(image)
-                    calc_end = time.time()
-                    elapsed = calc_end - calc_start
-                    if elapsed < self.all_args.ifi:
-                        time.sleep(self.all_args.ifi - elapsed)
-                else:
-                    envs.render("human")
+                if self.all_args.env_type != 'isaac_sim':
+                    if self.all_args.save_gifs:
+                        image = envs.render("rgb_array")[0]  # TODO: support parallel env setting
+                        all_frames.append(image)
+                        calc_end = time.time()
+                        elapsed = calc_end - calc_start
+                        if elapsed < self.all_args.ifi:
+                            time.sleep(self.all_args.ifi - elapsed)
+                    else:
+                        envs.render("human")
                 
                 if np.any(dones):
                     all_frames = all_frames[:-1]

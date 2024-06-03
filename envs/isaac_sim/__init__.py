@@ -1,9 +1,9 @@
 from omni.isaac.kit import SimulationApp
 
 
-def init_simulation_app():
+def init_simulation_app(headless=True):
     # launch the simulator
-    config = {"headless": True, "anti_aliasing": 1}
+    config = {"headless": headless, "anti_aliasing": 1}
     simulation_app = SimulationApp(config)
     # simulation_app = SimulationApp(config)
 
