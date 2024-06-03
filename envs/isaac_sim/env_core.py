@@ -21,10 +21,11 @@ from envs.isaac_sim.utils.scene import get_world, set_up_scene
 
 
 class EnvCore(object):
-    def __init__(self) -> None:
+    def __init__(self, all_args, env_num) -> None:
         # isaac sim environment
+        self.all_args = all_args
         self.world = get_world()
-        self.env_num = 2  # TODO: setting in config.py
+        self.env_num = env_num  # TODO: setting in config.py
         self.car_view = self.world.scene.get_object("car_view")
         self.jetbot_view = self.world.scene.get_object("jetbot_chassis_view")
 
@@ -77,7 +78,7 @@ class EnvCore(object):
         previous_car_position= self.car_view.get_world_poses()[0][:, 0:2]
 
         self.set_actions(actions)
-        self.world.step(render=False)
+        self.world.step(not self.all_args.isaac_sim_headless)
 
         current_car_position = self.car_view.get_world_poses()[0][:, 0:2]
         goal_world_position = self.dest
