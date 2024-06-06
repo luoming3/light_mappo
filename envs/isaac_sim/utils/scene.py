@@ -176,7 +176,7 @@ def set_up_new_scene(env_num=1, bot_num=4):
     # generate 4 paths that begin with "/World/Cube" - path will be appended with _{index}
     prim_paths = cloner.generate_paths("/World/envs/env", env_num)
 
-    cloner.clone(
+    env_pos = cloner.clone(
         source_prim_path=default_zero_env_path, prim_paths=prim_paths, replicate_physics=True, copy_from_source=False
     )
 
@@ -187,8 +187,15 @@ def set_up_new_scene(env_num=1, bot_num=4):
         collision_filter_global_paths
     )
 
-    car_view = ArticulationView(prim_paths_expr="/World/envs/.*/car", name="car_view", reset_xform_properties=False)
-    jetbot_view = RigidPrimView(prim_paths_expr="/World/envs/env_*/car/jetbot_.*/chassis", name="jetbot_chassis_view", reset_xform_properties=False)
+    car_view = ArticulationView(
+        prim_paths_expr="/World/envs/.*/car",
+        name="car_view",
+        positions=env_pos,
+        reset_xform_properties=False)
+    jetbot_view = RigidPrimView(
+        prim_paths_expr="/World/envs/env_*/car/jetbot_.*/chassis",
+        name="jetbot_chassis_view",
+        reset_xform_properties=False)
 
     # add car ArticulationView for control
     scene.add(car_view)
