@@ -179,6 +179,7 @@ def set_up_new_scene(env_num=1, bot_num=4):
     env_pos = cloner.clone(
         source_prim_path=default_zero_env_path, prim_paths=prim_paths, replicate_physics=True, copy_from_source=False
     )
+    env_pos = torch.tensor(env_pos, dtype=torch.float32)
 
     cloner.filter_collisions(
         world.get_physics_context().prim_path,
