@@ -228,7 +228,7 @@ def get_config():
     parser.add_argument(
         "--isaac_sim_headless",
         action="store_true",
-        default=False,
+        default=True,
         help="Headless mode of IsaacSim",
     ) 
 
