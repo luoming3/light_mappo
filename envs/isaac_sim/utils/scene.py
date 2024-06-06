@@ -13,10 +13,6 @@ from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.prims import RigidPrimView
 from omni.kit.commands import execute
 
-<<<<<<< HEAD
-from pxr import UsdGeom
-import torch
-=======
 from pxr import UsdGeom, PhysxSchema, UsdPhysics
 
 import os
@@ -35,7 +31,6 @@ cfg = cfg_cls()
 
 rigid_props = cfg.rigid_props
 articulation_props = cfg.articulation_props
->>>>>>> origin/isaac-sim-maxbot-wenze
 
 _world = None
 
@@ -167,7 +162,7 @@ def set_up_new_scene(env_num=1, bot_num=4):
     physx_articulation_api.GetSolverVelocityIterationCountAttr().Set(articulation_props.solver_velocity_iteration_count)
 
     # create a GridCloner instance
-    cloner = GridCloner(spacing=0)
+    cloner = GridCloner(spacing=8)
     cloner.define_base_env(base_env_path)
 
     UsdGeom.Xform.Define(get_current_stage(), base_env_path)

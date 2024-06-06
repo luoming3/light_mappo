@@ -22,11 +22,7 @@ from envs.isaac_sim.utils.scene import get_world, set_up_scene
 
 
 class EnvCore(object):
-<<<<<<< HEAD
-    def __init__(self, device=None) -> None:
-=======
-    def __init__(self, all_args, env_num) -> None:
->>>>>>> origin/isaac-sim-maxbot-wenze
+    def __init__(self, all_args, env_num, device=None) -> None:
         # isaac sim environment
         self.all_args = all_args
         self.world = get_world()
