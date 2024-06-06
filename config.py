@@ -225,6 +225,12 @@ def get_config():
         default=False,
         help="Whether to use global state or concatenated obs",
     )
+    parser.add_argument(
+        "--isaac_sim_headless",
+        action="store_true",
+        default=True,
+        help="Headless mode of IsaacSim",
+    ) 
 
     # replay buffer parameters
     parser.add_argument("--episode_length", type=int, default=2048, help="Max length for any episode")

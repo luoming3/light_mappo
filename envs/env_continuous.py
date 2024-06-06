@@ -11,8 +11,8 @@ class ContinuousActionEnv(object):
     Wrapper for continuous action environment.
     """
 
-    def __init__(self):
-        self.env = EnvCore()
+    def __init__(self, all_args, env_num):
+        self.env = EnvCore(all_args, env_num)
         self.num_agent = self.env.agent_num
 
         self.signal_obs_dim = self.env.obs_dim

@@ -14,8 +14,9 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from config import get_config  # noqa: E402
-from envs.env_wrappers import DummyVecEnv  # noqa: E402
+from envs.env_wrappers import DummyVecEnv, IsaacSimEnv  # noqa: E402
 
+from envs.isaac_sim import init_simulation_app
 
 def make_render_env(all_args):
     def get_env_fn(rank):
@@ -25,7 +26,7 @@ def make_render_env(all_args):
 
             from envs.env_continuous import ContinuousActionEnv
 
-            env = ContinuousActionEnv()
+            env = ContinuousActionEnv(all_args, all_args.n_render_rollout_threads)
 
             # from envs.env_discrete import DiscreteActionEnv
 
@@ -35,6 +36,9 @@ def make_render_env(all_args):
             return env
 
         return init_env
+        
+    if all_args.env_type == "isaac_sim":
+        return IsaacSimEnv(get_env_fn(0), all_args.n_render_rollout_threads)
 
     return DummyVecEnv([get_env_fn(i) for i in range(all_args.n_render_rollout_threads)])
 
@@ -109,6 +113,13 @@ def main(args):
     torch.cuda.manual_seed_all(all_args.seed)
     np.random.seed(all_args.seed)
 
+    # create SimulationApp for import isaac sim modules
+    simulation_app = init_simulation_app(all_args.isaac_sim_headless)
+    from envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
+
+    # set_up_scene(all_args.n_rollout_threads)
+    set_up_new_scene(env_num=all_args.n_render_rollout_threads)
+
     # env init
     envs = make_render_env(all_args)
     eval_envs = None
@@ -136,6 +147,8 @@ def main(args):
     
     # post process
     envs.close()
+    simulation_app.close()
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

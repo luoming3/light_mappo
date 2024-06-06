@@ -38,7 +38,7 @@ def make_train_env(all_args):
 
             from envs.env_continuous import ContinuousActionEnv
 
-            env = ContinuousActionEnv()
+            env = ContinuousActionEnv(all_args, all_args.n_rollout_threads)
 
             # from envs.env_discrete import DiscreteActionEnv
 
@@ -167,10 +167,11 @@ def main(args):
     np.random.seed(all_args.seed)
 
     # create SimulationApp for import isaac sim modules
-    simulation_app = init_simulation_app()
-    from envs.isaac_sim.utils.scene import set_up_scene
+    simulation_app = init_simulation_app(all_args.isaac_sim_headless)
+    from envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
 
-    set_up_scene(all_args.n_rollout_threads)
+    # set_up_scene(all_args.n_rollout_threads)
+    set_up_new_scene(all_args.n_rollout_threads)
 
     # env init
     envs = make_train_env(all_args)
