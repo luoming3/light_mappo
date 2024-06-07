@@ -227,7 +227,7 @@ def get_config():
     )
     parser.add_argument(
         "--isaac_sim_headless",
-        action="store_true",
+        action="store_false",
         default=True,
         help="Headless mode of IsaacSim",
     ) 
@@ -471,7 +471,7 @@ def get_config():
     parser.add_argument(
         "--save_gifs",
         action="store_true",
-        default=True,
+        default=False,
         help="by default, do not save render video. If set, save video.",
     )
     parser.add_argument(

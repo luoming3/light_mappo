@@ -107,7 +107,10 @@ In the train.py file, choose to comment out continuous environment or discrete e
 
 ### render
 
-1. modify *scripts/render.sh*, select your model path
-2. `bash scripts/render.sh` (under the project directory)
+for isaac sim, you should setup environment variable ${ISAAC_SIM_FOLDER} to your isaac_sim_workspace_folder,
+e.g. `export ISAAC_SIM_FOLDER=/home/user/.local/share/ov/pkg/isaac_sim-2023.1.1`
+
+- modify *scripts/render.sh*, select your model path
+- `bash scripts/render.sh` (under the project directory)
     - get the gif in *scrips/result/run/gif*
 
