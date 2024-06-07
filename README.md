@@ -37,7 +37,9 @@ cd path_to_isaac_sim_workspace_folder
 conda env create -f environment.yml
 conda activate isaac-sim
 
-# set up environment variables
+# set up environment variables.
+# execute this command when open a new terminal or you can 
+# set this command in ~/.bashrc so you only need to do it once
 source setup_conda_env.sh
 
 # install cuda 12.1
