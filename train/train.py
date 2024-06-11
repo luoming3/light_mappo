@@ -165,6 +165,7 @@ def main(args):
     torch.manual_seed(all_args.seed)
     torch.cuda.manual_seed_all(all_args.seed)
     np.random.seed(all_args.seed)
+    pprint.pprint(vars(all_args))
 
     # create SimulationApp for import isaac sim modules
     simulation_app = init_simulation_app(all_args.isaac_sim_headless)
@@ -188,7 +189,6 @@ def main(args):
     }
 
     pprint.pprint(config)
-    pprint.pprint(vars(all_args))
 
     # run experiments
     if all_args.share_policy:
