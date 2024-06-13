@@ -30,7 +30,7 @@ pip install -r requirements.txt
 ```
 ### 3d environment
 
-For isaac sim environment, the following code should be used.
+For isaac sim environment, the following command should be used.
 
 ```sh
 cd path_to_isaac_sim_workspace_folder
@@ -46,7 +46,7 @@ source setup_conda_env.sh
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 
 # install box2d==2.3.10 (if it requires swig, install swig in "sudo apt install swig")
-pip install https://github.com/pybox2d/pybox2d/archive/refs/tags/2.3.10.tar.gz
+# pip install https://github.com/pybox2d/pybox2d/archive/refs/tags/2.3.10.tar.gz
 # install requirements
 cd path_to_light_mappo_folder
 pip install -r requirements_3_10.txt
