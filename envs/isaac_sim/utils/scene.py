@@ -62,7 +62,8 @@ def set_up_new_scene(env_num=1, bot_num=4):
     world = get_world()
     assets_root_path = get_assets_root_path()
     assert assets_root_path is not None, "asserts root path is None"
-    jetbot_asset_path = assets_root_path + "/Isaac/Robots/Jetbot/jetbot.usd"
+    # jetbot_asset_path = assets_root_path + "/Isaac/Robots/Jetbot/jetbot.usd"
+    jetbot_asset_path = "/home/user/.local/share/ov/pkg/isaac_sim-2023.1.1/light_mappo/envs/isaac_sim/robot/assets/jetbot.usd"
     scene = world.scene
     scene.clear(True)
 
@@ -145,7 +146,7 @@ def set_up_new_scene(env_num=1, bot_num=4):
         )
 
         stage = stage_utils.get_current_stage()
-        chassis = prim_utils.get_prim_at_path(f"{prim_path}/jetbot_{i}/chassis")
+        chassis = prim_utils.get_prim_at_path(f"{prim_path}/jetbot_{i}/jetbot/chassis")
         joint = script_utils.createJoint(stage, "Revolute", payload, chassis)
         UsdPhysics.DriveAPI.Apply(joint, "linear")
         joint.GetAttribute("physics:axis").Set("Z")
@@ -194,7 +195,7 @@ def set_up_new_scene(env_num=1, bot_num=4):
         positions=env_pos,
         reset_xform_properties=False)
     jetbot_view = RigidPrimView(
-        prim_paths_expr="/World/envs/env_*/car/jetbot_.*/chassis",
+        prim_paths_expr="/World/envs/env_*/car/jetbot_.*/jetbot/chassis",
         name="jetbot_chassis_view",
         reset_xform_properties=False)
 
@@ -253,7 +254,7 @@ def set_up_scene(env_num=1):
         reset_xform_properties=False
     )
     jetbot_view = RigidPrimView(
-        prim_paths_expr="/World/envs/env_*/car/jetbot_.*/chassis",
+        prim_paths_expr="/World/envs/env_*/car/jetbot_.*/jetbot/chassis",
         name="jetbot_chassis_view",
         reset_xform_properties=False
     )
