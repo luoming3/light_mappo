@@ -209,7 +209,8 @@ class EnvCore(object):
         self.car_view.set_gains(kps=default_gains_kps, kds=default_gains_kds, indices=indices)
         self.car_view.set_velocities(torch.zeros(6, device=self.device), indices=indices)
 
-        self.world.step()
+        # TODO: reset jetbot_view (posiditon, linear and angular velocity)
+        # but this only affects the first obs of warm and does not affect the subsequent step process
     
     def get_random_positions(self, indices):
         pos = self.init_pos_dist.sample((len(indices),))
