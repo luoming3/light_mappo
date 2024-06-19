@@ -25,6 +25,8 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from envs.isaac_sim.utils.config import RobotCfg
+from envs.isaac_sim import ASSET_PATH
+
 
 cfg_cls = RobotCfg
 cfg = cfg_cls()
@@ -60,10 +62,7 @@ def get_world():
 
 def set_up_new_scene(env_num=1, bot_num=4):
     world = get_world()
-    assets_root_path = get_assets_root_path()
-    assert assets_root_path is not None, "asserts root path is None"
-    # jetbot_asset_path = assets_root_path + "/Isaac/Robots/Jetbot/jetbot.usd"
-    jetbot_asset_path = os.path.dirname(os.path.dirname(__file__)) + "/robot/assets/jetbot_trim.usd"
+    jetbot_asset_path = os.path.join(ASSET_PATH, "jetbot_trim.usd")
     scene = world.scene
     scene.clear(True)
 

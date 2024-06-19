@@ -1,5 +1,9 @@
 from omni.isaac.kit import SimulationApp
 
+import os.path as osp
+
+ASSET_PATH = osp.join(osp.dirname(__file__), "robot/assets")
+
 
 def init_simulation_app(headless=True):
     # launch the simulator
