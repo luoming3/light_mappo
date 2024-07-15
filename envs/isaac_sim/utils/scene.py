@@ -11,6 +11,8 @@ from omni.isaac.core.utils.stage import get_current_stage
 from omni.isaac.core.utils.nucleus import get_assets_root_path
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.prims import RigidPrimView
+from omni.isaac.core.materials.physics_material import PhysicsMaterial
+
 from omni.kit.commands import execute
 
 from pxr import UsdGeom, PhysxSchema, UsdPhysics
@@ -146,9 +148,14 @@ def set_up_new_scene(env_num=1, bot_num=4):
 
         stage = stage_utils.get_current_stage()
         chassis = prim_utils.get_prim_at_path(f"{prim_path}/jetbot_{i}/chassis")
+        chassis.GetAttribute("physics:mass").Set(10.0)
         joint = script_utils.createJoint(stage, "Revolute", payload, chassis)
         UsdPhysics.DriveAPI.Apply(joint, "linear")
         joint.GetAttribute("physics:axis").Set("Z")
+
+        wheel_material_prim_path = f"{prim_path}/jetbot_{i}/wheel_material"
+        wheel_material = PhysicsMaterial(wheel_material_prim_path, "wheel_material")
+        wheel_material.set_dynamic_friction(5.0)
 
     UsdPhysics.ArticulationRootAPI.Apply(car)
     PhysxSchema.PhysxArticulationAPI.Apply(car)
