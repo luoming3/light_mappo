@@ -175,6 +175,7 @@ class EnvCore(object):
         return observations
     
     def set_actions(self, actions):
+        actions = np.tanh(actions) * 5
         actions = torch.from_numpy(actions)
         actions = actions.reshape(self.env_num, -1)
         revolution_joint_indices = torch.arange(4, 12)
