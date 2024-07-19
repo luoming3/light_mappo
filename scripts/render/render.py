@@ -118,7 +118,7 @@ def main(args):
     from envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
 
     # set_up_scene(all_args.n_rollout_threads)
-    set_up_new_scene(env_num=all_args.n_render_rollout_threads)
+    set_up_scene(env_num=all_args.n_render_rollout_threads)
 
     # env init
     envs = make_render_env(all_args)
