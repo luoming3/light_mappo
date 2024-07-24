@@ -220,7 +220,14 @@ class EnvCore(object):
         self.world.step()
     
     def get_random_positions(self, indices):
-        pos = self.init_pos_dist.sample((len(indices),))
+        # pos = self.init_pos_dist.sample((len(indices),))
+        # pos += self.init_envs_positions[indices]
+        radius = 2
+        theta = 2 * torch.pi * torch.rand(len(indices), device=self.device)
+        x = radius * torch.cos(theta)
+        y = radius * torch.sin(theta)
+        z = torch.zeros(size=(len(indices),), device=self.device)
+        pos = torch.stack((x, y, z), dim=1)
         pos += self.init_envs_positions[indices]
         return pos
     
