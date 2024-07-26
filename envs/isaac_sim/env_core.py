@@ -42,7 +42,8 @@ class EnvCore(object):
             self.device = "cuda:0"
         else:
             self.device = device
-        self.steps = torch.zeros(size=(self.env_num, 1), dtype=int, device=self.device)
+        self.steps = torch.zeros(size=(self.env_num,), dtype=int, device=self.device)
+        self.truncation_step = 2048
 
         self.target_pos = torch.zeros((self.env_num, 2), device=self.device)
         self.init_envs_positions = self.get_world_poses()[0]
@@ -109,7 +110,7 @@ class EnvCore(object):
         # env_reward[failure_indices] = 0.
 
         # truncation
-        truncation_indices = torch.where(self.steps==2048)
+        truncation_indices = torch.where(self.steps==self.truncation_step)
         env_done[truncation_indices] = True
         # env_reward[truncation_indices] = 0.
 
