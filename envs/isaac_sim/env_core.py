@@ -95,8 +95,9 @@ class EnvCore(object):
         # running
         dist_reward = previous_dist_to_goal - current_dist_to_goal
         direction_reward = torch.cosine_similarity(self.car_linear_velocities, self.rpos_car_dest, dim=1)
-        env_reward = -0.1
-        env_reward = (dist_reward + direction_reward + env_reward).reshape((self.env_num, 1))
+        velocities_reward = 5 * torch.where(direction_reward > 0, 1., -1.) * torch.norm(self.car_linear_velocities, dim=1)
+        step_reward = -0.5
+        env_reward = (dist_reward + direction_reward + velocities_reward + step_reward).reshape((self.env_num, 1))
         env_done = torch.zeros((self.env_num, 1), dtype=bool, device=self.device)
         
         # arrival
