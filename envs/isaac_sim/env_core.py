@@ -30,7 +30,7 @@ class EnvCore(object):
         self.car_view = self.world.scene.get_object("car_view")
         self.jetbot_view = self.world.scene.get_object("jetbot_chassis_view")
 
-        self.agent_num = 4  # number of agent
+        self.agent_num = all_args.num_agents  # number of agent
         self.obs_dim = 9  # observation dimension of agents
         self.action_dim = 3  # set the action dimension of agents
         self.env_indices = [i for i in range(self.env_num)]
@@ -180,7 +180,7 @@ class EnvCore(object):
         actions = np.tanh(actions) * 5
         actions = torch.from_numpy(actions)
         actions = actions.reshape(self.env_num, -1)
-        revolution_joint_indices = torch.arange(4, 12)
+        revolution_joint_indices = torch.arange(self.agent_num, self.agent_num * 3)
         self.car_view.set_joint_velocities(
             velocities=actions, 
             joint_indices=revolution_joint_indices  # revoluted joint indices
