@@ -501,4 +501,11 @@ def get_config():
         help="by default None. set the path to pretrained model.",
     )
 
+    parser.add_argument(
+        "--num_agents",
+        type=int,
+        default=4,
+        help="number of agents",
+    )
+
     return parser

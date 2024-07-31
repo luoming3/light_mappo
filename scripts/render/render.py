@@ -46,7 +46,6 @@ def make_render_env(all_args):
 def parse_args(args, parser):
     parser.add_argument('--scenario_name', type=str, default='simple', help="Which scenario to run on")
     parser.add_argument("--num_landmarks", type=int, default=3)
-    parser.add_argument('--num_agents', type=int, default=4, help="number of players")
 
     all_args = parser.parse_known_args(args)[0]
 
@@ -118,7 +117,7 @@ def main(args):
     from envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
 
     # set_up_scene(all_args.n_rollout_threads)
-    set_up_new_scene(env_num=all_args.n_render_rollout_threads)
+    set_up_scene(env_num=all_args.n_render_rollout_threads)
 
     # env init
     envs = make_render_env(all_args)

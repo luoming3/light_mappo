@@ -11,6 +11,8 @@ from omni.isaac.core.utils.stage import get_current_stage
 from omni.isaac.core.utils.nucleus import get_assets_root_path
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.prims import RigidPrimView
+from omni.isaac.core.materials.physics_material import PhysicsMaterial
+
 from omni.kit.commands import execute
 
 from pxr import UsdGeom, PhysxSchema, UsdPhysics
@@ -146,9 +148,14 @@ def set_up_new_scene(env_num=1, bot_num=4):
 
         stage = stage_utils.get_current_stage()
         chassis = prim_utils.get_prim_at_path(f"{prim_path}/jetbot_{i}/chassis")
+        chassis.GetAttribute("physics:mass").Set(10.0)
         joint = script_utils.createJoint(stage, "Revolute", payload, chassis)
         UsdPhysics.DriveAPI.Apply(joint, "linear")
         joint.GetAttribute("physics:axis").Set("Z")
+
+        wheel_material_prim_path = f"{prim_path}/jetbot_{i}/wheel_material"
+        wheel_material = PhysicsMaterial(wheel_material_prim_path, "wheel_material")
+        wheel_material.set_dynamic_friction(5.0)
 
     UsdPhysics.ArticulationRootAPI.Apply(car)
     PhysxSchema.PhysxArticulationAPI.Apply(car)
@@ -213,7 +220,31 @@ def set_up_scene(env_num=1):
     scene = world.scene
     scene.clear(True)
 
-    add_reference_to_stage("C:/Users/wenze.li/AppData/Local/ov/pkg/isaac_sim-2023.1.1/light_mappo/envs/isaac_sim/utils/car_jetbot.usd", "/World/envs/env_0/car")
+    jetbot_asset_path = os.path.join(ASSET_PATH, "car_jetbot_new.usd")
+    add_reference_to_stage(jetbot_asset_path, "/World/envs/env_0/car")
+    
+    prim_path = "/World/envs/env_0/car"
+    # payload setting
+    board_prim_path =  f"{prim_path}/board"
+    if not prim_utils.is_prim_path_valid(board_prim_path):
+        raise RuntimeError(f"Invalid prim at {board_prim_path}.")
+    stage = stage_utils.get_current_stage()
+    payload = prim_utils.get_prim_at_path(board_prim_path)
+    UsdPhysics.MassAPI.Apply(payload)
+    payload.GetAttribute("physics:mass").Set(40.0)
+
+    # jetbot setting
+    for i in range(4):
+        jetbot_prim_path = f"{prim_path}/jetbot_0{i+1}"
+        if not prim_utils.is_prim_path_valid(jetbot_prim_path):
+            raise RuntimeError(f"Invalid prim at {jetbot_prim_path}.")
+        stage = stage_utils.get_current_stage()
+        chassis = prim_utils.get_prim_at_path(f"{prim_path}/jetbot_0{i+1}/chassis")
+        chassis.GetAttribute("physics:mass").Set(10.0)
+
+        wheel_material_prim_path = f"{prim_path}/jetbot_0{i+1}/wheel_material"
+        wheel_material = PhysicsMaterial(wheel_material_prim_path, "wheel_material")
+        wheel_material.set_dynamic_friction(5.0)
 
     # create our base environment with one cube
     base_env_path = "/World/envs"

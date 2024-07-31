@@ -30,8 +30,8 @@ class EnvCore(object):
         self.car_view = self.world.scene.get_object("car_view")
         self.jetbot_view = self.world.scene.get_object("jetbot_chassis_view")
 
-        self.agent_num = 4  # number of agent
-        self.obs_dim = 8  # observation dimension of agents
+        self.agent_num = all_args.num_agents  # number of agent
+        self.obs_dim = 9  # observation dimension of agents
         self.action_dim = 3  # set the action dimension of agents
         self.env_indices = [i for i in range(self.env_num)]
         self.action_space = spaces.Box(
@@ -42,7 +42,8 @@ class EnvCore(object):
             self.device = "cuda:0"
         else:
             self.device = device
-        self.steps = torch.zeros(size=(self.env_num, 1), dtype=int, device=self.device)
+        self.steps = torch.zeros(size=(self.env_num,), dtype=int, device=self.device)
+        self.truncation_step = 2048
 
         self.target_pos = torch.zeros((self.env_num, 2), device=self.device)
         self.init_envs_positions = self.get_world_poses()[0]
@@ -82,6 +83,7 @@ class EnvCore(object):
 
         self.set_actions(actions)
         self.world.step(not self.all_args.isaac_sim_headless)
+        env_obs = self.get_observations()
 
         current_car_position = self.get_world_poses()[0][:, 0:2]
         current_car_position.sub_(self.init_envs_positions[:, 0:2])
@@ -91,7 +93,11 @@ class EnvCore(object):
         current_dist_to_goal = torch.norm(goal_world_position - current_car_position, p=2, dim=1)
 
         # running
-        env_reward = (previous_dist_to_goal - current_dist_to_goal).reshape(self.env_num, -1)
+        dist_reward = previous_dist_to_goal - current_dist_to_goal
+        direction_reward = torch.cosine_similarity(self.car_linear_velocities, self.rpos_car_dest, dim=1)
+        velocities_reward = 5 * torch.where(direction_reward > 0, 1., -1.) * torch.norm(self.car_linear_velocities, dim=1)
+        step_reward = -0.5
+        env_reward = (dist_reward + direction_reward + velocities_reward + step_reward).reshape((self.env_num, 1))
         env_done = torch.zeros((self.env_num, 1), dtype=bool, device=self.device)
         
         # arrival
@@ -102,14 +108,13 @@ class EnvCore(object):
         # failure
         failure_indices = torch.where(current_dist_to_goal > 5)
         env_done[failure_indices] = True
-        env_reward[failure_indices] = 0.
+        # env_reward[failure_indices] = 0.
 
         # truncation
-        truncation_indices = torch.where(self.steps==2048)
+        truncation_indices = torch.where(self.steps==self.truncation_step)
         env_done[truncation_indices] = True
-        env_reward[truncation_indices] = 0.
+        # env_reward[truncation_indices] = 0.
 
-        env_obs = self.get_observations()
         env_info = [[{}] * self.agent_num for _ in range(self.env_num)]
         
         result = (
@@ -133,9 +138,13 @@ class EnvCore(object):
         positions, _ = self.get_world_poses()
         positions.sub_(self.init_envs_positions)
         # only need x,y axis
-        car_position = torch.unsqueeze(positions[:, 0:2], 1)
-        car_position = car_position.repeat(1, self.agent_num, 1)
-        
+        self.rpos_car_dest = self.target_pos - positions[:, 0:2]
+        rpos_car_dest_norm = normalized(self.rpos_car_dest)
+        rpos_car_dest_norm = rpos_car_dest_norm.unsqueeze(1).repeat(1, self.agent_num, 1)
+
+        self.car_linear_velocities = car.get_linear_velocities()[:, 0:2]
+        car_linear_velocities = self.car_linear_velocities.unsqueeze(1).repeat(1, self.agent_num, 1)
+
         # only need x,y axis
         jetbot_linear_velocities = jetbot_view.get_linear_velocities()[:, 0:2]
         jetbot_linear_velocities = jetbot_linear_velocities.reshape(self.env_num, self.agent_num, 2)
@@ -148,18 +157,18 @@ class EnvCore(object):
         jetbot_position = jetbot_position[:, 0:2]
         jetbot_position = jetbot_position.reshape(self.env_num, self.agent_num, 2)
         jetbot_position.sub_(self.init_envs_positions[:, 0:2].unsqueeze(1))
+        rpos_car_jetbot_norm = normalized(jetbot_position - positions[:, 0:2].unsqueeze(1), dim=2)
+
         # only need z axis
         jetbot_orientation = jetbot_orientation[:, 3]
         jetbot_orientation = jetbot_orientation.reshape(self.env_num, self.agent_num, 1)
 
-        dest_position = torch.unsqueeze(self.target_pos, 1).repeat(1, self.agent_num, 1)
-
         observations = torch.cat(
             (
-                car_position - dest_position,
+                rpos_car_dest_norm,
+                car_linear_velocities,
+                rpos_car_jetbot_norm,
                 jetbot_linear_velocities,
-                jetbot_angular_velocities,
-                jetbot_position - dest_position,
                 jetbot_orientation
             ),
             dim=2
@@ -168,9 +177,10 @@ class EnvCore(object):
         return observations
     
     def set_actions(self, actions):
+        actions = np.tanh(actions) * 5
         actions = torch.from_numpy(actions)
         actions = actions.reshape(self.env_num, -1)
-        revolution_joint_indices = torch.arange(4, 12)
+        revolution_joint_indices = torch.arange(self.agent_num, self.agent_num * 3)
         self.car_view.set_joint_velocities(
             velocities=actions, 
             joint_indices=revolution_joint_indices  # revoluted joint indices
@@ -212,9 +222,21 @@ class EnvCore(object):
         self.world.step()
     
     def get_random_positions(self, indices):
-        pos = self.init_pos_dist.sample((len(indices),))
+        # pos = self.init_pos_dist.sample((len(indices),))
+        # pos += self.init_envs_positions[indices]
+        radius = 2
+        theta = 2 * torch.pi * torch.rand(len(indices), device=self.device)
+        x = radius * torch.cos(theta)
+        y = radius * torch.sin(theta)
+        z = torch.zeros(size=(len(indices),), device=self.device)
+        pos = torch.stack((x, y, z), dim=1)
         pos += self.init_envs_positions[indices]
         return pos
     
     def get_world_poses(self, clone: bool=True) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.car_view.get_world_poses(clone=clone)
+
+
+def normalized(v: torch.tensor, dim=1):
+    normalized = v / torch.norm(v, dim=dim, keepdim=True)
+    return normalized
