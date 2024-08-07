@@ -64,7 +64,7 @@ def get_world():
 
 def set_up_new_scene(env_num=1, bot_num=4):
     world = get_world()
-    jetbot_asset_path = os.path.join(ASSET_PATH, "jetbot_trim.usd")
+    jetbot_asset_path = os.path.join(ASSET_PATH, "jetbot_with_shell.usd")
     scene = world.scene
     scene.clear(True)
 
@@ -79,10 +79,7 @@ def set_up_new_scene(env_num=1, bot_num=4):
         # translation=translation,
     )
 
-    if bot_num == 4:
-        payload_scale = (0.75, 0.5, 0.001)
-    elif bot_num == 6:
-        payload_scale = (1.0, 0.5, 0.001)
+    payload_scale = (0.6, 0.4, 0.001)
     payload = prim_utils.create_prim(
         prim_path=f"{prim_path}/payload",
         prim_type="Cube",
@@ -106,19 +103,19 @@ def set_up_new_scene(env_num=1, bot_num=4):
 
     if bot_num == 4:
         drone_translations = torch.tensor([
-            [0.75, 0.5, 0],
-            [0.75, -0.5, 0],
-            [-0.75, -0.5, 0],
-            [-0.75, 0.5, 0],
+            [0.6, 0.4, 0],
+            [0.6, -0.4, 0],
+            [-0.6, 0.4, 0],
+            [-0.6, -0.4, 0],
         ])
     elif bot_num == 6:
         drone_translations = torch.tensor([
-            [1.0, 0.5, 0],
-            [1.0, -0.5, 0],
-            [0.0, 0.5, 0],
-            [0.0, -0.5, 0],
-            [-1.0, -0.5, 0],
-            [-1.0, 0.5, 0],
+            [0.6, 0.4, 0],
+            [0.6, -0.4, 0],
+            [0.0, 0.4, 0],
+            [0.0, -0.4, 0],
+            [-0.6, 0.4, 0],
+            [-0.6, -0.4, 0],
         ])
 
     for i in range(bot_num):

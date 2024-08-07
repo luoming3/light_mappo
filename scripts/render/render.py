@@ -72,7 +72,6 @@ def main(args):
 
     assert all_args.use_render, ("u need to set use_render be True")
     assert not (all_args.model_dir is None or all_args.model_dir == ""), ("set model_dir first")
-    assert all_args.n_render_rollout_threads==1, ("only support to use 1 env to render.")
     
     # cuda
     if all_args.cuda and torch.cuda.is_available():
@@ -116,8 +115,8 @@ def main(args):
     simulation_app = init_simulation_app(all_args.isaac_sim_headless)
     from envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
 
-    # set_up_scene(all_args.n_rollout_threads)
-    set_up_scene(env_num=all_args.n_render_rollout_threads)
+    # set_up_scene(all_args.n_render_rollout_threads)
+    set_up_new_scene(env_num=all_args.n_render_rollout_threads, bot_num=all_args.num_agents)
 
     # env init
     envs = make_render_env(all_args)

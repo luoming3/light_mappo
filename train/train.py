@@ -169,8 +169,8 @@ def main(args):
     simulation_app = init_simulation_app(all_args.isaac_sim_headless)
     from envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
 
-    set_up_scene(all_args.n_rollout_threads)
-    # set_up_new_scene(all_args.n_rollout_threads, all_args.num_agents)
+    # set_up_scene(all_args.n_rollout_threads)
+    set_up_new_scene(all_args.n_rollout_threads, all_args.num_agents)
 
     # env init
     envs = make_train_env(all_args)
