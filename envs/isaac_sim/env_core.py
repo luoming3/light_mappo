@@ -58,9 +58,10 @@ class EnvCore(object):
             indices = self.env_indices
 
         self.car_position = self.get_random_positions(indices)
+        orientations = self.get_random_orientation(indices)
 
         # reset cars' position and velocity
-        self._reset_idx(positions=self.car_position, orientations=None, indices=indices)
+        self._reset_idx(positions=self.car_position, orientations=orientations, indices=indices)
 
         # observations, shape is (env_num, agent_num, obs_dim)
         observations = self.get_observations()
@@ -212,7 +213,7 @@ class EnvCore(object):
         default_gains_kps = self.car_view._default_kps[indices]
         default_gains_kds = self.car_view._default_kds[indices]
 
-        self.car_view.set_world_poses(positions, default_orientations, indices)
+        self.car_view.set_world_poses(positions, orientations, indices)
         self.car_view.set_joint_positions(positions=default_joints_positions, indices=indices)
         self.car_view.set_joint_velocities(velocities=default_joints_velocities, indices=indices)
         self.car_view.set_joint_efforts(efforts=default_joints_efforts, indices=indices)
@@ -236,6 +237,12 @@ class EnvCore(object):
     def get_world_poses(self, clone: bool=True) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.car_view.get_world_poses(clone=clone)
 
+    def get_random_orientation(self, indices):
+        ori_z = 360 * torch.rand(size=(len(indices), 1), device=self.device) - 180
+        ori_other = torch.tensor([1, 0, 0], dtype=torch.float32, device=self.device)
+        ori_other = ori_other.repeat(len(indices), 1)
+        orientation = torch.cat((ori_other, ori_z), dim=1)
+        return orientation
 
 def normalized(v: torch.tensor, dim=1):
     normalized = v / torch.norm(v, dim=dim, keepdim=True)
