@@ -18,7 +18,8 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from envs.env_2d import map, plotting, Astar  # noqa: E402
-from envs.isaac_sim.utils.scene import get_world, set_up_scene
+from envs.isaac_sim.utils.scene import get_world
+from utils.util import euler_to_quaternion
 
 
 class EnvCore(object):
@@ -51,6 +52,10 @@ class EnvCore(object):
         self.init_pos_dist = D.Uniform(
             torch.tensor([-2, -2, 0], dtype=torch.float32, device=self.device),
             torch.tensor([2, 2, 0.0001], dtype=torch.float32, device=self.device)
+        )
+        self.init_rpy_dist = D.Uniform(
+            torch.tensor([0., 0., -1.], dtype=torch.float32, device=self.device) * torch.pi,
+            torch.tensor([1e-8, 1e-8, 1.], dtype=torch.float32, device=self.device) * torch.pi
         )
 
     def reset(self, indices=[]):
@@ -238,11 +243,9 @@ class EnvCore(object):
         return self.car_view.get_world_poses(clone=clone)
 
     def get_random_orientation(self, indices):
-        ori_z = 360 * torch.rand(size=(len(indices), 1), device=self.device) - 180
-        ori_other = torch.tensor([1, 0, 0], dtype=torch.float32, device=self.device)
-        ori_other = ori_other.repeat(len(indices), 1)
-        orientation = torch.cat((ori_other, ori_z), dim=1)
-        return orientation
+        random_rpy = self.init_rpy_dist.sample((len(indices),))
+        random_ori = euler_to_quaternion(random_rpy)
+        return random_ori
 
 def normalized(v: torch.tensor, dim=1):
     normalized = v / torch.norm(v, dim=dim, keepdim=True)
