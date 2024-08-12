@@ -152,20 +152,20 @@ class EnvCore(object):
         car_linear_velocities = self.car_linear_velocities.unsqueeze(1).repeat(1, self.agent_num, 1)
 
         # only need x,y axis
-        jetbot_linear_velocities = jetbot_view.get_linear_velocities()[:, 0:2]
-        jetbot_linear_velocities = jetbot_linear_velocities.reshape(self.env_num, self.agent_num, 2)
+        # jetbot_linear_velocities = jetbot_view.get_linear_velocities()[:, 0:2]
+        # jetbot_linear_velocities = jetbot_linear_velocities.reshape(self.env_num, self.agent_num, 2)
         # only need z axis
-        jetbot_angular_velocities = jetbot_view.get_angular_velocities()[:, 2]
-        jetbot_angular_velocities = jetbot_angular_velocities.reshape(self.env_num, self.agent_num, 1)
+        # jetbot_angular_velocities = jetbot_view.get_angular_velocities()[:, 2]
+        # jetbot_angular_velocities = jetbot_angular_velocities.reshape(self.env_num, self.agent_num, 1)
 
         jetbot_position, jetbot_orientation = jetbot_view.get_world_poses()
         # only need x,y axis
-        jetbot_position = jetbot_position[:, 0:2]
-        jetbot_position = jetbot_position.reshape(self.env_num, self.agent_num, 2)
-        jetbot_position.sub_(self.init_envs_positions[:, 0:2].unsqueeze(1))
-        rpos_car_jetbot_norm = normalized(jetbot_position - positions[:, 0:2].unsqueeze(1), dim=2)
+        # jetbot_position = jetbot_position[:, 0:2]
+        # jetbot_position = jetbot_position.reshape(self.env_num, self.agent_num, 2)
+        # jetbot_position.sub_(self.init_envs_positions[:, 0:2].unsqueeze(1))
+        # rpos_car_jetbot_norm = normalized(jetbot_position - positions[:, 0:2].unsqueeze(1), dim=2)
 
-        # only need z axis
+        # only need w and z axis
         jetbot_orientation = jetbot_orientation[:, [0, 3]]
         jetbot_orientation = jetbot_orientation.reshape(self.env_num, self.agent_num, 2)
 
