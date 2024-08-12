@@ -19,7 +19,7 @@ sys.path.append(parent_dir)
 
 from envs.env_2d import map, plotting, Astar  # noqa: E402
 from envs.isaac_sim.utils.scene import get_world
-from utils.util import euler_to_quaternion
+from utils.util import euler_to_quaternion, quaternion_to_euler
 
 
 class EnvCore(object):
@@ -211,7 +211,8 @@ class EnvCore(object):
         """
         Reset the articulations to their default states
         """
-        default_orientations = self.car_view._default_state.orientations[indices]
+        if orientations is None:
+            orientations = self.car_view._default_state.orientations[indices]
         default_joints_positions = self.car_view._default_joints_state.positions[indices]
         default_joints_velocities = self.car_view._default_joints_state.velocities[indices]
         default_joints_efforts = self.car_view._default_joints_state.efforts[indices]
