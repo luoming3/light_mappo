@@ -32,11 +32,7 @@ class EnvCore(object):
         self.jetbot_view = self.world.scene.get_object("jetbot_chassis_view")
 
         self.agent_num = all_args.num_agents  # number of agent
-<<<<<<< HEAD
-        self.obs_dim = 5  # observation dimension of agents
-=======
-        self.obs_dim = 10  # observation dimension of agents
->>>>>>> origin/isaac-sim-maxbot-add-ori-obs
+        self.obs_dim = 6  # observation dimension of agents
         self.action_dim = 3  # set the action dimension of agents
         self.env_indices = [i for i in range(self.env_num)]
         self.action_space = spaces.Box(
