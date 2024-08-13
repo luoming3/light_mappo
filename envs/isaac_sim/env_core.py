@@ -32,7 +32,7 @@ class EnvCore(object):
         self.jetbot_view = self.world.scene.get_object("jetbot_chassis_view")
 
         self.agent_num = all_args.num_agents  # number of agent
-        self.obs_dim = 6  # observation dimension of agents
+        self.obs_dim = 5  # observation dimension of agents
         self.action_dim = 3  # set the action dimension of agents
         self.env_indices = [i for i in range(self.env_num)]
         self.action_space = spaces.Box(
@@ -159,6 +159,7 @@ class EnvCore(object):
         # jetbot_angular_velocities = jetbot_angular_velocities.reshape(self.env_num, self.agent_num, 1)
 
         jetbot_position, jetbot_orientation = jetbot_view.get_world_poses()
+        jetbot_orientation = quaternion_to_euler(jetbot_orientation)
         # only need x,y axis
         # jetbot_position = jetbot_position[:, 0:2]
         # jetbot_position = jetbot_position.reshape(self.env_num, self.agent_num, 2)
@@ -166,8 +167,8 @@ class EnvCore(object):
         # rpos_car_jetbot_norm = normalized(jetbot_position - positions[:, 0:2].unsqueeze(1), dim=2)
 
         # only need w and z axis
-        jetbot_orientation = jetbot_orientation[:, [0, 3]]
-        jetbot_orientation = jetbot_orientation.reshape(self.env_num, self.agent_num, 2)
+        jetbot_orientation = jetbot_orientation[:, 2]
+        jetbot_orientation = jetbot_orientation.reshape(self.env_num, self.agent_num, 1)
 
         observations = torch.cat(
             (
