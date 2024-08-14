@@ -18,7 +18,8 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from envs.env_2d import map, plotting, Astar  # noqa: E402
-from envs.isaac_sim.utils.scene import get_world, set_up_scene
+from envs.isaac_sim.utils.scene import get_world
+from utils.util import euler_to_quaternion, quaternion_to_euler
 
 
 class EnvCore(object):
@@ -31,7 +32,7 @@ class EnvCore(object):
         self.jetbot_view = self.world.scene.get_object("jetbot_chassis_view")
 
         self.agent_num = all_args.num_agents  # number of agent
-        self.obs_dim = 9  # observation dimension of agents
+        self.obs_dim = 5  # observation dimension of agents
         self.action_dim = 3  # set the action dimension of agents
         self.env_indices = [i for i in range(self.env_num)]
         self.action_space = spaces.Box(
@@ -52,15 +53,20 @@ class EnvCore(object):
             torch.tensor([-2, -2, 0], dtype=torch.float32, device=self.device),
             torch.tensor([2, 2, 0.0001], dtype=torch.float32, device=self.device)
         )
+        self.init_rpy_dist = D.Uniform(
+            torch.tensor([0., 0., -1.], dtype=torch.float32, device=self.device) * torch.pi,
+            torch.tensor([1e-8, 1e-8, 1.], dtype=torch.float32, device=self.device) * torch.pi
+        )
 
     def reset(self, indices=[]):
         if len(indices) == 0:
             indices = self.env_indices
 
         self.car_position = self.get_random_positions(indices)
+        orientations = self.get_random_orientation(indices)
 
         # reset cars' position and velocity
-        self._reset_idx(positions=self.car_position, orientations=None, indices=indices)
+        self._reset_idx(positions=self.car_position, orientations=orientations, indices=indices)
 
         # observations, shape is (env_num, agent_num, obs_dim)
         observations = self.get_observations()
@@ -146,29 +152,28 @@ class EnvCore(object):
         car_linear_velocities = self.car_linear_velocities.unsqueeze(1).repeat(1, self.agent_num, 1)
 
         # only need x,y axis
-        jetbot_linear_velocities = jetbot_view.get_linear_velocities()[:, 0:2]
-        jetbot_linear_velocities = jetbot_linear_velocities.reshape(self.env_num, self.agent_num, 2)
+        # jetbot_linear_velocities = jetbot_view.get_linear_velocities()[:, 0:2]
+        # jetbot_linear_velocities = jetbot_linear_velocities.reshape(self.env_num, self.agent_num, 2)
         # only need z axis
-        jetbot_angular_velocities = jetbot_view.get_angular_velocities()[:, 2]
-        jetbot_angular_velocities = jetbot_angular_velocities.reshape(self.env_num, self.agent_num, 1)
+        # jetbot_angular_velocities = jetbot_view.get_angular_velocities()[:, 2]
+        # jetbot_angular_velocities = jetbot_angular_velocities.reshape(self.env_num, self.agent_num, 1)
 
         jetbot_position, jetbot_orientation = jetbot_view.get_world_poses()
+        jetbot_orientation = quaternion_to_euler(jetbot_orientation)
         # only need x,y axis
-        jetbot_position = jetbot_position[:, 0:2]
-        jetbot_position = jetbot_position.reshape(self.env_num, self.agent_num, 2)
-        jetbot_position.sub_(self.init_envs_positions[:, 0:2].unsqueeze(1))
-        rpos_car_jetbot_norm = normalized(jetbot_position - positions[:, 0:2].unsqueeze(1), dim=2)
+        # jetbot_position = jetbot_position[:, 0:2]
+        # jetbot_position = jetbot_position.reshape(self.env_num, self.agent_num, 2)
+        # jetbot_position.sub_(self.init_envs_positions[:, 0:2].unsqueeze(1))
+        # rpos_car_jetbot_norm = normalized(jetbot_position - positions[:, 0:2].unsqueeze(1), dim=2)
 
-        # only need z axis
-        jetbot_orientation = jetbot_orientation[:, 3]
+        # only need w and z axis
+        jetbot_orientation = jetbot_orientation[:, 2]
         jetbot_orientation = jetbot_orientation.reshape(self.env_num, self.agent_num, 1)
 
         observations = torch.cat(
             (
                 rpos_car_dest_norm,
                 car_linear_velocities,
-                rpos_car_jetbot_norm,
-                jetbot_linear_velocities,
                 jetbot_orientation
             ),
             dim=2
@@ -205,14 +210,15 @@ class EnvCore(object):
         """
         Reset the articulations to their default states
         """
-        default_orientations = self.car_view._default_state.orientations[indices]
+        if orientations is None:
+            orientations = self.car_view._default_state.orientations[indices]
         default_joints_positions = self.car_view._default_joints_state.positions[indices]
         default_joints_velocities = self.car_view._default_joints_state.velocities[indices]
         default_joints_efforts = self.car_view._default_joints_state.efforts[indices]
         default_gains_kps = self.car_view._default_kps[indices]
         default_gains_kds = self.car_view._default_kds[indices]
 
-        self.car_view.set_world_poses(positions, default_orientations, indices)
+        self.car_view.set_world_poses(positions, orientations, indices)
         self.car_view.set_joint_positions(positions=default_joints_positions, indices=indices)
         self.car_view.set_joint_velocities(velocities=default_joints_velocities, indices=indices)
         self.car_view.set_joint_efforts(efforts=default_joints_efforts, indices=indices)
@@ -236,6 +242,10 @@ class EnvCore(object):
     def get_world_poses(self, clone: bool=True) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.car_view.get_world_poses(clone=clone)
 
+    def get_random_orientation(self, indices):
+        random_rpy = self.init_rpy_dist.sample((len(indices),))
+        random_ori = euler_to_quaternion(random_rpy)
+        return random_ori
 
 def normalized(v: torch.tensor, dim=1):
     normalized = v / torch.norm(v, dim=dim, keepdim=True)
