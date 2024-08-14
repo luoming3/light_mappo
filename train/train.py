@@ -163,6 +163,8 @@ def main(args):
     torch.manual_seed(all_args.seed)
     torch.cuda.manual_seed_all(all_args.seed)
     np.random.seed(all_args.seed)
+
+    print(f"run_dir: {run_dir}")
     pprint.pprint(vars(all_args))
 
     # create SimulationApp for import isaac sim modules
@@ -185,8 +187,6 @@ def main(args):
         "device": device,
         "run_dir": run_dir,
     }
-
-    pprint.pprint(config)
 
     # run experiments
     if all_args.share_policy:
