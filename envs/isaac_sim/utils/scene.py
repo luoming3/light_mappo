@@ -29,6 +29,16 @@ sys.path.append(parent_dir)
 from envs.isaac_sim.utils.config import RobotCfg
 from envs.isaac_sim import ASSET_PATH
 
+if os.environ.get("OMNI_SERVER"):
+    '''
+    If us eremote nucleus, please make sure the nucleus app is sharing.
+    '''
+    import carb
+    if not os.environ.get("OMNI_USER"):
+        os.environ["OMNI_USER"] = "user"
+    if not os.environ.get("OMNI_PASS"):
+        os.environ["OMNI_PASS"] = "user"
+    carb.settings.get_settings().set("/persistent/isaac/asset_root/default", os.environ.get("OMNI_SERVER"))
 
 cfg_cls = RobotCfg
 cfg = cfg_cls()
