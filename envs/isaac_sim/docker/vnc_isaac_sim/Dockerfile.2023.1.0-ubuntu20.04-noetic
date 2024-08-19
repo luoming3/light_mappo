@@ -22,7 +22,8 @@ RUN apt update && apt install -y \
     git \
     lsb-release \
     locales \
-    bash-completion
+    bash-completion \
+    firefox
 
 # Setup VNC server
 RUN mkdir -p /root/.vnc \
