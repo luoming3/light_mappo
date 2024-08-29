@@ -92,7 +92,7 @@ class EnvCore(object):
 
         self.set_actions(actions)
         self.world.step(not self.all_args.isaac_sim_headless)
-        env_obs = self.get_observations()
+        env_obs, position = self.get_observations()
 
         current_car_position = self.get_world_poses()[0][:, 0:2]
         current_car_position.sub_(self.init_envs_positions[:, 0:2])
