@@ -72,7 +72,7 @@ class EnvCore(object):
         self._reset_idx(positions=self.car_position, orientations=orientations, indices=indices)
 
         # observations, shape is (env_num, agent_num, obs_dim)
-        observations, _ = self.get_observations()
+        observations = self.get_observations()
 
         self.steps[indices] = 0
 
@@ -92,7 +92,7 @@ class EnvCore(object):
 
         self.set_actions(actions)
         self.world.step(not self.all_args.isaac_sim_headless)
-        env_obs, position = self.get_observations()
+        env_obs = self.get_observations()
 
         current_car_position = self.get_world_poses()[0][:, 0:2]
         current_car_position.sub_(self.init_envs_positions[:, 0:2])
@@ -120,7 +120,7 @@ class EnvCore(object):
 
         self.steps[arrival_indices] = 0
         angle = 2 * math.pi * random.random()
-        next_point = torch.tensor([math.cos(angle), math.sin(angle)], device=self.device) + position[arrival_indices]
+        next_point = torch.tensor([math.cos(angle), math.sin(angle)], device=self.device) + self.positions[arrival_indices]
         next_point = torch.where(next_point > 4, 8 - next_point, next_point)
         next_point = torch.where(next_point < -4, -8 - next_point, next_point)
         self.target_pos[arrival_indices] = next_point
@@ -156,10 +156,11 @@ class EnvCore(object):
         car = self.car_view
         jetbot_view = self.jetbot_view
 
-        positions, _ = self.get_world_poses()
-        positions.sub_(self.init_envs_positions)
+        self.positions, _ = self.get_world_poses()
+        self.positions.sub_(self.init_envs_positions)
+        self.positions = self.positions[:, 0:2]
         # only need x,y axis
-        self.rpos_car_dest = self.target_pos - positions[:, 0:2]
+        self.rpos_car_dest = self.target_pos - self.positions
         rpos_car_dest_norm = normalized(self.rpos_car_dest)
         rpos_car_dest_norm = rpos_car_dest_norm.unsqueeze(1).repeat(1, self.agent_num, 1)
 
@@ -182,6 +183,9 @@ class EnvCore(object):
         # rpos_car_jetbot_norm = normalized(jetbot_position - positions[:, 0:2].unsqueeze(1), dim=2)
 
         # only need w and z axis
+        jetbot_orientation = jetbot_orientation[:, 2]
+        jetbot_orientation = jetbot_orientation.reshape(self.env_num, self.agent_num, 1)
+
         joint_forces = self.car_view.get_measured_joint_forces()[:,1:5,:2]
         self.y_joint_force = joint_forces[:,:,1]
         self.x_joint_force = joint_forces[:,:,0]
@@ -198,7 +202,7 @@ class EnvCore(object):
             dim=2
         )
 
-        return observations, positions[:, 0:2]
+        return observations
     
     def set_actions(self, actions):
         actions = np.tanh(actions) * 5

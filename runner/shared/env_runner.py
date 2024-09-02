@@ -284,7 +284,8 @@ class EnvRunner(Runner):
     def render(self):
         """Visualize the env."""
         envs = self.envs
-
+        steps = []
+        success = 0
         for episode in range(self.all_args.render_episodes):
             obs = envs.reset()
             all_frames = []
@@ -358,13 +359,21 @@ class EnvRunner(Runner):
                 
                 if np.any(dones):
                     all_frames = all_frames[:-1]
+                    print(step)
                     break
-            
+
+            steps.append(step)
+            if step < 2000:
+                success += 1
             average_episode_rewards = np.mean(np.sum(np.array(episode_rewards), axis=0))
             print("average episode rewards is: " + str(average_episode_rewards))
+
 
             if self.all_args.save_gifs:
                 imageio.mimsave(str(self.gif_dir) + '/' + str(episode) + '_' + '{:.2f}'.format(average_episode_rewards) + '.gif',
                                 all_frames,
                                 duration=self.all_args.ifi,
                                 loop=0)
+                
+        print("Overall average step is: " + str(sum(steps)/len(steps)))
+        print("Success Rate is: " + str(success/self.all_args.render_episodes))
