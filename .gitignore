@@ -5,3 +5,8 @@ results
 ## git
 !.gitignore
 !.gitkeep
+
+## package
+build/
+dist/
+*.egg-info/
