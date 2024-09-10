@@ -1,9 +1,6 @@
 import numpy as np
 from gym import spaces
 
-from omni.isaac.core.articulations import ArticulationView
-from omni.isaac.core.prims import RigidPrimView
-
 import torch
 import torch.distributions as D
 from typing import Optional, Union, Tuple

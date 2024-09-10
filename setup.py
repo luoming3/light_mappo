@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # 读取 requirements.txt 文件
-with open('requirements_3_10.txt') as f:
+with open('requirements_deploy.txt') as f:
     requirements = f.read().splitlines()
 
 setup(
