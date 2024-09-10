@@ -28,6 +28,7 @@ class EnvRunner(Runner):
 
         start = time.time()
         episodes = int(self.num_env_steps) // self.episode_length // self.n_rollout_threads
+        save_episode_interval = episodes // self.num_save_model
 
         for episode in range(episodes):
             if self.use_linear_lr_decay:
@@ -72,6 +73,10 @@ class EnvRunner(Runner):
             # save model
             if episode % self.save_interval == 0 or episode == episodes - 1:
                 self.save()
+
+            # save model at regular intervals for rendering test
+            if episode % save_episode_interval == 0:
+                self.save_for_test(total_num_steps)
 
             # log information
             if episode % self.log_interval == 0:

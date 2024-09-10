@@ -148,6 +148,8 @@ def get_config():
             the number of episodes to render a given env
         --ifi <float>
             the play interval of each rendered image in saved video.
+        --num_save_model <int>
+            number of save models during for rendering test.
 
     Pretrained parameters:
         --model_dir <str>
@@ -491,6 +493,12 @@ def get_config():
         type=float,
         default=0.1,
         help="the play interval of each rendered image in saved video.",
+    )
+    parser.add_argument(
+        "--num_save_model",
+        type=int,
+        default=12,
+        help="number of save models during for rendering test.",
     )
 
     # pretrained parameters
