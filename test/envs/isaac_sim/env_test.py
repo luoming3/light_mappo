@@ -1,6 +1,6 @@
 import unittest
 
-from envs.isaac_sim import init_simulation_app
+from light_mappo.envs.isaac_sim import init_simulation_app
 import numpy as np
 
 env_num = 2
@@ -14,12 +14,12 @@ class EnvCoreCase(unittest.TestCase):
         self.simulation_app.close()
 
     def test_setup_scene(self):
-        from envs.isaac_sim.utils import scene
+        from light_mappo.envs.isaac_sim.utils import scene
         
         scene.set_up_scene(env_num)
 
     def test_step(self):
-        from envs.isaac_sim.env_core import EnvCore
+        from light_mappo.envs.isaac_sim.env_core import EnvCore
         
         env = EnvCore()
         for i in range(3):
