@@ -102,12 +102,18 @@ In the train.py file, choose to comment out continuous environment or discrete e
 
 ### train
 
-1. modify *config.py* to adjust args
-2. `python train/train.py` (under the project directory)
+1. modify *scripts/train.sh* to adjust args
+2. `bash scripts/train.sh` (under the project directory)
 
 ### render
 
-- modify *scripts/render.sh*, select your model path
-- `bash scripts/render.sh` (under the project directory)
-    - get the gif in *scrips/result/run/gif*
+1. modify *scripts/render.sh*, select your model path
+2. `bash scripts/render.sh` (under the project directory)
 
+## deploy
+
+- package project
+    - `python setup.py bdist_wheel`
+- deploy project
+    - scp `dist/*.whl` to remote server
+    - install project: `pip install *.whl`
