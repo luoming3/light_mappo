@@ -26,8 +26,8 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 # Append the parent directory to sys.path, otherwise the following import will fail
 sys.path.append(parent_dir)
 
-from envs.isaac_sim.utils.config import RobotCfg
-from envs.isaac_sim import ASSET_PATH
+from light_mappo.envs.isaac_sim.utils.config import RobotCfg
+from light_mappo.envs.isaac_sim import ASSET_PATH
 
 if os.environ.get("OMNI_SERVER"):
     '''

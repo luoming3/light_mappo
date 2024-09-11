@@ -2,7 +2,10 @@ import os
 import numpy as np
 import torch
 from tensorboardX import SummaryWriter
-from utils.shared_buffer import SharedReplayBuffer
+from light_mappo.utils.shared_buffer import SharedReplayBuffer
+from light_mappo.algorithms.algorithm.r_mappo import RMAPPO as TrainAlgo
+from light_mappo.algorithms.algorithm.rMAPPOPolicy import RMAPPOPolicy as Policy
+
 
 def _t2n(x):
     """Convert torch tensor to a numpy array."""
@@ -59,9 +62,6 @@ class Runner(object):
         self.gif_dir = str(self.run_dir / "gifs")
         if not os.path.exists(self.gif_dir):
             os.makedirs(self.gif_dir)
-
-        from algorithms.algorithm.r_mappo import RMAPPO as TrainAlgo
-        from algorithms.algorithm.rMAPPOPolicy import RMAPPOPolicy as Policy
 
         share_observation_space = self.envs.share_observation_space[0] if self.use_centralized_V else self.envs.observation_space[0]
 

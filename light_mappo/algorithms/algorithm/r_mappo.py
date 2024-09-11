@@ -8,9 +8,9 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from utils.util import get_gard_norm, huber_loss, mse_loss
-from utils.valuenorm import ValueNorm
-from algorithms.utils.util import check
+from light_mappo.utils.util import get_gard_norm, huber_loss, mse_loss
+from light_mappo.utils.valuenorm import ValueNorm
+from light_mappo.algorithms.utils.util import check
 
 
 class RMAPPO():

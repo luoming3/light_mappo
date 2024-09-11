@@ -2,7 +2,7 @@ import gym
 from gym import spaces
 import numpy as np
 # from envs.env_2d.env_core import EnvCore
-from envs.isaac_sim.env_core import EnvCore
+from light_mappo.envs.isaac_sim.env_core import EnvCore
 
 
 class ContinuousActionEnv(object):

@@ -9,8 +9,9 @@ Modified from OpenAI Baselines code to work with multi-agent envs
 import numpy as np
 from abc import ABC, abstractmethod
 from multiprocessing import Process, Pipe
-from utils.util import _t2n
 import torch
+
+from light_mappo.utils.util import _t2n
 
 
 class CloudpickleWrapper(object):

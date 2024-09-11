@@ -13,9 +13,9 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 # Append the parent directory to sys.path, otherwise the following import will fail
 sys.path.append(parent_dir)
 
-from envs.env_2d import map, plotting, Astar  # noqa: E402
-from envs.env_2d.car_racing import CarRacing
-from utils.util import timethis
+from light_mappo.envs.env_2d import map, plotting, Astar  # noqa: E402
+from light_mappo.envs.env_2d.car_racing import CarRacing
+from light_mappo.utils.util import timethis
 
 
 class EnvCore(object):

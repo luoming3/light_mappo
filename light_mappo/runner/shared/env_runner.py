@@ -8,9 +8,8 @@
 import time
 import numpy as np
 import torch
-from runner.shared.base_runner import Runner
-
 import imageio
+from light_mappo.runner.shared.base_runner import Runner
 
 
 def _t2n(x):
