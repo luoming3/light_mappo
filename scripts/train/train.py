@@ -22,10 +22,10 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 # Append the parent directory to sys.path, otherwise the following import will fail
 sys.path.append(parent_dir)
 
-from config import get_config
-from envs.env_wrappers import DummyVecEnv, SubprocVecEnv, IsaacSimEnv
+from light_mappo.config import get_config
+from light_mappo.envs.env_wrappers import DummyVecEnv, SubprocVecEnv, IsaacSimEnv
 
-from envs.isaac_sim import init_simulation_app
+from light_mappo.envs.isaac_sim import init_simulation_app
 
 """Train script for MPEs."""
 
@@ -36,7 +36,7 @@ def make_train_env(all_args):
             # TODO 注意注意，这里选择连续还是离散可以选择注释上面两行，或者下面两行。
             # TODO Important, here you can choose continuous or discrete action space by uncommenting the above two lines or the below two lines.
 
-            from envs.env_continuous import ContinuousActionEnv
+            from light_mappo.envs.env_continuous import ContinuousActionEnv
 
             env = ContinuousActionEnv(all_args, all_args.n_rollout_threads)
 
@@ -63,7 +63,7 @@ def make_eval_env(all_args):
         def init_env():
             # TODO 注意注意，这里选择连续还是离散可以选择注释上面两行，或者下面两行。
             # TODO Important, here you can choose continuous or discrete action space by uncommenting the above two lines or the below two lines.
-            from envs.env_continuous import ContinuousActionEnv
+            from light_mappo.envs.env_continuous import ContinuousActionEnv
 
             env = ContinuousActionEnv()
             # from envs.env_discrete import DiscreteActionEnv
@@ -169,7 +169,7 @@ def main(args):
 
     # create SimulationApp for import isaac sim modules
     simulation_app = init_simulation_app(all_args.isaac_sim_headless)
-    from envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
+    from light_mappo.envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
 
     # set_up_scene(all_args.n_rollout_threads)
     set_up_new_scene(all_args.n_rollout_threads, all_args.num_agents)
@@ -190,9 +190,9 @@ def main(args):
 
     # run experiments
     if all_args.share_policy:
-        from runner.shared.env_runner import EnvRunner as Runner
+        from light_mappo.runner.shared.env_runner import EnvRunner as Runner
     else:
-        from runner.separated.env_runner import EnvRunner as Runner
+        from light_mappo.runner.separated.env_runner import EnvRunner as Runner
 
     runner = Runner(config)
     runner.run()

@@ -13,10 +13,10 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 # Append the parent directory to sys.path, otherwise the following import will fail
 sys.path.append(parent_dir)
 
-from config import get_config  # noqa: E402
-from envs.env_wrappers import DummyVecEnv, IsaacSimEnv  # noqa: E402
+from light_mappo.config import get_config  # noqa: E402
+from light_mappo.envs.env_wrappers import DummyVecEnv, IsaacSimEnv  # noqa: E402
 
-from envs.isaac_sim import init_simulation_app
+from light_mappo.envs.isaac_sim import init_simulation_app
 
 def make_render_env(all_args):
     def get_env_fn(rank):
@@ -24,7 +24,7 @@ def make_render_env(all_args):
             # TODO 注意注意，这里选择连续还是离散可以选择注释上面两行，或者下面两行。
             # TODO Important, here you can choose continuous or discrete action space by uncommenting the above two lines or the below two lines.
 
-            from envs.env_continuous import ContinuousActionEnv
+            from light_mappo.envs.env_continuous import ContinuousActionEnv
 
             env = ContinuousActionEnv(all_args, all_args.n_render_rollout_threads)
 
