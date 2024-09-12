@@ -381,3 +381,11 @@ class EnvRunner(Runner):
         suc_rate = len([num for num in step_list if num < (self.all_args.episode_length - 1)]) / len(step_list)
         print("average step: " + str(avg_step))
         print("success rate: " + str(suc_rate))
+
+        # 指定要追加的文件名
+        file_name = '/'.join(self.all_args.model_dir.split('/')[:-2]) + '/render_result.log'
+
+        # 以追加模式打开文件
+        with open(file_name, 'a') as file:
+            # 将数据写入文件, 每条数据占一行
+            file.write(f'Model Directory: {self.all_args.model_dir}, Avg Step: {avg_step}, Success Rate: {suc_rate}\n')
