@@ -47,6 +47,14 @@ class EnvRunner(Runner):
 
                 # Obser reward and next obs
                 obs, rewards, dones, infos = self.envs.step(actions_env)
+                
+                reset_indices = []
+                for (i, done) in enumerate(dones):
+                    if torch.any(done):
+                        reset_indices.append(i)
+                        
+                if reset_indices:
+                    obs = self.env.reset(reset_indices)
 
                 data = (
                     obs,
@@ -313,6 +321,7 @@ class EnvRunner(Runner):
             masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
 
             episode_rewards = []
+            episode_dones = []
 
             for step in range(self.episode_length):
                 calc_start = time.time()
@@ -343,6 +352,7 @@ class EnvRunner(Runner):
                 # Obser reward and next obs
                 obs, rewards, dones, infos = envs.step(actions_env)
                 episode_rewards.append(rewards)
+                episode_dones.append(dones)
 
                 rnn_states[dones == True] = np.zeros(
                     ((dones == True).sum(), self.recurrent_N, self.hidden_size),
@@ -362,23 +372,37 @@ class EnvRunner(Runner):
                     else:
                         envs.render("human")
                 
-                if np.any(dones):
+                if np.all(dones):
                     all_frames = all_frames[:-1]
+                    print(step)
                     break
             
-            average_episode_rewards = np.mean(np.sum(np.array(episode_rewards), axis=0))
-            print("average episode rewards is: " + str(average_episode_rewards))
-            print("step: " + str(step))
-            step_list.append(step)
+            sub_episode_dones = np.split(np.array(episode_dones), self.n_render_rollout_threads, axis=1)
+            sub_episode_rewards = np.split(np.array(episode_rewards), self.n_render_rollout_threads, axis=1)
+            for index, value in enumerate(sub_episode_dones):
+                indices = np.where(value == True)
+                if indices[0].size == 0:
+                    step = self.all_args.episode_length - 1
+                else:
+                    step = indices[0][0]
+                average_episode_rewards = np.mean(np.sum(np.array(sub_episode_rewards[index][:step+1]), axis=0))
+                print("average episode rewards is: " + str(average_episode_rewards))
+                print("step: " + str(step))
+                step_list.append(step)
+            # average_episode_rewards = np.mean(np.sum(np.array(episode_rewards), axis=0))
+            # print("average episode rewards is: " + str(average_episode_rewards))
+            # print("step: " + str(step))
+            # step_list.append(step)
+
 
             if self.all_args.save_gifs:
                 imageio.mimsave(str(self.gif_dir) + '/' + str(episode) + '_' + '{:.2f}'.format(average_episode_rewards) + '.gif',
                                 all_frames,
                                 duration=self.all_args.ifi,
                                 loop=0)
-
-        avg_step = sum(step_list) / len(step_list)
         suc_rate = len([num for num in step_list if num < (self.all_args.episode_length - 1)]) / len(step_list)
+        step_list = np.array(step_list)
+        avg_step = sum(step_list[step_list < (self.all_args.episode_length - 1)]) / (len(step_list) * suc_rate)
         print("average step: " + str(avg_step))
         print("success rate: " + str(suc_rate))
 
