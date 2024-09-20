@@ -14,3 +14,4 @@ dist/
 ## docker image
 *.tar.gz
 *.pt
+*.tar
