@@ -7,7 +7,7 @@ CONTAINER_NAME=light_mappo
 
 run-container:
 	@docker run --init -it -d --name ${CONTAINER_NAME} \
-	-v ./models:/app/deploy/models \
+	-v $(shell pwd)/models:/app/deploy/models \
 	${IMAGE_NAME}:${IMAGE_TAG}
 
 remove-container:
@@ -15,3 +15,9 @@ remove-container:
 
 exec-container:
 	@docker exec -it ${CONTAINER_NAME} bash
+
+load-image:
+	@for i in $(shell ls image/*.gz); do \
+		docker load < $$i ; \
+	done
+	@echo "load image successfully"
