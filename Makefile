@@ -13,3 +13,6 @@ build-image:
 
 save-image:  # save docker image
 	docker save ${IMAGE_NAME}:${IMAGE_TAG} | gzip > deploy/image/${IMAGE_NAME}_${IMAGE_TAG}.tar.gz
+
+package:
+	@tar -cvf deploy.tar deploy
