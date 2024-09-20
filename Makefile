@@ -1,9 +1,9 @@
 help:  # list all targets
 	@grep ^[a-z] Makefile
 
-IMAGE_NAME=light_mappo
+IMAGE_NAME=mappo
 IMAGE_TAG=ros-noetic-focal
-CONTAINER_NAME=light_mappo
+CONTAINER_NAME=mappo
 
 run-all:
 	bash ./run_all.sh
