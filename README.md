@@ -1,8 +1,6 @@
-# light_mappo
+## 1. development
 
-## Installation
-
-### conda
+### 1.1. conda
 
 ```sh
 mkdir -p ~/miniconda3
@@ -12,7 +10,7 @@ rm -rf ~/miniconda3/miniconda.sh
 source ~/.bashrc && ~/miniconda3/bin/conda init bash
 ```
 
-### 2d environment
+### 1.2. 2d environment
 
 Simply download the code, create a Conda environment, and then run the code, adding packages as needed. Specific packages will be added later.
 
@@ -28,7 +26,7 @@ conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=11
  
 pip install -r requirements.txt
 ```
-### 3d environment
+### 1.3. 3d environment
 
 For isaac sim environment, the following command should be used.
 
@@ -52,68 +50,40 @@ cd path_to_light_mappo_folder
 pip install -r requirements_3_10.txt
 ```
 
-## Usage
-
-- The environment part is an empty implementation, and the implementation of the environment part in the light_mappo/envs/env_core.py file is: [Code] (https://github.com/tinyzqh/light_mappo/blob/main/envs/env_core.py)
-
-```python
-import numpy as np
-class EnvCore(object):
-    """
-    # Environment Agent
-    """
-    def __init__(self):
-        self.agent_num = 2 # set the number of agents(aircrafts), here set to two
-        self.obs_dim = 14 # set the observation dimension of agents
-        self.action_dim = 5 # set the action dimension of agents, here set to a five-dimensional
-
-    def reset(self):
-        """
-        # When self.agent_num is set to 2 agents, the return value is a list, and each list contains observation data of shape = (self.obs_dim,)
-        """
-        sub_agent_obs = []
-        for i in range(self.agent_num):
-            sub_obs = np.random.random(size=(14, ))
-            sub_agent_obs.append(sub_obs)
-        return sub_agent_obs
-
-    def step(self, actions):
-        """
-        # When self.agent_num is set to 2 agents, the input of actions is a two-dimensional list, and each list contains action data of shape = (self.action_dim,).
-        # By default, the input is a list containing two elements, because the action dimension is 5, so each element has a shape of (5,)
-        """
-        sub_agent_obs = []
-        sub_agent_reward = []
-        sub_agent_done = []
-        sub_agent_info = []
-        for i in range(self.agent_num):
-            sub_agent_obs.append(np.random.random(size=(14,)))
-            sub_agent_reward.append([np.random.rand()])
-            sub_agent_done.append(False)
-            sub_agent_info.append({})
-
-        return [sub_agent_obs, sub_agent_reward, sub_agent_done, sub_agent_info]
-```
-
-
-Just write this part of the code, and you can seamlessly connect with MAPPO. After env_core.py, two files, env_discrete.py and env_continuous.py, were separately extracted to encapsulate the action space and discrete action space. In elif self.continuous_action: in algorithms/utils/act.py, this judgment logic is also used to handle continuous action spaces. The # TODO here in runner/shared/env_runner.py is also used to handle continuous action spaces.
-
-In the train.py file, choose to comment out continuous environment or discrete environment to switch the demo environment.
-
-### train
+### 1.4. train
 
 1. modify *scripts/train.sh* to adjust args
 2. `bash scripts/train.sh` (under the project directory)
 
-### render
+### 1.5. render
 
 1. modify *scripts/render.sh*, select your model path
 2. `bash scripts/render.sh` (under the project directory)
 
-## deploy
+## 2. deployment
 
-- package project
-    - `python setup.py bdist_wheel`
-- deploy project
-    - scp `dist/*.whl` to remote server
-    - install project: `pip install *.whl`
+### 2.1. package
+
+1. build image
+    - `make build-image` (under project folder)
+2. save image
+    - `make save-image` (under project folder)
+3. copy **actor.pt** to `deploy/models` directory
+4. compression deploy
+    - `make package` (under project folder)
+5. scp the package `deploy.tar` to remote maxbot
+
+### 2.2. deployment
+
+1. create new directory
+    - `TAG=mappo-$(date +%Y%m%d)`
+    - `mkdir -p /home/ubuntu/${TAG}`
+2. move the package `deploy.tar` to the created directory
+3. uncompression
+    - `cd /home/ubuntu/${TAG}`
+    - `tar -xvf deploy.tar`
+4. load image
+    - `cd /home/ubuntu/${TAG}/deploy`
+    - `make load-image`
+5. run container
+    - `make run-container`
