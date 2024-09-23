@@ -22,3 +22,13 @@ remove-container:
 
 exec-container:
 	make -C deploy/ exec-container
+
+# ros command
+launch-gmapping:
+	roslaunch maxbot_real maxbot_real_gmapping.launch
+
+launch-save-map:
+	roslaunch maxbot_real maxbot_real_map_save.launch
+
+launch-amcl:
+	roslaunch maxbot_real maxbot_real_amcl_pose.launch
