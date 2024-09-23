@@ -16,3 +16,4 @@ RUN pip3 install --no-cache-dir -r requirements_deploy.txt
 
 COPY light_mappo /app/light_mappo
 COPY test /app/test
+COPY ros_ws /app/ros_ws
