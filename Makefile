@@ -5,9 +5,6 @@ IMAGE_NAME=mappo
 IMAGE_TAG=ros-noetic-focal
 CONTAINER_NAME=mappo
 
-run-all:
-	bash ./run_all.sh
-
 build-image:
 	docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
 
@@ -16,3 +13,12 @@ save-image:  # save docker image
 
 package:
 	@tar -cvf deploy.tar deploy
+
+run-container:
+	make -C deploy/ run-container
+
+remove-container:
+	make -C deploy/ remove-container
+
+exec-container:
+	make -C deploy/ exec-container
