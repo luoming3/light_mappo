@@ -2,7 +2,7 @@ FROM ros:noetic-ros-base-focal
 
 ENV DEBIAN_FRONTEND noninteractive
 
-# Install XFCE, VNC server, dbus-x11, and xfonts-base
+# Install pacakge
 RUN apt-get update && \
     apt-get install -y vim && \
     apt-get install -y python3-pip && \
