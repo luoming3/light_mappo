@@ -22,11 +22,11 @@ COPY test /app/test
 COPY ros_ws /app/ros_ws
 COPY Makefile /app/Makefile
 
-# SHELL ["/bin/bash", "-c"]
+# Build maxbot_real package
 RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && \
     cd ros_ws && \
     catkin_make -DCATKIN_BLACKLIST_PACKAGES='maxbot_sim'"
 
-# Build maxbot_real package
+# Setup ros environment
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
     echo "source /app/ros_ws/devel/setup.bash" >> ~/.bashrc
