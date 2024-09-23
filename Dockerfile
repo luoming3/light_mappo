@@ -29,4 +29,6 @@ RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && \
 
 # Setup ros environment
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
-    echo "source /app/ros_ws/devel/setup.bash" >> ~/.bashrc
+    echo "source /app/ros_ws/devel/setup.bash" >> ~/.bashrc && \
+    echo "export ROS_IP=127.0.0.1" >> ~/.bashrc && \
+    echo "export ROS_MASTER_URI=http://\$ROS_IP:13131" >> ~/.bashrc

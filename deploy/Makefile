@@ -6,7 +6,7 @@ IMAGE_TAG=ros-noetic-focal
 CONTAINER_NAME=mappo
 
 run-container:
-	@docker run --init -it -d --name ${CONTAINER_NAME} \
+	@docker run --init -it -d --name ${CONTAINER_NAME} --network=host \
 	-v $(shell pwd)/models:/app/deploy/models \
 	${IMAGE_NAME}:${IMAGE_TAG}
 
