@@ -1,0 +1,7 @@
+<robot name="maxbot" xmlns:xacro="http://wiki.ros.org/xacro">
+    <xacro:include filename="inertial_matrix.xacro" />
+    <xacro:include filename="base.urdf.xacro" />
+    <xacro:include filename="lidar.urdf.xacro" />
+    <xacro:include filename="gazebo/move.urdf.xacro" />
+    <xacro:include filename="gazebo/laser.urdf.xacro" />
+</robot>

@@ -1,0 +1,7 @@
+<launch>
+    <!-- 设置地图的配置文件 -->
+    <arg name="map_name" default="demo_room" />
+
+    <arg name="filename" value="$(find maxbot_sim)/map/$(arg map_name)" />
+    <node name="map_save" pkg="map_server" type="map_saver" args="-f $(arg filename)" />
+</launch>

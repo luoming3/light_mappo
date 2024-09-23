@@ -1,0 +1,26 @@
+<robot name="maxbot" xmlns:xacro="http://wiki.ros.org/xacro">
+    <xacro:property name="lidar_length" value="0.1" />
+    <xacro:property name="lidar_width" value="0.1" />
+    <xacro:property name="lidar_height" value="0.1" />
+    <xacro:property name="lidar_mass" value="1e-5" />
+    <link name="scan">
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="package://maxbot/meshes/hokuyo.dae"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size="${lidar_length} ${lidar_width} ${lidar_height}"/>
+            </geometry>
+        </collision>
+        <xacro:box_inertial_matrix m="${lidar_mass}" l="${lidar_length}" w="${lidar_width}" h="${lidar_height}" />
+    </link>
+    <joint name="scan_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="scan"/>
+        <origin rpy="0 0 0" xyz="0 0 0.23"/>
+    </joint>
+</robot>
