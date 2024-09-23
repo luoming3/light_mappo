@@ -10,7 +10,6 @@ results
 build/
 dist/
 *.egg-info/
-**/ros_ws/src/CMakeLists.txt
 
 ## docker image
 *.tar.gz

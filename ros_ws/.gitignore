@@ -4,6 +4,7 @@ logs/
 build/
 bin/
 lib/
+**/src/CMakeLists.txt
 
 ## map
 map/
