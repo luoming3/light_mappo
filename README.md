@@ -60,7 +60,7 @@ pip install -r requirements_3_10.txt
 1. modify *scripts/render.sh*, select your model path
 2. `bash scripts/render.sh` (under the project directory)
 
-## 2. deployment
+## 2. package & deployment
 
 ### 2.1. package
 
