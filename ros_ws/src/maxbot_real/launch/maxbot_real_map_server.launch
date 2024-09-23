@@ -1,0 +1,6 @@
+<launch>
+    <!-- config file of map -->
+    <arg name="map" default="demo_scene.yaml" />
+    <!-- run map_server and load map-->
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find maxbot_real)/map/$(arg map)"/>
+</launch>
