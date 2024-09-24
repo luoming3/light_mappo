@@ -8,6 +8,7 @@ import numpy as np
 import math
 
 from light_mappo.agent import Agent
+from make_plan import get_path
 
 # /cmd_vel topic
 ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
@@ -21,6 +22,7 @@ class MappoNode:
         self.euler_ori = None
         self.velocities = None
         self.force = np.array([0., 0.])
+        self.path = []
 
         self.amcl_subscriber = rospy.Subscriber("/amcl_pose",
                                                 PoseWithCovarianceStamped,
@@ -72,7 +74,10 @@ class MappoNode:
         # TODO
         pass
 
-    def get_path(self):
+    def get_path(self, start, goal):
+        self.path = get_path(start, goal)
+
+    def get_guide_point(self):
         # TODO
         pass
 
