@@ -6,7 +6,7 @@
     <!-- move base -->
     <include file="$(find maxbot_sim)/launch/maxbot_sim_move_base.launch" />
     <!-- 运行rviz -->
-    <node pkg="rviz" type="rviz" name="rviz" />
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find maxbot_sim)/config/navigation.rviz" />
     <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" output="screen" />
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" />
 </launch>
