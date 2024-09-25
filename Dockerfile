@@ -8,7 +8,7 @@ RUN apt-get update && \
     apt-get install -y python3-pip && \
     apt-get install -y ros-${ROS_DISTRO}-gmapping && \
     apt-get install -y ros-${ROS_DISTRO}-map-server && \
-    apt-get install -y ros-${ROS_DISTRO}-amcl && \
+    apt-get install -y ros-${ROS_DISTRO}-navigation && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Set the working directory in the container

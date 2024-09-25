@@ -5,7 +5,12 @@ IMAGE_NAME=mappo
 IMAGE_TAG=ros-noetic-focal
 CONTAINER_NAME=mappo
 
-build-image:
+clean-up:
+	@rm -rf ros_ws/build
+	@rm -rf ros_ws/devel
+	@rm -f ros_ws/src/CMakeLists.txt
+
+build-image: clean-up
 	docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
 
 save-image:  # save docker image
@@ -32,3 +37,6 @@ launch-save-map:
 
 launch-amcl:
 	roslaunch maxbot_real maxbot_real_amcl_pose.launch
+
+launch-navigation:
+	roslaunch maxbot_real maxbot_real_navigation.launch
