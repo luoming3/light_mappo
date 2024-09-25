@@ -8,6 +8,15 @@ import numpy as np
 import math
 import copy
 
+import os
+import sys
+
+# Get the parent directory of the current file
+parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
+
+# Append the parent directory to sys.path, otherwise the following import will fail
+sys.path.append(parent_dir)
+
 from light_mappo.agent import Agent
 from make_plan import get_path
 
