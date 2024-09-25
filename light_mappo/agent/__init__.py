@@ -72,7 +72,7 @@ class Agent(object):
 
         actions = _t2n(actions)
         if ACTION_SPACE.__class__.__name__ == "Box":
-            actions = np.tanh(actions) * 0.5
+            actions = np.tanh(actions) * 0.16
         else:
             raise NotImplementedError
 
