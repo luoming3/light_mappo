@@ -12,7 +12,7 @@ observation_sources: scan
 #对传感器的坐标系和数据进行配置。这个也会用于代价地图添加和清除障碍物。例如，你可以用激光雷达传感器用于在代价地图添加障碍物，再添加kinect用于导航和清除障碍物。
 scan:
   {
-    sensor_frame: scan,
+    sensor_frame: laser_link,
     data_type: LaserScan,
     topic: scan,
     marking: true,
