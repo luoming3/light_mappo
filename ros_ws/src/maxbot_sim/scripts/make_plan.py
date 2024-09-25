@@ -47,10 +47,12 @@ def simplify_path(path, distance=1.0):
         rospy.logwarn("Received an empty path")
         return []
 
-    simplified_path = [path.poses[-1].pose.position]
-    for i in range(len(path.poses) - 2, -1, -1):
+    path = np.array([[pose.pose.position.x, pose.pose.position.y]
+                     for pose in path.poses])
+    simplified_path = [path[-1]]
+    for i in range(len(path) - 2, -1, -1):
         last_point = simplified_path[-1]
-        current_point = path.poses[i].pose.position
+        current_point = path[i]
         dist = cal_dist(current_point, last_point)
         if dist >= distance:
             simplified_path.append(current_point)
@@ -61,14 +63,14 @@ def simplify_path(path, distance=1.0):
         return simplified_path
 
     # remove the first point if it is too close to the start point
-    if cal_dist(simplified_path[0], path.poses[0].pose.position) < distance:
+    if cal_dist(simplified_path[0], path[0]) < distance:
         simplified_path = simplified_path[1:]
 
     return simplified_path
 
 
 def cal_dist(point1, point2):
-    return np.sqrt((point1.x - point2.x)**2 + (point1.y - point2.y)**2)
+    return np.linalg.norm(point1 - point2)
 
 
 @timethis
@@ -78,7 +80,7 @@ def main():
 
     guide_point = get_path(start, goal)
     if guide_point:
-        [print(point.x, point.y) for point in guide_point]
+        [print(point) for point in guide_point]
     else:
         rospy.logwarn("No plan received")
 
