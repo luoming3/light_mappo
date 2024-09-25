@@ -204,6 +204,7 @@ def main(start, goal):
             return
         if status == STATUS_FAILURE:
             rospy.logerr("task failure")
+            publish_action(np.array([0, 0]))
             return
 
     rospy.spin()
