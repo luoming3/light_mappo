@@ -76,7 +76,7 @@ pip install -r requirements_3_10.txt
 ### 2.2. deployment
 
 1. create new directory
-    - `TAG=mappo-$(date +%Y%m%d)`
+    - `TAG=deploy-$(date +%Y%m%d)`
     - `mkdir -p /home/ubuntu/${TAG}`
 2. move the package `deploy.tar` to the created directory
 3. uncompression
