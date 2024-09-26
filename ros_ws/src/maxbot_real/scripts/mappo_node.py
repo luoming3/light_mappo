@@ -211,6 +211,11 @@ def main(start, goal):
 
 
 if __name__ == "__main__":
-    start = (-5, 3)
-    goal = (5, -3)
+    import ast
+    args = sys.argv[1:]
+    try:
+        start = ast.literal_eval(args[0])
+        goal = ast.literal_eval(args[1])
+    except:
+        raise RuntimeError("input args is invalid")
     main(start, goal)

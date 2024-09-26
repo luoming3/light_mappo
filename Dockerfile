@@ -21,6 +21,7 @@ COPY light_mappo /app/light_mappo
 COPY test /app/test
 COPY ros_ws /app/ros_ws
 COPY Makefile /app/Makefile
+COPY runner.sh /app/runner.sh
 
 # Build maxbot_real package
 RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && \
