@@ -37,22 +37,25 @@ docker build -t isaac-sim:2023.1.0-ubuntu22.04-vnc -f Dockerfile.2023.1.0-ubuntu
 
 ## 2. usage
 
-1. `docker run -d -it --gpus all -p ${expose_port}:80 isaac-sim:2023.1.0-ubuntu20.04-noetic`
-    - modify the expose_port
-2. Access `http://172.16.2.197:${expose_port}/vnc.html` with Chrome
+1. `docker run -d -it --gpus all -p ${vnc_port}:80 -p ${ssh_port}:22 isaac-sim:2023.1.0-ubuntu20.04-noetic`
+    - modify `vnc_port` and `ssh_port`
+    - root's passwd is `1`
+2. Access `http://172.16.2.197:${vnc_port}/vnc.html` with Chrome
     - default vncpasswd is `123456`
 3. fix 'Failed to execute default Terminal Emulator.'
     - select *Applications > Settings > Preferred Applications > Utilities > Terminal Emulator* to Xfce Terminal
 4. open isaac sim
     - open terminal
     - run `bash /isaac-sim/isaac-sim.sh --allow-root`
-5. kill Xfce4 Power Manager avoiding blank screen
-    - `ps -ef | grep power-manager | awk '{print $2}' | xargs kill -9`
+5. Power Manager set Security
+    - select *Automatically lock the session* to `Never`
+6. develop remote-container in vscode
+    - [vscode dev remote-container (#23) · Issues · MARL / light_mappo · GitLab](http://192.168.11.180:8080/marl/light_mappo/-/issues/23)
 
 ### 2.1. example
 
 ```sh
-docker run -d -it --gpus all -p 7020:80 \
+docker run -d -it --gpus all -p 7020:80 -p 10001:22 \
     -v /home/tonyli/luoming/ros_ws:/root/ros_ws \
     isaac-sim:2023.1.0-ubuntu20.04-noetic
 ```
