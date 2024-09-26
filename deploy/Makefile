@@ -8,6 +8,7 @@ CONTAINER_NAME=mappo
 run-container:
 	@docker run --init -it -d --name ${CONTAINER_NAME} --network=host \
 	-v $(shell pwd)/models:/app/deploy/models \
+	-v $(shell pwd)/ros_ws/src/maxbot_real/map:/app/ros_ws/src/maxbot_real/map \
 	${IMAGE_NAME}:${IMAGE_TAG}
 
 remove-container:
