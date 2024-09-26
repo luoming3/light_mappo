@@ -50,12 +50,16 @@ cd path_to_light_mappo_folder
 pip install -r requirements_3_10.txt
 ```
 
-### 1.4. train
+### 1.4. docker env
+
+see `light_mappo/envs/isaac_sim/docker/README.md`
+
+### 1.5. train
 
 1. modify *scripts/train.sh* to adjust args
 2. `bash scripts/train.sh` (under the project directory)
 
-### 1.5. render
+### 1.6. render
 
 1. modify *scripts/render.sh*, select your model path
 2. `bash scripts/render.sh` (under the project directory)
