@@ -17,6 +17,9 @@ remove-container:
 exec-container:
 	@docker exec -it ${CONTAINER_NAME} bash
 
+restart-container:
+	@docker restart ${CONTAINER_NAME}
+
 load-image:
 	@for i in $(shell ls image/*.gz); do \
 		docker load < $$i ; \

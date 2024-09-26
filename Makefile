@@ -25,6 +25,9 @@ run-container:
 remove-container:
 	make -C deploy/ remove-container
 
+restart-container:
+	make -C deploy/ restart-container
+
 exec-container:
 	make -C deploy/ exec-container
 
