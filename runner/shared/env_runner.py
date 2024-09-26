@@ -298,6 +298,9 @@ class EnvRunner(Runner):
         """Visualize the env."""
         envs = self.envs
         step_list = []
+        bad_case = []
+        for i in range(100):
+            envs.env.env.world.step(render=False)
 
         for episode in range(self.all_args.render_episodes):
             obs = envs.reset()
@@ -383,9 +386,13 @@ class EnvRunner(Runner):
                 indices = np.where(value == True)
                 if indices[0].size == 0:
                     step = self.all_args.episode_length - 1
+                    bad_case.append(envs.env.env.init_envs_positions[index:index+1])
+                    bad_case.append(envs.env.env.car_position[index:index+1])
+                    bad_case.append(envs.env.env.orientations[index:index+1])
                 else:
                     step = indices[0][0]
                 average_episode_rewards = np.mean(np.sum(np.array(sub_episode_rewards[index][:step+1]), axis=0))
+                print("index: " + str((episode, index)))
                 print("average episode rewards is: " + str(average_episode_rewards))
                 print("step: " + str(step))
                 step_list.append(step)
@@ -406,6 +413,18 @@ class EnvRunner(Runner):
         print("average step: " + str(avg_step))
         print("success rate: " + str(suc_rate))
 
+        # 保存 tensor 列表到文件
+        tensor_file_name = '/'.join(self.all_args.model_dir.split('/')[:-1]) + '/tensors.pth'
+        torch.save(bad_case, tensor_file_name)
+
+        # 读取 tensor 列表
+        loaded_tensors = torch.load(tensor_file_name)
+
+        # 打印加载的 tensor
+        for i, tensor in enumerate(loaded_tensors):
+            print(f"Tensor {i + 1}:")
+            print(tensor)
+
         # 指定要追加的文件名
         file_name = '/'.join(self.all_args.model_dir.split('/')[:-2]) + '/render_result.log'
 
@@ -413,3 +432,98 @@ class EnvRunner(Runner):
         with open(file_name, 'a') as file:
             # 将数据写入文件, 每条数据占一行
             file.write(f'Model Directory: {self.all_args.model_dir}, Avg Step: {avg_step}, Success Rate: {suc_rate}\n')
+
+    def render_specific_episode(self):
+        """Visualize the env."""
+        envs = self.envs
+        step_list = []
+        render_rollout_threads = 1
+
+        file_name = '/'.join(self.all_args.model_dir.split('/')[:-1]) + '/tensors.pth'
+        # 读取 tensor 列表
+        loaded_tensors = torch.load(file_name)
+        for i in range(100):
+            envs.env.env.world.step(render=False)
+        # 打印加载的 tensor
+        for i in range(0, len(loaded_tensors), 3):
+            print(f"Tensor {i}:")
+            envs.env.env.init_envs_positions = loaded_tensors[i]
+            # envs.env.env.world.reset()
+            obs = envs.reset_specific_pos(loaded_tensors[i + 1], loaded_tensors[i + 2])
+            all_frames = []
+            if self.all_args.env_type != 'isaac_sim':
+                if self.all_args.save_gifs:
+                    image = envs.render("rgb_array")[0]
+                    all_frames.append(image)
+                else:
+                    envs.render("human")
+
+            rnn_states = np.zeros(
+                (
+                    render_rollout_threads,
+                    self.num_agents,
+                    self.recurrent_N,
+                    self.hidden_size,
+                ),
+                dtype=np.float32,
+            )
+            masks = np.ones((render_rollout_threads, self.num_agents, 1), dtype=np.float32)
+
+            episode_rewards = []
+            for step in range(self.episode_length):
+                calc_start = time.time()
+
+                self.trainer.prep_rollout()
+                action, rnn_states = self.trainer.policy.act(
+                    np.concatenate(obs),
+                    np.concatenate(rnn_states),
+                    np.concatenate(masks),
+                    deterministic=True,
+                )
+                actions = np.array(np.split(_t2n(action), render_rollout_threads))
+                rnn_states = np.array(np.split(_t2n(rnn_states), render_rollout_threads))
+
+                if envs.action_space[0].__class__.__name__ == "MultiDiscrete":
+                    for i in range(envs.action_space[0].shape):
+                        uc_actions_env = np.eye(envs.action_space[0].high[i] + 1)[actions[:, :, i]]
+                        if i == 0:
+                            actions_env = uc_actions_env
+                        else:
+                            actions_env = np.concatenate((actions_env, uc_actions_env), axis=2)
+                elif envs.action_space[0].__class__.__name__ == "Discrete":
+                    actions_env = np.squeeze(np.eye(envs.action_space[0].n)[actions], 2)
+                else:
+                    actions_env = actions
+                    # raise NotImplementedError
+
+                # Obser reward and next obs
+                obs, rewards, dones, infos = envs.step(actions_env)
+                episode_rewards.append(rewards)
+
+                rnn_states[dones == True] = np.zeros(
+                    ((dones == True).sum(), self.recurrent_N, self.hidden_size),
+                    dtype=np.float32,
+                )
+                masks = np.ones((render_rollout_threads, self.num_agents, 1), dtype=np.float32)
+                masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
+
+                if self.all_args.env_type != 'isaac_sim':
+                    if self.all_args.save_gifs:
+                        image = envs.render("rgb_array")[0]  # TODO: support parallel env setting
+                        all_frames.append(image)
+                        calc_end = time.time()
+                        elapsed = calc_end - calc_start
+                        if elapsed < self.all_args.ifi:
+                            time.sleep(self.all_args.ifi - elapsed)
+                    else:
+                        envs.render("human")
+                
+                if np.any(dones):
+                    all_frames = all_frames[:-1]
+                    print(step)
+                    break
+            
+            average_episode_rewards = np.mean(np.sum(np.array(episode_rewards), axis=0))
+            print("average episode rewards is: " + str(average_episode_rewards))
+            print("step: " + str(step))
+            step_list.append(step)

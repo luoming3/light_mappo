@@ -73,6 +73,10 @@ class ContinuousActionEnv(object):
         obs = self.env.reset(indices)
         return obs
 
+    def reset_specific_pos(self, car_position, orientations, indices=[]):
+        obs = self.env.reset_specific_pos(car_position, orientations, indices)
+        return obs
+
     def close(self):
         pass
 

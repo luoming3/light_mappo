@@ -42,6 +42,10 @@ class EnvCore(object):
             np.array([-10, -10]).astype(np.float32),
             np.array([+10, +10]).astype(np.float32),
         )  # left_wheel velocity and right_wheel velocity
+
+        self.car_position = None
+        self.orientations = None
+
         if device is None:
             self.device = "cuda:0"
         else:
@@ -66,14 +70,30 @@ class EnvCore(object):
             indices = self.env_indices
 
         self.car_position = self.get_random_positions(indices)
-        orientations = self.get_random_orientation(indices)
+        self.orientations = self.get_random_orientation(indices)
+
+        # reset cars' position and velocity
+        self._reset_idx(positions=self.car_position, orientations=self.orientations, indices=indices)
+
+        # observations, shape is (env_num, agent_num, obs_dim)
+        observations = self.get_observations()
+
+        self.steps[indices] = 0
+
+        return observations
+    
+    def reset_specific_pos(self, car_position: Optional[Union[np.ndarray, torch.Tensor]] = None, orientations: Optional[Union[np.ndarray, torch.Tensor]] = None, indices=[]):
+        if len(indices) == 0:
+            indices = self.env_indices
+
+        self.car_position = car_position
 
         # reset cars' position and velocity
         self._reset_idx(positions=self.car_position, orientations=orientations, indices=indices)
 
         # observations, shape is (env_num, agent_num, obs_dim)
         observations = self.get_observations()
-
+        
         self.steps[indices] = 0
 
         return observations

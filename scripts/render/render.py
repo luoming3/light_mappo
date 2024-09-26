@@ -142,6 +142,9 @@ def main(args):
 
     runner = Runner(config)
     runner.render()
+
+    # # for bad case
+    # runner.render_specific_episode()
     
     # post process
     envs.close()

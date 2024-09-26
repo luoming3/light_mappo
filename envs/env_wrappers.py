@@ -305,6 +305,10 @@ class IsaacSimEnv(ShareVecEnv):
     def reset(self):
         obs = self.env.reset([])
         return _t2n(obs)
+    
+    def reset_specific_pos(self, car_position, orientations):
+        obs = self.env.reset_specific_pos(car_position, orientations, [])
+        return _t2n(obs)
 
     def render(self, mode="rgb_array"):
         if mode == "rgb_array":
