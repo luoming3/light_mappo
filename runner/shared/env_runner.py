@@ -407,9 +407,14 @@ class EnvRunner(Runner):
                                 all_frames,
                                 duration=self.all_args.ifi,
                                 loop=0)
+
+        # Overall success rate & average step   
         suc_rate = len([num for num in step_list if num < (self.all_args.episode_length - 1)]) / len(step_list)
         step_list = np.array(step_list)
-        avg_step = sum(step_list[step_list < (self.all_args.episode_length - 1)]) / (len(step_list) * suc_rate)
+        if suc_rate == 0:
+            avg_step = self.all_args.episode_length - 1
+        else:
+            avg_step = sum(step_list[step_list < (self.all_args.episode_length - 1)]) / (len(step_list) * suc_rate)
         print("average step: " + str(avg_step))
         print("success rate: " + str(suc_rate))
 
