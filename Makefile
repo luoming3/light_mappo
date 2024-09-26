@@ -42,4 +42,4 @@ launch-navigation:
 	roslaunch maxbot_real maxbot_real_navigation.launch
 
 run-mappo: # e.g. make run-mappo start=1,1 goal=0,0
-	@bash ./runner.sh
+	@bash ./run_mappo_node.sh
