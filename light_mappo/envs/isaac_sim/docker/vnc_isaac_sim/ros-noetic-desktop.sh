@@ -12,7 +12,10 @@ curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key
 
 ## Installation
 apt update
-apt-get install -y ros-${ROS_DISTRO}-desktop-full
+apt-get install -y ros-${ROS_DISTRO}-desktop-full \
+    ros-${ROS_DISTRO}-gmapping \
+    ros-${ROS_DISTRO}-map-server \
+    ros-${ROS_DISTRO}-navigation
 
 ## Environment setup
 echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc

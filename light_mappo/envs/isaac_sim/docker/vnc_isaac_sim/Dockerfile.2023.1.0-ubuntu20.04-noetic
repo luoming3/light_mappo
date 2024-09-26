@@ -23,7 +23,10 @@ RUN apt update && apt install -y \
     lsb-release \
     locales \
     bash-completion \
-    firefox
+    firefox \
+    openssh-server \
+    openssh-client \
+    ssh
 
 # Setup VNC server
 RUN mkdir -p /root/.vnc \
@@ -34,6 +37,14 @@ RUN echo '#!/bin/sh' >> ~/.vnc/xstartup \
     && echo 'unset SESSION_MANAGER' >> ~/.vnc/xstartup \
     && echo 'unset DBUS_SESSION_BUS_ADDRESS' >> ~/.vnc/xstartup \
     && echo 'exec startxfce4' >> ~/.vnc/xstartup
+
+# Setup ssh config
+RUN echo "Port 22" >> /etc/ssh/sshd_config && \
+    echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+
+# Setup root passwd
+RUN echo "root:1" | chpasswd
+RUN echo "service ssh start" >> /root/.bashrc
 
 # Set the working directory in the container
 WORKDIR /app
@@ -48,5 +59,6 @@ RUN chmod +x start-vnc.sh
 
 # Expose websocket port
 EXPOSE 80
+EXPOSE 22
 
 ENTRYPOINT ["/app/start-vnc.sh"]
