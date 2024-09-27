@@ -75,7 +75,7 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
 3. copy **actor.pt** to `deploy/models` directory
 4. compression deploy
     - `make package` (under project folder)
-5. scp the package `deploy.tar` to remote maxbot
+5. scp the package `deploy.tar` and `deploy.tar.sha256` to remote maxbot
 
 ### 2.2. deployment
 
@@ -83,9 +83,10 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
     - `TAG=deploy-$(date +%Y%m%d)`
     - `mkdir -p /home/ubuntu/${TAG}`
 2. move the package `deploy.tar` to the created directory
-3. uncompression
+3. check and uncompress
     - `cd /home/ubuntu/${TAG}`
-    - `tar -xvf deploy.tar`
+    - check sha256 file: `sha256sum -c deploy.tar.sha256`
+    - if package OK, uncompress package: `tar -xvf deploy.tar`
 4. load image
     - `cd /home/ubuntu/${TAG}/deploy`
     - `make load-image`

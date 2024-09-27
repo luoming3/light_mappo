@@ -18,6 +18,7 @@ save-image:  # save docker image
 
 package:
 	@tar -cvf deploy.tar deploy
+	@sha256sum deploy.tar > deploy.tar.sha256
 
 run-container:
 	make -C deploy/ run-container
