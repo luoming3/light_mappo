@@ -17,6 +17,7 @@ save-image:  # save docker image
 	docker save ${IMAGE_NAME}:${IMAGE_TAG} | gzip > deploy/image/${IMAGE_NAME}_${IMAGE_TAG}.tar.gz
 
 package:
+	@rm -f deploy.tar*
 	@tar -cvf deploy.tar deploy
 	@sha256sum deploy.tar > deploy.tar.sha256
 
