@@ -53,3 +53,4 @@ run-mappo: # e.g. make run-mappo start=1,1 goal=0,0
 kill-mappo:
 	@rosnode kill ${MAPPO_NODE_NAME}
 	@rostopic pub -1 /cmd_vel geometry_msgs/Twist '{linear: {x: 0, y: 0, z: 0}, angular: {x: 0, y: 0, z: 0}}'
+	@echo "kill mappo_node and stop maxbot"
