@@ -10,6 +10,7 @@ results
 build/
 dist/
 *.egg-info/
+deploy.tar.sha256
 
 ## docker image
 *.tar.gz
