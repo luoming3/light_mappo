@@ -62,7 +62,7 @@ class MappoNode:
             [orientation.x, orientation.y, orientation.z, orientation.w])
 
     def process_odom(self, odom_data):
-        if odom_data and np.any(self.orientation):
+        if odom_data and self.orientation.size > 0:
             linear_x = odom_data.twist.twist.linear.x
             self.euler_ori = quaternion_to_euler(self.orientation)
             self.velocities = get_vel_from_linear(linear_x, self.euler_ori)
