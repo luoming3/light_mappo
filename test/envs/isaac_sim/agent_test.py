@@ -13,7 +13,7 @@ from light_mappo.agent import Agent
 
 if __name__ == "__main__":
     agent = Agent()
-    obs = np.array([[0, 0, 0, 0, 0]])
+    obs = np.array([[0, 0, 0, 0, 0, 0, 0]])
 
     for i in range(10):
         time_s = time.perf_counter()
