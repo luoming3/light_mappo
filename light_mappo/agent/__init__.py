@@ -16,6 +16,7 @@ class Agent(object):
     def __init__(self):
         parser = get_config()
         all_args = parser.parse_known_args()[0]
+        self.L = 0.3  # wheel spacing
 
         observation_space = spaces.Box(
             low=-np.inf,
@@ -72,8 +73,15 @@ class Agent(object):
 
         actions = _t2n(actions)
         if ACTION_SPACE.__class__.__name__ == "Box":
-            actions = np.tanh(actions) * 0.16
+            actions = np.tanh(actions[0]) * 0.16
+            v, omega = wheel_speeds_to_cmd_vel(actions[0], actions[1], self.L)
         else:
             raise NotImplementedError
 
-        return actions[0]
+        return np.array([v, omega])
+
+
+def wheel_speeds_to_cmd_vel(v_L, v_R, L):
+    v = (v_L + v_R) / 2
+    omega = (v_R - v_L) / L
+    return v, omega
