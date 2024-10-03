@@ -83,5 +83,5 @@ class Agent(object):
 
 def wheel_speeds_to_cmd_vel(v_L, v_R, L):
     v = (v_L + v_R) / 2
-    omega = (v_R - v_L) / L
+    omega = (v_R - v_L) * 0.25 / L
     return v, omega

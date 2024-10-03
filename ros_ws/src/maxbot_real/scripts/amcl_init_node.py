@@ -43,7 +43,7 @@ def init_amcl():
     rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped,
                      process_amcl_covariance)
     # pub FPS: 10 Hz
-    rate = rospy.Rate(1)
+    rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         if not CONVERGENCE:
             publish_action(np.array([0, 1]))
