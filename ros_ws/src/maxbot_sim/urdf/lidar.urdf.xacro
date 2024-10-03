@@ -7,7 +7,7 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="package://maxbot/meshes/hokuyo.dae"/>
+                <mesh filename="package://maxbot_sim/meshes/hokuyo.dae"/>
             </geometry>
         </visual>
         <collision>
