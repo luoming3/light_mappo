@@ -50,11 +50,11 @@ class EnvRunner(Runner):
                 
                 reset_indices = []
                 for (i, done) in enumerate(dones):
-                    if torch.any(done):
+                    if np.any(done):
                         reset_indices.append(i)
                         
                 if reset_indices:
-                    obs = self.env.reset(reset_indices)
+                    obs = self.envs.reset(reset_indices)
 
                 data = (
                     obs,
@@ -296,22 +296,15 @@ class EnvRunner(Runner):
     @torch.no_grad()
     def render(self):
         """Visualize the env."""
+        # torch.set_printoptions(precision=8)
         envs = self.envs
-        step_list = []
         bad_case = []
+        step_record = []
         for i in range(100):
             envs.env.env.world.step(render=False)
 
-        for episode in range(self.all_args.render_episodes):
+        while True:
             obs = envs.reset()
-            all_frames = []
-            if self.all_args.env_type != 'isaac_sim':
-                if self.all_args.save_gifs:
-                    image = envs.render("rgb_array")[0]
-                    all_frames.append(image)
-                else:
-                    envs.render("human")
-
             rnn_states = np.zeros(
                 (
                     self.n_render_rollout_threads,
@@ -323,12 +316,11 @@ class EnvRunner(Runner):
             )
             masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
 
-            episode_rewards = []
-            episode_dones = []
+            step_list = np.zeros(self.n_render_rollout_threads)
+            episode_rewards = np.zeros((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
 
-            for step in range(self.episode_length):
-                calc_start = time.time()
-
+            step = 0
+            while step < self.episode_length:
                 self.trainer.prep_rollout()
                 action, rnn_states = self.trainer.policy.act(
                     np.concatenate(obs),
@@ -354,8 +346,24 @@ class EnvRunner(Runner):
 
                 # Obser reward and next obs
                 obs, rewards, dones, infos = envs.step(actions_env)
-                episode_rewards.append(rewards)
-                episode_dones.append(dones)
+                step_list += 1
+                episode_rewards = np.append(episode_rewards, rewards, axis=2)
+
+                reset_indices = []
+                for (i, done) in enumerate(dones):
+                    if np.any(done):
+                        reset_indices.append(i)
+                        
+                if reset_indices:
+                    for index in reset_indices:
+                        average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
+                        print("index: " + str((index)))
+                        print("average episode rewards is: " + str(average_episode_rewards))
+                        print("step: " + str(step_list[index]))
+                        step_record.append(step_list[index])
+                        step_list[index] = 0
+                        episode_rewards[index] = np.zeros((self.num_agents, 1), dtype=np.float32)
+                    obs = envs.reset(reset_indices)
 
                 rnn_states[dones == True] = np.zeros(
                     ((dones == True).sum(), self.recurrent_N, self.hidden_size),
@@ -363,63 +371,39 @@ class EnvRunner(Runner):
                 )
                 masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
                 masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
+                step += 1
 
-                if self.all_args.env_type != 'isaac_sim':
-                    if self.all_args.save_gifs:
-                        image = envs.render("rgb_array")[0]  # TODO: support parallel env setting
-                        all_frames.append(image)
-                        calc_end = time.time()
-                        elapsed = calc_end - calc_start
-                        if elapsed < self.all_args.ifi:
-                            time.sleep(self.all_args.ifi - elapsed)
-                    else:
-                        envs.render("human")
-                
-                if np.all(dones):
-                    all_frames = all_frames[:-1]
-                    print(step)
-                    break
+            for (i, step_num) in enumerate(step_list):
+                if step_num >= self.episode_length:
+                    bad_case.append(envs.env.env.init_envs_positions[i:i+1])
+                    bad_case.append(envs.env.env.n_car_position[i:i+1])
+                    bad_case.append(envs.env.env.n_orientations[i:i+1])
+                    step_record.append(self.episode_length - 1)
+                    average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[i]), axis=1))
+                    print("index: " + str((i)))
+                    print("init_envs_positions: " + str((envs.env.env.init_envs_positions[i:i+1])))
+                    print("n_car_position: " + str((envs.env.env.n_car_position[i:i+1])))
+                    print("n_orientations: " + str((envs.env.env.n_orientations[i:i+1])))
+
+                    print("average episode rewards is: " + str(average_episode_rewards))
+                    print("step: " + str(self.episode_length - 1))
             
-            sub_episode_dones = np.split(np.array(episode_dones), self.n_render_rollout_threads, axis=1)
-            sub_episode_rewards = np.split(np.array(episode_rewards), self.n_render_rollout_threads, axis=1)
-            for index, value in enumerate(sub_episode_dones):
-                indices = np.where(value == True)
-                if indices[0].size == 0:
-                    step = self.all_args.episode_length - 1
-                    bad_case.append(envs.env.env.init_envs_positions[index:index+1])
-                    bad_case.append(envs.env.env.car_position[index:index+1])
-                    bad_case.append(envs.env.env.orientations[index:index+1])
-                else:
-                    step = indices[0][0]
-                average_episode_rewards = np.mean(np.sum(np.array(sub_episode_rewards[index][:step+1]), axis=0))
-                print("index: " + str((episode, index)))
-                print("average episode rewards is: " + str(average_episode_rewards))
-                print("step: " + str(step))
-                step_list.append(step)
-            # average_episode_rewards = np.mean(np.sum(np.array(episode_rewards), axis=0))
-            # print("average episode rewards is: " + str(average_episode_rewards))
-            # print("step: " + str(step))
-            # step_list.append(step)
-
-
-            if self.all_args.save_gifs:
-                imageio.mimsave(str(self.gif_dir) + '/' + str(episode) + '_' + '{:.2f}'.format(average_episode_rewards) + '.gif',
-                                all_frames,
-                                duration=self.all_args.ifi,
-                                loop=0)
+            if len(step_record) >= self.all_args.render_episodes:
+                step_record = step_record[:self.all_args.render_episodes]
+                break
 
         # Overall success rate & average step   
-        suc_rate = len([num for num in step_list if num < (self.all_args.episode_length - 1)]) / len(step_list)
-        step_list = np.array(step_list)
+        suc_rate = len([num for num in step_record if num < (self.all_args.episode_length - 1)]) / len(step_record)
+        step_record = np.array(step_record)
         if suc_rate == 0:
             avg_step = self.all_args.episode_length - 1
         else:
-            avg_step = sum(step_list[step_list < (self.all_args.episode_length - 1)]) / (len(step_list) * suc_rate)
-        print("average step: " + str(avg_step))
-        print("success rate: " + str(suc_rate))
+            avg_step = sum(step_record[step_record < (self.all_args.episode_length - 1)]) / (len(step_record) * suc_rate)
+        print("Overall average step: " + str(avg_step))
+        print("Overall success rate: " + str(suc_rate))
 
         # 保存 tensor 列表到文件
-        tensor_file_name = '/'.join(self.all_args.model_dir.split('/')[:-1]) + '/tensors.pth'
+        tensor_file_name = '/'.join(self.all_args.model_dir.split('/')) + '/tensors.pth'
         torch.save(bad_case, tensor_file_name)
 
         # 读取 tensor 列表
@@ -432,11 +416,10 @@ class EnvRunner(Runner):
 
         # 指定要追加的文件名
         file_name = '/'.join(self.all_args.model_dir.split('/')[:-2]) + '/render_result.log'
-
-        # 以追加模式打开文件
         with open(file_name, 'a') as file:
             # 将数据写入文件, 每条数据占一行
             file.write(f'Model Directory: {self.all_args.model_dir}, Avg Step: {avg_step}, Success Rate: {suc_rate}\n')
+            
 
     def render_specific_episode(self):
         """Visualize the env."""

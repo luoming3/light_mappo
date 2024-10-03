@@ -291,5 +291,5 @@ class EnvCore(object):
         return random_ori
 
 def normalized(v: torch.tensor, dim=1):
-    normalized = v / torch.norm(v, dim=dim, keepdim=True)
+    normalized = v / (torch.norm(v, dim=dim, keepdim=True) + 0.0000001)
     return normalized
