@@ -302,8 +302,8 @@ class IsaacSimEnv(ShareVecEnv):
 
         return _t2n(obs), _t2n(rews), _t2n(dones), np.array(infos)
 
-    def reset(self):
-        obs = self.env.reset([])
+    def reset(self, indices=[]):
+        obs = self.env.reset(indices)
         return _t2n(obs)
     
     def reset_specific_pos(self, car_position, orientations):
