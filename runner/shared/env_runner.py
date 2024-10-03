@@ -422,20 +422,37 @@ class EnvRunner(Runner):
             
 
     def render_specific_episode(self):
+        from omni.isaac.core.objects import VisualCuboid
+
         """Visualize the env."""
         envs = self.envs
-        step_list = []
+        episode_step = []
         render_rollout_threads = 1
 
-        file_name = '/'.join(self.all_args.model_dir.split('/')[:-1]) + '/tensors.pth'
+        file_name = '/'.join(self.all_args.model_dir.split('/')) + '/tensors.pth'
         # 读取 tensor 列表
         loaded_tensors = torch.load(file_name)
         for i in range(100):
-            envs.env.env.world.step(render=False)
+            envs.env.env.world.step()
+
         # 打印加载的 tensor
         for i in range(0, len(loaded_tensors), 3):
             print(f"Tensor {i}:")
+            print(f"init_envs_positions {loaded_tensors[i]}:")
+            print(f"car_position {loaded_tensors[i + 1]}:")
+            print(f"orientations {loaded_tensors[i + 2]}:")
+
             envs.env.env.init_envs_positions = loaded_tensors[i]
+            path_cube_name = f"target_cube"
+            envs.env.env.world.scene.add(
+                VisualCuboid( 
+                    prim_path=f"/World/envs/env_0/target_cube",
+                    name=path_cube_name,
+                    position=np.array(loaded_tensors[i].cpu().numpy()),
+                    size=0.1,
+                    color=np.array([1, 0, 0]),
+                )
+            )
             # envs.env.env.world.reset()
             obs = envs.reset_specific_pos(loaded_tensors[i + 1], loaded_tensors[i + 2])
             all_frames = []
@@ -514,4 +531,17 @@ class EnvRunner(Runner):
             average_episode_rewards = np.mean(np.sum(np.array(episode_rewards), axis=0))
             print("average episode rewards is: " + str(average_episode_rewards))
             print("step: " + str(step))
-            step_list.append(step)
+            episode_step.append(step)
+
+            envs.env.env.world.scene.remove_object(path_cube_name)
+            envs.env.env.world.reset()
+
+        # Overall success rate & average step   
+        suc_rate = len([num for num in episode_step if num < (self.episode_length - 1)]) / len(episode_step)
+        episode_step = np.array(episode_step)
+        if suc_rate == 0:
+            avg_step = self.episode_length - 1
+        else:
+            avg_step = sum(episode_step[episode_step < (self.episode_length - 1)]) / (len(episode_step) * suc_rate)
+        print("Overall average step: " + str(avg_step))
+        print("Overall success rate: " + str(suc_rate))

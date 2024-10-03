@@ -53,6 +53,8 @@ class EnvCore(object):
         self.steps = torch.zeros(size=(self.env_num,), dtype=int, device=self.device)
         self.truncation_step = 2048
 
+        self.n_car_position = torch.zeros((self.env_num, 3), device=self.device)
+        self.n_orientations = torch.zeros((self.env_num, 4), device=self.device)
         self.target_pos = torch.zeros((self.env_num, 2), device=self.device)
         self.init_envs_positions = self.get_world_poses()[0]
 
@@ -69,11 +71,14 @@ class EnvCore(object):
         if len(indices) == 0:
             indices = self.env_indices
 
-        self.car_position = self.get_random_positions(indices)
-        self.orientations = self.get_random_orientation(indices)
+        car_position = self.get_random_positions(indices)
+        orientations = self.get_random_orientation(indices)
 
         # reset cars' position and velocity
-        self._reset_idx(positions=self.car_position, orientations=self.orientations, indices=indices)
+        self._reset_idx(positions=car_position, orientations=orientations, indices=indices)
+
+        self.n_car_position[indices] = car_position
+        self.n_orientations[indices] = orientations
 
         # observations, shape is (env_num, agent_num, obs_dim)
         observations = self.get_observations()
