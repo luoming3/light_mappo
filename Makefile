@@ -5,6 +5,7 @@ IMAGE_NAME=mappo
 IMAGE_TAG=ros-noetic-focal
 CONTAINER_NAME=mappo
 MAPPO_NODE_NAME=mappo_node
+AMCL_INIT_NODE_NAME=amcl_init_node
 
 clean-up:
 	@rm -rf ros_ws/build
@@ -51,6 +52,21 @@ run-mappo: # e.g. make run-mappo start=1,1 goal=0,0
 	@bash ./run_mappo_node.sh
 
 kill-mappo:
-	@rosnode kill ${MAPPO_NODE_NAME}
+	@if rosnode list | grep -o ${MAPPO_NODE_NAME} ; then \
+		rosnode kill ${MAPPO_NODE_NAME} ; \
+	fi
 	@rostopic pub -1 /cmd_vel geometry_msgs/Twist '{linear: {x: 0, y: 0, z: 0}, angular: {x: 0, y: 0, z: 0}}'
 	@echo "kill mappo_node and stop maxbot"
+
+init-amcl:
+	@python3 ./ros_ws/src/maxbot_real/scripts/amcl_init_node.py
+
+kill-init-amcl:
+	@if rosnode list | grep -o ${AMCL_INIT_NODE_NAME} ; then \
+		rosnode kill ${AMCL_INIT_NODE_NAME} ; \
+	fi
+	@rostopic pub -1 /cmd_vel geometry_msgs/Twist '{linear: {x: 0, y: 0, z: 0}, angular: {x: 0, y: 0, z: 0}}'
+	@echo "kill init_amcl and stop maxbot"
+
+clean-node: kill-init-amcl kill-mappo
+	@echo "y" | rosnode cleanup
