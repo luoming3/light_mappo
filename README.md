@@ -111,3 +111,8 @@ In the train.py file, choose to comment out continuous environment or discrete e
 - `bash scripts/render.sh` (under the project directory)
     - get the gif in *scrips/result/run/gif*
 
+### bad case rendering
+
+- change the function from `runner.render()` to `runner.render_specific_episode()`
+- make sure the argument `--n_render_rollout_threads` is set to 1
+- the output_file need to be changed anything else but `result.log` in render.sh

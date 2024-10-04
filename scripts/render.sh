@@ -7,7 +7,7 @@ num_agents=4
 algo="mappo"  # default="mappo", choices=["rmappo", "mappo"]
 exp="check"
 seed=1
-model_dir="/home/user/wenze/ros_ws/light_mappo/results/isaac-sim/share/mappo/wenze/run4/models"  # TODO: path to your model dir
+model_dir=""  # TODO: path to your model dir
 
 current_dir=$(cd $(dirname $0); pwd)
 

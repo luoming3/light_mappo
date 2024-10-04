@@ -124,23 +124,23 @@ class Runner(object):
 
     def save(self):
         """Save policy's actor and critic networks."""
-        dir = str(self.save_dir) + "/latest"
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        path_name = str(self.save_dir) + "/latest"
+        if not os.path.exists(path_name):
+            os.makedirs(path_name)
         policy_actor = self.trainer.policy.actor
-        torch.save(policy_actor.state_dict(), str(dir) + "/actor.pt")
+        torch.save(policy_actor.state_dict(), str(path_name) + "/actor.pt")
         policy_critic = self.trainer.policy.critic
-        torch.save(policy_critic.state_dict(), str(dir) + "/critic.pt")
+        torch.save(policy_critic.state_dict(), str(path_name) + "/critic.pt")
 
     def save_for_test(self, total_num_steps):
         """Save policy's actor and critic networks."""
-        dir = str(self.save_dir) + "/" + str(total_num_steps)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        path_name = str(self.save_dir) + "/" + str(total_num_steps)
+        if not os.path.exists(path_name):
+            os.makedirs(path_name)
         policy_actor = self.trainer.policy.actor
-        torch.save(policy_actor.state_dict(), str(dir) + "/actor.pt")
+        torch.save(policy_actor.state_dict(), str(path_name) + "/actor.pt")
         policy_critic = self.trainer.policy.critic
-        torch.save(policy_critic.state_dict(), str(dir) + "/critic.pt")
+        torch.save(policy_critic.state_dict(), str(path_name) + "/critic.pt")
 
     def restore(self):
         """Restore policy's networks from a saved model."""

@@ -42,10 +42,6 @@ class EnvCore(object):
             np.array([-10, -10]).astype(np.float32),
             np.array([+10, +10]).astype(np.float32),
         )  # left_wheel velocity and right_wheel velocity
-
-        self.car_position = None
-        self.orientations = None
-
         if device is None:
             self.device = "cuda:0"
         else:

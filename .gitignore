@@ -4,7 +4,3 @@ results
 
 ## git
 !.gitignore
-!.gitkeep
-random0.95fixedresults.log
-random0.95results.log
-scripts/render.sh
