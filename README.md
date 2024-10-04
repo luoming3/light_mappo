@@ -92,3 +92,16 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
     - `make load-image`
 5. run container
     - `make run-container`
+
+### 2.3. navigation usage
+
+1. enter container
+    - `make exec-container` (under deploy/ folder)
+2. launch navigation
+    - `make launch-navigation` (under /app folder)
+3. initialize amcl for convergence
+    - `make init-amcl` (under /app folder)
+4. run mappo node for given start and goal
+    - `make run-mappo start=1,1 goal=0,0` (under /app folder)
+5. kill mappo node for termination
+    - `make kill-mappo` (under /app folder)
