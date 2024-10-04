@@ -303,87 +303,85 @@ class EnvRunner(Runner):
         for i in range(100):
             envs.env.env.world.step(render=False)
 
+        obs = envs.reset()
+        rnn_states = np.zeros(
+            (
+                self.n_render_rollout_threads,
+                self.num_agents,
+                self.recurrent_N,
+                self.hidden_size,
+            ),
+            dtype=np.float32,
+        )
+        masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
+
+        step_list = np.zeros(self.n_render_rollout_threads)
+        episode_rewards = np.zeros((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
+
         while True:
-            obs = envs.reset()
-            rnn_states = np.zeros(
-                (
-                    self.n_render_rollout_threads,
-                    self.num_agents,
-                    self.recurrent_N,
-                    self.hidden_size,
-                ),
+            self.trainer.prep_rollout()
+            action, rnn_states = self.trainer.policy.act(
+                np.concatenate(obs),
+                np.concatenate(rnn_states),
+                np.concatenate(masks),
+                deterministic=True,
+            )
+            actions = np.array(np.split(_t2n(action), self.n_render_rollout_threads))
+            rnn_states = np.array(np.split(_t2n(rnn_states), self.n_render_rollout_threads))
+
+            if envs.action_space[0].__class__.__name__ == "MultiDiscrete":
+                for i in range(envs.action_space[0].shape):
+                    uc_actions_env = np.eye(envs.action_space[0].high[i] + 1)[actions[:, :, i]]
+                    if i == 0:
+                        actions_env = uc_actions_env
+                    else:
+                        actions_env = np.concatenate((actions_env, uc_actions_env), axis=2)
+            elif envs.action_space[0].__class__.__name__ == "Discrete":
+                actions_env = np.squeeze(np.eye(envs.action_space[0].n)[actions], 2)
+            else:
+                actions_env = actions
+                # raise NotImplementedError
+
+            # Obser reward and next obs
+            obs, rewards, dones, infos = envs.step(actions_env)
+            step_list += 1
+            episode_rewards = np.append(episode_rewards, rewards, axis=2)
+
+            reset_indices = []
+            for (i, done) in enumerate(dones):
+                if np.any(done):
+                    reset_indices.append(i)
+                    
+            if reset_indices:
+                for index in reset_indices:
+                    average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
+                    print("index: " + str((index)))
+                    print("average episode rewards is: " + str(average_episode_rewards))
+                    print("step: " + str(step_list[index]))
+                    step_record.append(step_list[index])
+                    step_list[index] = 0
+                    episode_rewards[index] = np.zeros((self.num_agents, 1), dtype=np.float32)
+                obs = envs.reset(reset_indices)
+
+            rnn_states[dones == True] = np.zeros(
+                ((dones == True).sum(), self.recurrent_N, self.hidden_size),
                 dtype=np.float32,
             )
             masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
+            masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
 
-            step_list = np.zeros(self.n_render_rollout_threads)
-            episode_rewards = np.zeros((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
-
-            step = 0
-            while step < self.episode_length:
-                self.trainer.prep_rollout()
-                action, rnn_states = self.trainer.policy.act(
-                    np.concatenate(obs),
-                    np.concatenate(rnn_states),
-                    np.concatenate(masks),
-                    deterministic=True,
-                )
-                actions = np.array(np.split(_t2n(action), self.n_render_rollout_threads))
-                rnn_states = np.array(np.split(_t2n(rnn_states), self.n_render_rollout_threads))
-
-                if envs.action_space[0].__class__.__name__ == "MultiDiscrete":
-                    for i in range(envs.action_space[0].shape):
-                        uc_actions_env = np.eye(envs.action_space[0].high[i] + 1)[actions[:, :, i]]
-                        if i == 0:
-                            actions_env = uc_actions_env
-                        else:
-                            actions_env = np.concatenate((actions_env, uc_actions_env), axis=2)
-                elif envs.action_space[0].__class__.__name__ == "Discrete":
-                    actions_env = np.squeeze(np.eye(envs.action_space[0].n)[actions], 2)
-                else:
-                    actions_env = actions
-                    # raise NotImplementedError
-
-                # Obser reward and next obs
-                obs, rewards, dones, infos = envs.step(actions_env)
-                step_list += 1
-                episode_rewards = np.append(episode_rewards, rewards, axis=2)
-
-                reset_indices = []
-                for (i, done) in enumerate(dones):
-                    if np.any(done):
-                        reset_indices.append(i)
-                        
-                if reset_indices:
-                    for index in reset_indices:
-                        average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
-                        print("index: " + str((index)))
-                        print("average episode rewards is: " + str(average_episode_rewards))
-                        print("step: " + str(step_list[index]))
-                        step_record.append(step_list[index])
-                        step_list[index] = 0
-                        episode_rewards[index] = np.zeros((self.num_agents, 1), dtype=np.float32)
-                    obs = envs.reset(reset_indices)
-
-                rnn_states[dones == True] = np.zeros(
-                    ((dones == True).sum(), self.recurrent_N, self.hidden_size),
-                    dtype=np.float32,
-                )
-                masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
-                masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
-                step += 1
-
-            for (i, step_num) in enumerate(step_list):
-                if step_num >= self.episode_length:
-                    bad_case.append(envs.env.env.init_envs_positions[i:i+1])
-                    bad_case.append(envs.env.env.n_car_position[i:i+1])
-                    bad_case.append(envs.env.env.n_orientations[i:i+1])
+            fail_indices = np.where(step_list >= self.episode_length)[0]
+            if len(fail_indices) > 0:
+                for index in fail_indices:
+                    bad_case.append(envs.env.env.init_envs_positions[index:index+1])
+                    bad_case.append(envs.env.env.n_car_position[index:index+1])
+                    bad_case.append(envs.env.env.n_orientations[index:index+1])
                     step_record.append(self.episode_length - 1)
-                    average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[i]), axis=1))
-                    print("index: " + str((i)))
-                    print("init_envs_positions: " + str((envs.env.env.init_envs_positions[i:i+1])))
-                    print("n_car_position: " + str((envs.env.env.n_car_position[i:i+1])))
-                    print("n_orientations: " + str((envs.env.env.n_orientations[i:i+1])))
+                    average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
+                    print("index: " + str((index)))
+                    print("init_envs_positions: " + str((envs.env.env.init_envs_positions[index:index+1])))
+                    print("n_car_position: " + str((envs.env.env.n_car_position[index:index+1])))
+                    print("n_orientations: " + str((envs.env.env.n_orientations[index:index+1])))
 
                     print("average episode rewards is: " + str(average_episode_rewards))
                     print("step: " + str(self.episode_length - 1))
