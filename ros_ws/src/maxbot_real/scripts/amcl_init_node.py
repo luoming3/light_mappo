@@ -29,10 +29,10 @@ def publish_action(action):
 
 def process_amcl_covariance(message):
     global CONVERGENCE
-    convariance = message.pose.covariance
-    x_var = convariance[0]
-    y_var = convariance[7]
-    yaw_var = convariance[-1]
+    covariance = message.pose.covariance
+    x_var = covariance[0]
+    y_var = covariance[7]
+    yaw_var = covariance[-1]
 
     if x_var < epsilon and y_var < epsilon and yaw_var < epsilon:
         CONVERGENCE = True
