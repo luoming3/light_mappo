@@ -118,8 +118,7 @@ class MappoNode:
             return done, status
         # arrival
         current_dist_to_goal = np.linalg.norm(self.position - self.goal)
-        current_dist_to_point = np.linalg.norm(self.position -
-                                               self.guide_point)
+        current_dist_to_point = np.linalg.norm(self.position - self.guide_point)
         if current_dist_to_goal < 0.5:
             done = True
             status = STATUS_SUCCESS
