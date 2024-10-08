@@ -83,8 +83,9 @@ class EnvRunner(Runner):
                 self.save()
 
             # save model at regular intervals for rendering test
-            if episode % save_episode_interval == 0:
-                self.save_for_test(total_num_steps)
+            if save_episode_interval:
+                if episode % save_episode_interval == 0:
+                    self.save_for_test(total_num_steps)
 
             # log information
             if episode % self.log_interval == 0:
@@ -363,28 +364,34 @@ class EnvRunner(Runner):
                     episode_rewards[index] = np.zeros((self.num_agents, 1), dtype=np.float32)
                 obs = envs.reset(reset_indices)
 
+            fail_indices = np.where(step_list >= self.episode_length)[0]
+            if len(fail_indices) > 0:
+                for index in fail_indices:
+                    init_envs_positions = torch.clone(envs.env.env.init_envs_positions[index:index+1])
+                    car_position = torch.clone(envs.env.env.n_car_position[index:index+1])
+                    orientations = torch.clone(envs.env.env.n_orientations[index:index+1])
+                    bad_case.append(init_envs_positions)
+                    bad_case.append(car_position)
+                    bad_case.append(orientations)
+                    average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
+                    print("index: " + str((index)))
+                    print("init_envs_positions: " + str(init_envs_positions))
+                    print("n_car_position: " + str(car_position))
+                    print("n_orientations: " + str(orientations))
+
+                    print("average episode rewards is: " + str(average_episode_rewards))
+                    print("step: " + str(self.episode_length - 1))
+                    step_record.append(self.episode_length - 1)
+                    step_list[index] = 0
+                    episode_rewards[index] = np.zeros((self.num_agents, 1), dtype=np.float32)
+                obs = envs.reset(fail_indices.tolist())
+
             rnn_states[dones == True] = np.zeros(
                 ((dones == True).sum(), self.recurrent_N, self.hidden_size),
                 dtype=np.float32,
             )
             masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
             masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
-
-            fail_indices = np.where(step_list >= self.episode_length)[0]
-            if len(fail_indices) > 0:
-                for index in fail_indices:
-                    bad_case.append(envs.env.env.init_envs_positions[index:index+1])
-                    bad_case.append(envs.env.env.n_car_position[index:index+1])
-                    bad_case.append(envs.env.env.n_orientations[index:index+1])
-                    step_record.append(self.episode_length - 1)
-                    average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
-                    print("index: " + str((index)))
-                    print("init_envs_positions: " + str((envs.env.env.init_envs_positions[index:index+1])))
-                    print("n_car_position: " + str((envs.env.env.n_car_position[index:index+1])))
-                    print("n_orientations: " + str((envs.env.env.n_orientations[index:index+1])))
-
-                    print("average episode rewards is: " + str(average_episode_rewards))
-                    print("step: " + str(self.episode_length - 1))
             
             if len(step_record) >= self.all_args.render_episodes:
                 step_record = step_record[:self.all_args.render_episodes]
@@ -532,7 +539,7 @@ class EnvRunner(Runner):
             episode_step.append(step)
 
             envs.env.env.world.scene.remove_object(path_cube_name)
-            envs.env.env.world.reset()
+            # envs.env.env.world.reset()
 
         # Overall success rate & average step   
         suc_rate = len([num for num in episode_step if num < (self.episode_length - 1)]) / len(episode_step)
