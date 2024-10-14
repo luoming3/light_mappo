@@ -103,16 +103,18 @@ In the train.py file, choose to comment out continuous environment or discrete e
 ### train
 
 1. modify *config.py* to adjust args
+    - add new argument `--num_save_model`
 2. `python train/train.py` (under the project directory)
 
 ### render
 
 - modify *scripts/render.sh*, select your model path
+    - add new argument `--use_render`
 - `bash scripts/render.sh` (under the project directory)
     - get the gif in *scrips/result/run/gif*
 
 ### bad case rendering
 
 - change the function from `runner.render()` to `runner.render_specific_episode()`
-- make sure the argument `--n_render_rollout_threads` is set to 1
-- the output_file need to be changed anything else but `result.log` in render.sh
+- make sure the argument `--n_render_rollout_threads` is set to 1,  choose to add `--isaac_sim_headless`
+- the `output_file` name need to be changed anything else but `test.log` in render.sh
