@@ -29,11 +29,7 @@ def make_plan(start, goal, tolerance):
     rospy.wait_for_service('/move_base/make_plan')
     try:
         get_plan = rospy.ServiceProxy('/move_base/make_plan', GetPlan)
-        req = GetPlan()
-        req.start = start
-        req.goal = goal
-        req.tolerance = tolerance
-        resp = get_plan(req.start, req.goal, req.tolerance)
+        resp = get_plan(start, goal, tolerance)
         return resp.plan
     except rospy.ServiceException as e:
         rospy.logerr("Service call failed: %s" % e)
