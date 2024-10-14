@@ -446,7 +446,7 @@ class EnvRunner(Runner):
         file_name = self.model_dir + '/tensors.pth'
         loaded_tensors = torch.load(file_name)
 
-        numpy_file_name = self.model_dir + '/array.npy'
+        numpy_file_name = self.model_dir + '/actions.npy'
         loaded_array = np.load(numpy_file_name)
         # print("加载的数组:\n", loaded_array)
 
