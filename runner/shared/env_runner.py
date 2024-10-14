@@ -298,12 +298,15 @@ class EnvRunner(Runner):
     def render(self):
         """Visualize the env."""
         # torch.set_printoptions(precision=8)
+        import copy
         envs = self.envs
         bad_case = []
+        bad_case_actions = []
         step_record = []
-        for i in range(100):
+        for i in range(1000):
             envs.env.env.world.step(render=False)
 
+        obs = envs.reset()
         obs = envs.reset()
         rnn_states = np.zeros(
             (
@@ -318,6 +321,7 @@ class EnvRunner(Runner):
 
         step_list = np.zeros(self.n_render_rollout_threads)
         episode_rewards = np.zeros((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
+        action_record = []
 
         while True:
             self.trainer.prep_rollout()
@@ -347,6 +351,7 @@ class EnvRunner(Runner):
             obs, rewards, dones, infos = envs.step(actions_env)
             step_list += 1
             episode_rewards = np.append(episode_rewards, rewards, axis=2)
+            action_record.append(actions_env)
 
             reset_indices = []
             for (i, done) in enumerate(dones):
@@ -373,6 +378,7 @@ class EnvRunner(Runner):
                     bad_case.append(init_envs_positions)
                     bad_case.append(car_position)
                     bad_case.append(orientations)
+                    bad_case_actions.append(np.array(copy.deepcopy(action_record))[-self.episode_length:, index:index+1])
                     average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
                     print("index: " + str((index)))
                     print("init_envs_positions: " + str(init_envs_positions))
@@ -407,8 +413,11 @@ class EnvRunner(Runner):
         print("Overall average step: " + str(avg_step))
         print("Overall success rate: " + str(suc_rate))
 
+        numpy_file_name = self.all_args.model_dir + '/actions.npy'
+        np.save(numpy_file_name, np.array(bad_case_actions))
+
         # 保存 tensor 列表到文件
-        tensor_file_name = '/'.join(self.all_args.model_dir.split('/')) + '/tensors.pth'
+        tensor_file_name = self.all_args.model_dir + '/tensors.pth'
         torch.save(bad_case, tensor_file_name)
 
         # 读取 tensor 列表
@@ -434,10 +443,14 @@ class EnvRunner(Runner):
         episode_step = []
         render_rollout_threads = 1
 
-        file_name = '/'.join(self.all_args.model_dir.split('/')) + '/tensors.pth'
-        # 读取 tensor 列表
+        file_name = self.model_dir + '/tensors.pth'
         loaded_tensors = torch.load(file_name)
-        for i in range(100):
+
+        numpy_file_name = self.model_dir + '/array.npy'
+        loaded_array = np.load(numpy_file_name)
+        # print("加载的数组:\n", loaded_array)
+
+        for i in range(1000):
             envs.env.env.world.step()
 
         # 打印加载的 tensor
@@ -446,6 +459,8 @@ class EnvRunner(Runner):
             print(f"init_envs_positions {loaded_tensors[i]}:")
             print(f"car_position {loaded_tensors[i + 1]}:")
             print(f"orientations {loaded_tensors[i + 2]}:")
+            action_index = int(i / 3)
+            action_list = loaded_array[action_index]
 
             envs.env.env.init_envs_positions = loaded_tensors[i]
             path_cube_name = f"target_cube"
@@ -481,32 +496,8 @@ class EnvRunner(Runner):
 
             episode_rewards = []
             for step in range(self.episode_length):
-                calc_start = time.time()
-
-                self.trainer.prep_rollout()
-                action, rnn_states = self.trainer.policy.act(
-                    np.concatenate(obs),
-                    np.concatenate(rnn_states),
-                    np.concatenate(masks),
-                    deterministic=True,
-                )
-                actions = np.array(np.split(_t2n(action), render_rollout_threads))
-                rnn_states = np.array(np.split(_t2n(rnn_states), render_rollout_threads))
-
-                if envs.action_space[0].__class__.__name__ == "MultiDiscrete":
-                    for i in range(envs.action_space[0].shape):
-                        uc_actions_env = np.eye(envs.action_space[0].high[i] + 1)[actions[:, :, i]]
-                        if i == 0:
-                            actions_env = uc_actions_env
-                        else:
-                            actions_env = np.concatenate((actions_env, uc_actions_env), axis=2)
-                elif envs.action_space[0].__class__.__name__ == "Discrete":
-                    actions_env = np.squeeze(np.eye(envs.action_space[0].n)[actions], 2)
-                else:
-                    actions_env = actions
-                    # raise NotImplementedError
-
-                # Obser reward and next obs
+                actions_env = action_list[step]
+                  # Obser reward and next obs
                 obs, rewards, dones, infos = envs.step(actions_env)
                 episode_rewards.append(rewards)
 

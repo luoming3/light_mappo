@@ -268,8 +268,9 @@ class EnvCore(object):
         self.car_view.set_joint_efforts(efforts=default_joints_efforts, indices=indices)
         self.car_view.set_gains(kps=default_gains_kps, kds=default_gains_kds, indices=indices)
         self.car_view.set_velocities(torch.zeros(6, device=self.device), indices=indices)
+        if not self.all_args.use_render:
+            self.world.step()
 
-        self.world.step()
     
     def get_random_positions(self, indices):
         # pos = self.init_pos_dist.sample((len(indices),))
