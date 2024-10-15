@@ -1,0 +1,36 @@
+FROM mappo:ros-noetic-focal
+
+# Avoid warnings by switching to noninteractive for the build process
+ENV DEBIAN_FRONTEND=noninteractive
+ENV USER=root
+
+# Install XFCE, VNC server, dbus-x11, and xfonts-base
+# Install pacakge
+RUN apt-get update && \
+    apt-get install -y ros-${ROS_DISTRO}-rviz \
+    xfce4 \
+    xfce4-goodies \
+    tigervnc-standalone-server \
+    novnc && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Setup VNC server
+RUN mkdir -p /root/.vnc \
+    && echo "123456" | vncpasswd -f > /root/.vnc/passwd \
+    && chmod 600 /root/.vnc/passwd
+RUN touch ~/.vnc/xstartup && chmod +x ~/.vnc/xstartup
+RUN echo '#!/bin/sh' >> ~/.vnc/xstartup \
+    && echo 'unset SESSION_MANAGER' >> ~/.vnc/xstartup \
+    && echo 'unset DBUS_SESSION_BUS_ADDRESS' >> ~/.vnc/xstartup \
+    && echo 'exec startxfce4' >> ~/.vnc/xstartup
+
+# Set the working directory in the container
+WORKDIR /app
+
+COPY start-vnc.sh start-vnc.sh
+RUN chmod +x start-vnc.sh
+
+# Expose websocket port
+EXPOSE 8077
+
+ENTRYPOINT ["/app/start-vnc.sh"]

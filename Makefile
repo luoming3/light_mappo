@@ -35,6 +35,12 @@ restart-container:
 exec-container:
 	make -C deploy/ exec-container
 
+build-vnc-image: build-image
+	docker build -t ${IMAGE_NAME}:${IMAGE_TAG}-vnc -f Dockerfile_vnc .
+
+run-vnc-container:
+	make -C deploy/ run-vnc-container
+
 # ros command
 launch-gmapping:
 	roslaunch maxbot_real maxbot_real_gmapping.launch
@@ -70,3 +76,8 @@ kill-init-amcl:
 
 clean-node: kill-init-amcl kill-mappo
 	@echo "y" | rosnode cleanup
+
+init: init-amcl
+
+rotate: # TODO
+	@echo "rotate maxbot to the inital state"
