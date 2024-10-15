@@ -18,6 +18,9 @@ build-image: clean-up
 save-image:  # save docker image
 	docker save ${IMAGE_NAME}:${IMAGE_TAG} | gzip > deploy/image/${IMAGE_NAME}_${IMAGE_TAG}.tar.gz
 
+save-vnc-image:
+	docker save ${IMAGE_NAME}:${IMAGE_TAG}-vnc | gzip > deploy/image/${IMAGE_NAME}_${IMAGE_TAG}_vnc.tar.gz
+
 package:
 	@rm -f deploy.tar*
 	@tar -cvf deploy.tar deploy
