@@ -46,8 +46,7 @@ class Agent(object):
     def restore(self, model_dir=None):
         """Restore policy's networks from a saved model."""
         policy_actor_state_dict = torch.load(model_dir,
-                                             map_location=torch.device("cpu"),
-                                             weights_only=True)
+                                             map_location=torch.device("cpu"))
         self.policy.actor.load_state_dict(policy_actor_state_dict)
 
     def prep_rollout(self):
