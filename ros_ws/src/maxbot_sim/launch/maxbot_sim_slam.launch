@@ -5,8 +5,8 @@
       <param name="base_frame" value="base_footprint"/><!--底盘坐标系-->
       <param name="odom_frame" value="odom"/> <!--里程计坐标系-->
 
-      <param name="map_update_interval" value="5.0"/>
-      <param name="maxUrange" value="16.0"/>
+      <param name="map_update_interval" value="3.0"/>
+      <param name="maxUrange" value="12.0"/>
       <param name="sigma" value="0.05"/>
       <param name="kernelSize" value="1"/>
       <param name="lstep" value="0.05"/>
