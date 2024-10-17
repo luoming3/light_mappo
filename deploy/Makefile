@@ -5,6 +5,22 @@ IMAGE_NAME=mappo
 IMAGE_TAG=ros-noetic-focal
 CONTAINER_NAME=mappo
 
+MAXBOT_IP_1=
+MAXBOT_IP_2=
+MAXBOT_IP_3=
+MAXBOT_IP_4=
+MAXBOT_IP_5=
+MAXBOT_IP_6=
+
+REMOTE_USER=maxbot
+MAXBOT_IPS=${MAXBOT_IP_1} ${MAXBOT_IP_2} ${MAXBOT_IP_3} ${MAXBOT_IP_4} \
+	${MAXBOT_IP_5} ${MAXBOT_IP_6}
+
+setup-ssh:
+	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		bash scripts/setup_ssh.sh ${REMOTE_USER} $${REMOTE_HOST}; \
+	done
+
 run-container:
 	@docker run --init -it -d --name ${CONTAINER_NAME} --network=host \
 	-v $(shell pwd)/models:/app/deploy/models \
