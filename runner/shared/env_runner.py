@@ -346,18 +346,18 @@ class EnvRunner(Runner):
             else:
                 actions_env = actions
                 # raise NotImplementedError
-
+            
             # Obser reward and next obs
             obs, rewards, dones, infos = envs.step(actions_env)
             step_list += 1
-            episode_rewards = np.append(episode_rewards, rewards, axis=2)
+            episode_rewards = episode_rewards + rewards     
             action_record.append(actions_env)
 
             reset_indices = []
             for (i, done) in enumerate(dones):
                 if np.any(done):
                     reset_indices.append(i)
-                    
+
             if reset_indices:
                 for index in reset_indices:
                     average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
@@ -371,6 +371,7 @@ class EnvRunner(Runner):
 
             fail_indices = np.where(step_list >= self.episode_length)[0]
             if len(fail_indices) > 0:
+                action_record = action_record[-self.episode_length:]
                 for index in fail_indices:
                     init_envs_positions = torch.clone(envs.env.env.init_envs_positions[index:index+1])
                     car_position = torch.clone(envs.env.env.n_car_position[index:index+1])
@@ -378,7 +379,7 @@ class EnvRunner(Runner):
                     bad_case.append(init_envs_positions)
                     bad_case.append(car_position)
                     bad_case.append(orientations)
-                    bad_case_actions.append(np.array(copy.deepcopy(action_record))[-self.episode_length:, index:index+1])
+                    bad_case_actions.append(np.array(action_record)[:,index:index+1])
                     average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
                     print("index: " + str((index)))
                     print("init_envs_positions: " + str(init_envs_positions))

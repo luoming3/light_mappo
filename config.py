@@ -479,7 +479,7 @@ def get_config():
     parser.add_argument(
         "--use_render",
         action="store_true",
-        default=True,
+        default=False,
         help="by default, do not render the env during training. If set, start render. Note: something, the environment has internal render process which is not controlled by this hyperparam.",
     )
     parser.add_argument(
