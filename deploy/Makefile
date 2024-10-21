@@ -4,6 +4,8 @@ help:  # list all targets
 IMAGE_NAME=mappo
 IMAGE_TAG=ros-noetic-focal
 CONTAINER_NAME=mappo
+MAPPO_NODE_NAME=mappo_node
+AMCL_INIT_NODE_NAME=amcl_init_node
 
 MAXBOT_IP_1=
 MAXBOT_IP_2=
@@ -27,6 +29,7 @@ run-container:
 	@docker run --init -it -d --name ${CONTAINER_NAME} --network=host \
 	-v $(shell pwd)/models:/app/deploy/models \
 	-v $(shell pwd)/ros_ws/src/maxbot_real/map:/app/ros_ws/src/maxbot_real/map \
+	-v $(shell pwd)/ros_commands:/app/ros_commands \
 	-e ROS_IP="${ROS_IP}" \
 	-e ROS_MASTER_URI="http://${ROS_IP}" \
 	-e ROS_HOSTNAME="${ROS_IP}" \
@@ -36,6 +39,7 @@ run-vnc-container:
 	@docker run --init -it -d --name ${CONTAINER_NAME}-vnc --network=host \
 	-v $(shell pwd)/models:/app/deploy/models \
 	-v $(shell pwd)/ros_ws/src/maxbot_real/map:/app/ros_ws/src/maxbot_real/map \
+	-v $(shell pwd)/ros_commands:/app/ros_commands \
 	-e ROS_IP="${ROS_IP}" \
 	-e ROS_MASTER_URI="http://${ROS_IP}" \
 	-e ROS_HOSTNAME="${ROS_IP}" \
@@ -56,6 +60,47 @@ load-image:
 	done
 	@echo "load image successfully"
 
+# ros command
+launch-gmapping:
+	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
+	'bash ros_commands/launch_gmapping.sh'
+
+launch-save-map:
+	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
+	'bash ros_commands/launch_save_map.sh'
+
+launch-amcl:
+	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
+	'bash ros_commands/launch_amcl.sh'
+
+launch-navigation:
+	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
+	'bash ros_commands/launch_navigation.sh'
+
+init:
+	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
+	'bash ros_commands/init.sh'
+
+run-mappo: # e.g. make run-mappo start=1,1 goal=0,0
+	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
+	'bash ros_commands/run_mappo.sh ${start} ${goal}'
+
+kill-mappo:
+	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
+	'bash ros_commands/kill_mappo.sh ${MAPPO_NODE_NAME}'
+
+kill-init-amcl:
+	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
+	'bash ros_commands/kill_init_amcl.sh ${AMCL_INIT_NODE_NAME}'
+
+clean-node: kill-init-amcl kill-mappo
+	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
+	'bash ros_commands/clean_node.sh'
+
+rotate: # TODO
+	@echo "rotate maxbot to the inital state"
+
+# remote command
 init-all: # TODO
 	@echo "init all maxbot"
 
