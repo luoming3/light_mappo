@@ -27,7 +27,7 @@ setup-ssh:
 
 run-container:
 	@docker run --init -it -d --name ${CONTAINER_NAME} --network=host \
-	-v $(shell pwd)/models:/app/deploy/models \
+	-v $(shell pwd)/models:/app/models \
 	-v $(shell pwd)/ros_ws/src/maxbot_real/map:/app/ros_ws/src/maxbot_real/map \
 	-v $(shell pwd)/ros_commands:/app/ros_commands \
 	-e ROS_IP="${ROS_IP}" \
@@ -37,7 +37,7 @@ run-container:
 
 run-vnc-container:
 	@docker run --init -it -d --name ${CONTAINER_NAME}-vnc --network=host \
-	-v $(shell pwd)/models:/app/deploy/models \
+	-v $(shell pwd)/models:/app/models \
 	-v $(shell pwd)/ros_ws/src/maxbot_real/map:/app/ros_ws/src/maxbot_real/map \
 	-v $(shell pwd)/ros_commands:/app/ros_commands \
 	-e ROS_IP="${ROS_IP}" \
