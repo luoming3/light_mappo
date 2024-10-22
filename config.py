@@ -150,6 +150,8 @@ def get_config():
             the play interval of each rendered image in saved video.
         --num_save_model <int>
             number of save models during for rendering test.
+        --render_badcase <int>
+            by default, do not render the badcase during testing.
 
     Pretrained parameters:
         --model_dir <str>
@@ -499,6 +501,12 @@ def get_config():
         type=int,
         default=12,
         help="number of save models during for rendering test.",
+    )
+    parser.add_argument(
+        "--render_badcase",
+        action="store_true",
+        default=False,
+        help="by default, do not render the badcase during testing",
     )
 
     # pretrained parameters

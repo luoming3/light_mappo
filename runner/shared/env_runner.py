@@ -9,9 +9,9 @@ import time
 import numpy as np
 import torch
 from runner.shared.base_runner import Runner
+import pprint
 
 import imageio
-
 
 def _t2n(x):
     return x.detach().cpu().numpy()
@@ -298,32 +298,36 @@ class EnvRunner(Runner):
     def render(self):
         """Visualize the env."""
         # torch.set_printoptions(precision=8)
-        import copy
         envs = self.envs
         bad_case = []
-        bad_case_actions = []
+        # bad_case_actions = []
+        # bad_case_obs = []
         step_record = []
         for i in range(1000):
             envs.env.env.world.step(render=False)
 
         obs = envs.reset()
-        obs = envs.reset()
-        rnn_states = np.zeros(
-            (
-                self.n_render_rollout_threads,
-                self.num_agents,
-                self.recurrent_N,
-                self.hidden_size,
-            ),
-            dtype=np.float32,
-        )
-        masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
+        init_obs = torch.clone(torch.from_numpy(obs))
+        # pprint.pprint(init_obs)
+        # pprint.pprint(envs.env.env.n_car_position)
+        # pprint.pprint(envs.env.env.n_orientations)
+        # pprint.pprint(envs.env.env.init_envs_positions)
 
-        step_list = np.zeros(self.n_render_rollout_threads)
         episode_rewards = np.zeros((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
-        action_record = []
+        # action_record = []
+        # obs_record = []
 
         while True:
+            rnn_states = np.zeros(
+                (
+                    self.n_render_rollout_threads,
+                    self.num_agents,
+                    self.recurrent_N,
+                    self.hidden_size,
+                ),
+                dtype=np.float32,
+            )
+            masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
             self.trainer.prep_rollout()
             action, rnn_states = self.trainer.policy.act(
                 np.concatenate(obs),
@@ -349,9 +353,11 @@ class EnvRunner(Runner):
             
             # Obser reward and next obs
             obs, rewards, dones, infos = envs.step(actions_env)
-            step_list += 1
             episode_rewards = episode_rewards + rewards     
-            action_record.append(actions_env)
+            # action_record.append(actions_env)
+            # obs_record.append(obs)
+            # pprint.pprint(actions_env)
+            # pprint.pprint(obs)
 
             reset_indices = []
             for (i, done) in enumerate(dones):
@@ -359,82 +365,78 @@ class EnvRunner(Runner):
                     reset_indices.append(i)
 
             if reset_indices:
+                fail_indices = torch.where(envs.env.env.steps > envs.env.env.truncation_step)[0]
+
+                # action_record = action_record[-self.episode_length:]
+                # obs_record = obs_record[-self.episode_length:]
+
                 for index in reset_indices:
+                    if index in fail_indices:
+                        init_envs_positions = torch.clone(envs.env.env.init_envs_positions[index:index+1])
+                        car_position = torch.clone(envs.env.env.n_car_position[index:index+1])
+                        orientations = torch.clone(envs.env.env.n_orientations[index:index+1])
+                        observations = torch.clone(init_obs[index:index+1])
+                        bad_case.append(init_envs_positions)
+                        bad_case.append(car_position)
+                        bad_case.append(orientations)
+                        bad_case.append(observations)
+
+                        # bad_case_actions.append(np.array(action_record)[:,index:index+1])
+                        # bad_case_obs.append(np.array(obs_record)[:,index:index+1])
+
+                        average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
+                        print("index: " + str(index))
+                        print("init_envs_positions: " + str(init_envs_positions))
+                        print("n_car_position: " + str(car_position))
+                        print("n_orientations: " + str(orientations))
+                        print("n_observations: " + str(observations))
+                        print("fail average episode rewards is: " + str(average_episode_rewards))
+                        print("fail step: " + str(envs.env.env.steps[index].item() - 1))
+
                     average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
-                    print("index: " + str((index)))
+                    print("index: " + str(index))
                     print("average episode rewards is: " + str(average_episode_rewards))
-                    print("step: " + str(step_list[index]))
-                    step_record.append(step_list[index])
-                    step_list[index] = 0
+                    print("step: " + str(envs.env.env.steps[index].item() - 1))
+                    step_record.append(envs.env.env.steps[index].item() - 1)
                     episode_rewards[index] = np.zeros((self.num_agents, 1), dtype=np.float32)
                 obs = envs.reset(reset_indices)
+                init_obs[reset_indices] = torch.clone(torch.from_numpy(obs[reset_indices]))
 
-            fail_indices = np.where(step_list >= self.episode_length)[0]
-            if len(fail_indices) > 0:
-                action_record = action_record[-self.episode_length:]
-                for index in fail_indices:
-                    init_envs_positions = torch.clone(envs.env.env.init_envs_positions[index:index+1])
-                    car_position = torch.clone(envs.env.env.n_car_position[index:index+1])
-                    orientations = torch.clone(envs.env.env.n_orientations[index:index+1])
-                    bad_case.append(init_envs_positions)
-                    bad_case.append(car_position)
-                    bad_case.append(orientations)
-                    bad_case_actions.append(np.array(action_record)[:,index:index+1])
-                    average_episode_rewards = np.mean(np.sum(np.array(episode_rewards[index]), axis=1))
-                    print("index: " + str((index)))
-                    print("init_envs_positions: " + str(init_envs_positions))
-                    print("n_car_position: " + str(car_position))
-                    print("n_orientations: " + str(orientations))
-
-                    print("average episode rewards is: " + str(average_episode_rewards))
-                    print("step: " + str(self.episode_length - 1))
-                    step_record.append(self.episode_length - 1)
-                    step_list[index] = 0
-                    episode_rewards[index] = np.zeros((self.num_agents, 1), dtype=np.float32)
-                obs = envs.reset(fail_indices.tolist())
-
-            rnn_states[dones == True] = np.zeros(
-                ((dones == True).sum(), self.recurrent_N, self.hidden_size),
-                dtype=np.float32,
-            )
-            masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
-            masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
-            
             if len(step_record) >= self.all_args.render_episodes:
                 step_record = step_record[:self.all_args.render_episodes]
                 break
 
         # Overall success rate & average step   
-        suc_rate = len([num for num in step_record if num < (self.all_args.episode_length - 1)]) / len(step_record)
+        suc_rate = len([num for num in step_record if num < envs.env.env.truncation_step]) / len(step_record)
+        # step_record = [tensor.item() for tensor in step_record]
         step_record = np.array(step_record)
         if suc_rate == 0:
-            avg_step = self.all_args.episode_length - 1
+            avg_step = envs.env.env.truncation_step
         else:
-            avg_step = sum(step_record[step_record < (self.all_args.episode_length - 1)]) / (len(step_record) * suc_rate)
+            avg_step = sum(step_record[step_record < envs.env.env.truncation_step]) / (len(step_record) * suc_rate)
         print("Overall average step: " + str(avg_step))
         print("Overall success rate: " + str(suc_rate))
 
-        numpy_file_name = self.all_args.model_dir + '/actions.npy'
-        np.save(numpy_file_name, np.array(bad_case_actions))
+        # numpy_file_name = self.all_args.model_dir + '/actions.npy'
+        # np.save(numpy_file_name, np.array(bad_case_actions))
+
+        # numpy_file_name = self.all_args.model_dir + '/obs.npy'
+        # np.save(numpy_file_name, np.array(bad_case_obs))
 
         # 保存 tensor 列表到文件
         tensor_file_name = self.all_args.model_dir + '/tensors.pth'
         torch.save(bad_case, tensor_file_name)
 
-        # 读取 tensor 列表
-        loaded_tensors = torch.load(tensor_file_name)
-
-        # 打印加载的 tensor
-        for i, tensor in enumerate(loaded_tensors):
-            print(f"Tensor {i + 1}:")
-            print(tensor)
+        # loaded_tensors = torch.load(tensor_file_name)
+        # for i, tensor in enumerate(loaded_tensors):
+        #     print(f"Tensor {i + 1}:")
+        #     print(tensor)
 
         # 指定要追加的文件名
         file_name = '/'.join(self.all_args.model_dir.split('/')[:-2]) + '/render_result.log'
         with open(file_name, 'a') as file:
             # 将数据写入文件, 每条数据占一行
             file.write(f'Model Directory: {self.all_args.model_dir}, Avg Step: {avg_step}, Success Rate: {suc_rate}\n')
-            
 
     def render_specific_episode(self):
         from omni.isaac.core.objects import VisualCuboid
@@ -474,8 +476,43 @@ class EnvRunner(Runner):
                     color=np.array([1, 0, 0]),
                 )
             )
-            # envs.env.env.world.reset()
+    def render_specific_episode(self):
+        from omni.isaac.core.objects import VisualCuboid
+
+        """Visualize the env."""
+        envs = self.envs
+        episode_step = []
+
+        file_name = self.model_dir + '/tensors.pth'
+        loaded_tensors = torch.load(file_name)
+
+        for i in range(1000):
+            envs.env.env.world.step()
+
+        # 打印加载的 tensor
+        for i in range(0, len(loaded_tensors), 4):
+            print(f"Tensor {i}:")
+            print(f"init_envs_positions {loaded_tensors[i]}:")
+            print(f"car_position {loaded_tensors[i + 1]}:")
+            print(f"orientations {loaded_tensors[i + 2]}:")
+
+            envs.env.env.init_envs_positions = loaded_tensors[i]
+
+            path_cube_name = f"target_cube"
+            envs.env.env.world.scene.add(
+                VisualCuboid( 
+                    prim_path=f"/World/envs/env_0/target_cube",
+                    name=path_cube_name,
+                    position=np.array(loaded_tensors[i].cpu().numpy()),
+                    size=0.1,
+                    color=np.array([1, 0, 0]),
+                )
+            )
+
             obs = envs.reset_specific_pos(loaded_tensors[i + 1], loaded_tensors[i + 2])
+            obs = loaded_tensors[i + 3].numpy()
+            print("obs: " + str(obs))
+         
             all_frames = []
             if self.all_args.env_type != 'isaac_sim':
                 if self.all_args.save_gifs:
@@ -486,27 +523,53 @@ class EnvRunner(Runner):
 
             rnn_states = np.zeros(
                 (
-                    render_rollout_threads,
+                    self.n_render_rollout_threads,
                     self.num_agents,
                     self.recurrent_N,
                     self.hidden_size,
                 ),
                 dtype=np.float32,
             )
-            masks = np.ones((render_rollout_threads, self.num_agents, 1), dtype=np.float32)
+            masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
 
             episode_rewards = []
             for step in range(self.episode_length):
-                actions_env = action_list[step]
-                  # Obser reward and next obs
+                calc_start = time.time()
+
+                self.trainer.prep_rollout()
+                action, rnn_states = self.trainer.policy.act(
+                    np.concatenate(obs),
+                    np.concatenate(rnn_states),
+                    np.concatenate(masks),
+                    deterministic=True,
+                )
+                actions = np.array(np.split(_t2n(action), self.n_render_rollout_threads))
+                rnn_states = np.array(np.split(_t2n(rnn_states), self.n_render_rollout_threads))
+
+                if envs.action_space[0].__class__.__name__ == "MultiDiscrete":
+                    for i in range(envs.action_space[0].shape):
+                        uc_actions_env = np.eye(envs.action_space[0].high[i] + 1)[actions[:, :, i]]
+                        if i == 0:
+                            actions_env = uc_actions_env
+                        else:
+                            actions_env = np.concatenate((actions_env, uc_actions_env), axis=2)
+                elif envs.action_space[0].__class__.__name__ == "Discrete":
+                    actions_env = np.squeeze(np.eye(envs.action_space[0].n)[actions], 2)
+                else:
+                    actions_env = actions
+                    # raise NotImplementedError
+
+                # Obser reward and next obs
                 obs, rewards, dones, infos = envs.step(actions_env)
                 episode_rewards.append(rewards)
+                # pprint.pprint(actions_env)
+                # pprint.pprint(obs)
 
                 rnn_states[dones == True] = np.zeros(
                     ((dones == True).sum(), self.recurrent_N, self.hidden_size),
                     dtype=np.float32,
                 )
-                masks = np.ones((render_rollout_threads, self.num_agents, 1), dtype=np.float32)
+                masks = np.ones((self.n_render_rollout_threads, self.num_agents, 1), dtype=np.float32)
                 masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
 
                 if self.all_args.env_type != 'isaac_sim':
@@ -524,14 +587,13 @@ class EnvRunner(Runner):
                     all_frames = all_frames[:-1]
                     print(step)
                     break
-            
+
             average_episode_rewards = np.mean(np.sum(np.array(episode_rewards), axis=0))
             print("average episode rewards is: " + str(average_episode_rewards))
             print("step: " + str(step))
             episode_step.append(step)
 
             envs.env.env.world.scene.remove_object(path_cube_name)
-            # envs.env.env.world.reset()
 
         # Overall success rate & average step   
         suc_rate = len([num for num in episode_step if num < (self.episode_length - 1)]) / len(episode_step)
