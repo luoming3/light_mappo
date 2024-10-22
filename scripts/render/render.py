@@ -141,11 +141,13 @@ def main(args):
         from runner.separated.env_runner import EnvRunner as Runner
 
     runner = Runner(config)
-    runner.render()
 
     # # for bad case
-    # runner.render_specific_episode()
-    
+    if all_args.render_badcase:
+        print('badcase!!!!!!')
+        runner.render_specific_episode()
+    else:
+        runner.render()
     # post process
     envs.close()
     simulation_app.close()
