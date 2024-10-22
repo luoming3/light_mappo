@@ -84,7 +84,7 @@ class EnvRunner(Runner):
 
             # save model at regular intervals for rendering test
             if save_episode_interval:
-                if episode % save_episode_interval == 0:
+                if episode > save_episode_interval and episode % save_episode_interval == 0:
                     self.save_for_test(total_num_steps)
 
             # log information
