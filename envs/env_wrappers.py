@@ -292,18 +292,22 @@ class IsaacSimEnv(ShareVecEnv):
     def step_wait(self, actions):
         obs, rews, dones, infos = self.env.step(actions)
 
-        reset_indices = []
-        for (i, done) in enumerate(dones):
-            if torch.any(done):
-                reset_indices.append(i)
+        # reset_indices = []
+        # for (i, done) in enumerate(dones):
+        #     if torch.any(done):
+        #         reset_indices.append(i)
                 
-        if reset_indices:
-            self.env.reset(reset_indices)
+        # if reset_indices:
+        #     self.env.reset(reset_indices)
 
         return _t2n(obs), _t2n(rews), _t2n(dones), np.array(infos)
 
-    def reset(self):
-        obs = self.env.reset([])
+    def reset(self, indices=[]):
+        obs = self.env.reset(indices)
+        return _t2n(obs)
+    
+    def reset_specific_pos(self, car_position, orientations):
+        obs = self.env.reset_specific_pos(car_position, orientations, [])
         return _t2n(obs)
 
     def render(self, mode="rgb_array"):

@@ -4,9 +4,12 @@ results
 
 ## git
 !.gitignore
+<<<<<<< HEAD
 !.gitkeep
 
 ## package
 build/
 dist/
 *.egg-info/
+=======
+>>>>>>> origin/isaac-sim-maxbot-render

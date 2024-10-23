@@ -148,6 +148,10 @@ def get_config():
             the number of episodes to render a given env
         --ifi <float>
             the play interval of each rendered image in saved video.
+        --num_save_model <int>
+            number of save models during for rendering test.
+        --render_badcase <int>
+            by default, do not render the badcase during testing.
 
     Pretrained parameters:
         --model_dir <str>
@@ -477,7 +481,7 @@ def get_config():
     parser.add_argument(
         "--use_render",
         action="store_true",
-        default=True,
+        default=False,
         help="by default, do not render the env during training. If set, start render. Note: something, the environment has internal render process which is not controlled by this hyperparam.",
     )
     parser.add_argument(
@@ -491,6 +495,18 @@ def get_config():
         type=float,
         default=0.1,
         help="the play interval of each rendered image in saved video.",
+    )
+    parser.add_argument(
+        "--num_save_model",
+        type=int,
+        default=12,
+        help="number of save models during for rendering test.",
+    )
+    parser.add_argument(
+        "--render_badcase",
+        action="store_true",
+        default=False,
+        help="by default, do not render the badcase during testing",
     )
 
     # pretrained parameters

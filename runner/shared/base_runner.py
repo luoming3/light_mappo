@@ -44,6 +44,7 @@ class Runner(object):
         self.use_eval = self.all_args.use_eval
         self.eval_interval = self.all_args.eval_interval
         self.log_interval = self.all_args.log_interval
+        self.num_save_model = self.all_args.num_save_model
 
         # dir
         self.model_dir = self.all_args.model_dir
@@ -123,18 +124,31 @@ class Runner(object):
 
     def save(self):
         """Save policy's actor and critic networks."""
+        path_name = str(self.save_dir) + "/latest"
+        if not os.path.exists(path_name):
+            os.makedirs(path_name)
         policy_actor = self.trainer.policy.actor
-        torch.save(policy_actor.state_dict(), str(self.save_dir) + "/actor.pt")
+        torch.save(policy_actor.state_dict(), str(path_name) + "/actor.pt")
         policy_critic = self.trainer.policy.critic
-        torch.save(policy_critic.state_dict(), str(self.save_dir) + "/critic.pt")
+        torch.save(policy_critic.state_dict(), str(path_name) + "/critic.pt")
+
+    def save_for_test(self, total_num_steps):
+        """Save policy's actor and critic networks."""
+        path_name = str(self.save_dir) + "/" + str(total_num_steps)
+        if not os.path.exists(path_name):
+            os.makedirs(path_name)
+        policy_actor = self.trainer.policy.actor
+        torch.save(policy_actor.state_dict(), str(path_name) + "/actor.pt")
+        policy_critic = self.trainer.policy.critic
+        torch.save(policy_critic.state_dict(), str(path_name) + "/critic.pt")
 
     def restore(self):
         """Restore policy's networks from a saved model."""
         policy_actor_state_dict = torch.load(str(self.model_dir) + '/actor.pt')
         self.policy.actor.load_state_dict(policy_actor_state_dict)
-        if not self.all_args.use_render:
-            policy_critic_state_dict = torch.load(str(self.model_dir) + '/critic.pt')
-            self.policy.critic.load_state_dict(policy_critic_state_dict)
+        # if not self.all_args.use_render:
+        policy_critic_state_dict = torch.load(str(self.model_dir) + '/critic.pt')
+        self.policy.critic.load_state_dict(policy_critic_state_dict)
  
     def log_train(self, train_infos, total_num_steps):
         """
