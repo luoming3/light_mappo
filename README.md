@@ -115,6 +115,6 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
 2. initialization before run mappo
     - `make init-all`
 3. run mappo
-    - `make start-all`
+    - `make start-all start=1,1 goal=0,0`
 4. stop mappo
     - `make stop-all`
