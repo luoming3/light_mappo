@@ -80,28 +80,32 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
 ### 2.2. deployment
 
 1. create new directory
-    - `TAG=deploy-$(date +%Y%m%d)`
-    - `mkdir -p /home/ubuntu/${TAG}`
-2. move the package `deploy.tar` to the created directory
+    - export DEPLOY_TAG variable, see **DEPLOY_TAG** in *deploy/Makefile*
+        - e.g. `export DEPLOY_TAG=release-20241021`
+    - `mkdir -p ~/${DEPLOY_TAG}`
+2. move the package `deploy.tar` and `deploy.tar.sha256` to the created directory
 3. check and uncompress
-    - `cd /home/ubuntu/${TAG}`
+    - `cd ~/${DEPLOY_TAG}`
     - check sha256 file: `sha256sum -c deploy.tar.sha256`
     - if package OK, uncompress package: `tar -xvf deploy.tar`
 4. load image
-    - `cd /home/ubuntu/${TAG}/deploy`
+    - `cd ~/${DEPLOY_TAG}/deploy`
     - `make load-image`
 5. run container
+    - `cd ~/${DEPLOY_TAG}/deploy`
     - `make run-container`
 
-### 2.3. navigation usage
+### 2.3. navigation usage for single maxbot
 
-1. enter container
-    - `make exec-container` (under deploy/ folder)
+1. enter deploy diretory
+    - `cd ~/${DEPLOY_TAG}/deploy`
 2. launch navigation
-    - `make launch-navigation` (under /app folder)
+    - `make launch-navigation`
 3. initialize amcl for convergence
-    - `make init-amcl` (under /app folder)
+    - `make init`
 4. run mappo node for given start and goal
-    - `make run-mappo start=1,1 goal=0,0` (under /app folder)
+    - `make run-mappo start=1,1 goal=0,0`
 5. kill mappo node for termination
-    - `make kill-mappo` (under /app folder)
+    - `make kill-mappo`
+
+### 2.4. navigation usage for all maxbot
