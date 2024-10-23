@@ -1,0 +1,6 @@
+<launch>
+    <!-- run map server, load map-->
+    <include file="$(find maxbot_real)/launch/maxbot_real_map_server.launch" />
+    <!-- run AMCL node -->
+    <include file="$(find maxbot_real)/launch/maxbot_real_amcl.launch" />
+</launch>

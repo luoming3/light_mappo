@@ -1,0 +1,64 @@
+FROM isaac-sim:2023.1.0-ubuntu20.04
+
+# Avoid warnings by switching to noninteractive for the build process
+ENV DEBIAN_FRONTEND=noninteractive
+ENV USER=root
+
+# for run isaac sim docker
+ENV ACCEPT_EULA=Y
+ENV PRIVACY_CONSENT=Y
+ENV MESA_GL_VERSION_OVERRIDE=4.6
+ENV APPIMAGE_EXTRACT_AND_RUN=1
+
+# Install XFCE, VNC server, dbus-x11, and xfonts-base
+RUN apt update && apt install -y \
+    xfce4 \
+    xfce4-goodies \
+    tigervnc-standalone-server \
+    novnc \
+    vim \
+    wget \
+    curl \
+    git \
+    lsb-release \
+    locales \
+    bash-completion \
+    firefox \
+    openssh-server \
+    openssh-client \
+    ssh
+
+# Setup VNC server
+RUN mkdir -p /root/.vnc \
+    && echo "123456" | vncpasswd -f > /root/.vnc/passwd \
+    && chmod 600 /root/.vnc/passwd
+RUN touch ~/.vnc/xstartup && chmod +x ~/.vnc/xstartup
+RUN echo '#!/bin/sh' >> ~/.vnc/xstartup \
+    && echo 'unset SESSION_MANAGER' >> ~/.vnc/xstartup \
+    && echo 'unset DBUS_SESSION_BUS_ADDRESS' >> ~/.vnc/xstartup \
+    && echo 'exec startxfce4' >> ~/.vnc/xstartup
+
+# Setup ssh config
+RUN echo "Port 22" >> /etc/ssh/sshd_config && \
+    echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+
+# Setup root passwd
+RUN echo "root:1" | chpasswd
+RUN echo "service ssh start" >> /root/.bashrc
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Install ROS Noetic
+COPY ros-noetic-desktop.sh ros-noetic-desktop.sh
+RUN chmod +x ros-noetic-desktop.sh
+RUN bash ros-noetic-desktop.sh
+
+COPY start-vnc.sh start-vnc.sh
+RUN chmod +x start-vnc.sh
+
+# Expose websocket port
+EXPOSE 80
+EXPOSE 22
+
+ENTRYPOINT ["/app/start-vnc.sh"]

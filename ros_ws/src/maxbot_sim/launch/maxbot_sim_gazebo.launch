@@ -1,0 +1,12 @@
+<launch>
+    <!-- 设置地图的配置文件 -->
+    <arg name="map_name" default="demo_room" />
+
+    <param name="robot_description" command="$(find xacro)/xacro $(find maxbot_sim)/urdf/maxbot_sim.urdf.xacro" />
+    <!-- run gazebo -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find maxbot_sim)/world/$(arg map_name).world" />
+    </include>
+    <!-- show model in gazebo -->
+    <node pkg="gazebo_ros" type="spawn_model" name="model" args="-urdf -model maxbot_sim -param robot_description" />
+</launch>

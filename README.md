@@ -1,8 +1,6 @@
-# light_mappo
+## 1. development
 
-## Installation
-
-### conda
+### 1.1. conda
 
 ```sh
 mkdir -p ~/miniconda3
@@ -12,7 +10,7 @@ rm -rf ~/miniconda3/miniconda.sh
 source ~/.bashrc && ~/miniconda3/bin/conda init bash
 ```
 
-### 2d environment
+### 1.2. 2d environment
 
 Simply download the code, create a Conda environment, and then run the code, adding packages as needed. Specific packages will be added later.
 
@@ -28,7 +26,7 @@ conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=11
  
 pip install -r requirements.txt
 ```
-### 3d environment
+### 1.3. 3d environment
 
 For isaac sim environment, the following command should be used.
 
@@ -52,62 +50,60 @@ cd path_to_light_mappo_folder
 pip install -r requirements_3_10.txt
 ```
 
-## Usage
+### 1.4. docker env
 
-- The environment part is an empty implementation, and the implementation of the environment part in the light_mappo/envs/env_core.py file is: [Code] (https://github.com/tinyzqh/light_mappo/blob/main/envs/env_core.py)
+see `light_mappo/envs/isaac_sim/docker/README.md`
 
-```python
-import numpy as np
-class EnvCore(object):
-    """
-    # Environment Agent
-    """
-    def __init__(self):
-        self.agent_num = 2 # set the number of agents(aircrafts), here set to two
-        self.obs_dim = 14 # set the observation dimension of agents
-        self.action_dim = 5 # set the action dimension of agents, here set to a five-dimensional
+### 1.5. train
 
-    def reset(self):
-        """
-        # When self.agent_num is set to 2 agents, the return value is a list, and each list contains observation data of shape = (self.obs_dim,)
-        """
-        sub_agent_obs = []
-        for i in range(self.agent_num):
-            sub_obs = np.random.random(size=(14, ))
-            sub_agent_obs.append(sub_obs)
-        return sub_agent_obs
+1. modify *scripts/train.sh* to adjust args
+2. `bash scripts/train.sh` (under the project directory)
 
-    def step(self, actions):
-        """
-        # When self.agent_num is set to 2 agents, the input of actions is a two-dimensional list, and each list contains action data of shape = (self.action_dim,).
-        # By default, the input is a list containing two elements, because the action dimension is 5, so each element has a shape of (5,)
-        """
-        sub_agent_obs = []
-        sub_agent_reward = []
-        sub_agent_done = []
-        sub_agent_info = []
-        for i in range(self.agent_num):
-            sub_agent_obs.append(np.random.random(size=(14,)))
-            sub_agent_reward.append([np.random.rand()])
-            sub_agent_done.append(False)
-            sub_agent_info.append({})
+### 1.6. render
 
-        return [sub_agent_obs, sub_agent_reward, sub_agent_done, sub_agent_info]
-```
+1. modify *scripts/render.sh*, select your model path
+2. `bash scripts/render.sh` (under the project directory)
 
+## 2. package & deployment
 
-Just write this part of the code, and you can seamlessly connect with MAPPO. After env_core.py, two files, env_discrete.py and env_continuous.py, were separately extracted to encapsulate the action space and discrete action space. In elif self.continuous_action: in algorithms/utils/act.py, this judgment logic is also used to handle continuous action spaces. The # TODO here in runner/shared/env_runner.py is also used to handle continuous action spaces.
+### 2.1. package
 
-In the train.py file, choose to comment out continuous environment or discrete environment to switch the demo environment.
+1. build image
+    - `make build-image` (under project folder)
+2. save image
+    - `make save-image` (under project folder)
+3. copy **actor.pt** to `deploy/models` directory
+4. compression deploy
+    - `make package` (under project folder)
+5. scp the package `deploy.tar` and `deploy.tar.sha256` to remote maxbot
 
-### train
+### 2.2. deployment
 
+<<<<<<< HEAD
 1. modify *config.py* to adjust args
     - add new argument `--num_save_model`
 2. `python train/train.py` (under the project directory)
+=======
+1. create new directory
+    - export DEPLOY_TAG variable, see **DEPLOY_TAG** in *deploy/Makefile*
+        - e.g. `export DEPLOY_TAG=release-20241021`
+    - `mkdir -p ~/${DEPLOY_TAG}`
+2. move the package `deploy.tar` and `deploy.tar.sha256` to the created directory
+3. check and uncompress
+    - `cd ~/${DEPLOY_TAG}`
+    - check sha256 file: `sha256sum -c deploy.tar.sha256`
+    - if package OK, uncompress package: `tar -xvf deploy.tar`
+4. load image
+    - `cd ~/${DEPLOY_TAG}/deploy`
+    - `make load-image`
+5. run container
+    - `cd ~/${DEPLOY_TAG}/deploy`
+    - `make run-container`
+>>>>>>> origin/isaac-sim-maxbot-package
 
-### render
+### 2.3. navigation usage for single maxbot
 
+<<<<<<< HEAD
 - modify *scripts/render.sh*, select your model path
     - add new argument `--use_render`
 - `bash scripts/render.sh` (under the project directory)
@@ -120,3 +116,26 @@ In the train.py file, choose to comment out continuous environment or discrete e
     - change argument `--n_render_rollout_threads` to 1
 - `bash scripts/render_badcase.sh`
 - select 'target_cube' in isaac-sim interface, then press the 'F' key to check the car 
+=======
+1. enter deploy diretory
+    - `cd ~/${DEPLOY_TAG}/deploy`
+2. launch navigation
+    - `make launch-navigation`
+3. initialize amcl for convergence
+    - `make init`
+4. run mappo node for given start and goal
+    - `make run-mappo start=1,1 goal=0,0`
+5. kill mappo node for termination
+    - `make kill-mappo`
+
+### 2.4. navigation usage for all maxbot
+
+1. modify MAXBOT_IP and set up ssh config 
+    - `make setup-ssh` (under `deploy/` folder)
+2. initialization before run mappo
+    - `make init-all`
+3. run mappo
+    - `make start-all start=1,1 goal=0,0`
+4. stop mappo
+    - `make stop-all`
+>>>>>>> origin/isaac-sim-maxbot-package

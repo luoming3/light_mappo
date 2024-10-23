@@ -1,0 +1,139 @@
+<robot name="maxbot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <!-- source en.wikipedia.org/wiki/List_of_moments_of_inertia-->
+    <material name="Red">
+        <color rgba="1 0 0 1"/>
+    </material>
+    <material name="Green">
+        <color rgba="0 1 0 1"/>
+    </material>
+    <material name="Blue">
+        <color rgba="0 0 0.8 1"/>
+    </material>
+    <material name="Black">
+        <color rgba="0 0 0 1"/>
+    </material>
+    <material name="White">
+        <color rgba="1 1 1 1"/>
+    </material>
+    <material name="Gray">
+        <color rgba="0.8 0.8 0.8 1"/>
+    </material>
+    <material name="Yellow">
+        <color rgba="1 1 0 1"/>
+    </material>
+    <material name="Orange">
+        <color rgba="1 0.5 0 1"/>
+    </material>
+    <material name="Brown">
+        <color rgba="0.6 0.4 0.2 1"/>
+    </material>
+    <material name="Purple">
+        <color rgba="0.5 0 0.5 1"/>
+    </material>
+    <material name="Cyan">
+        <color rgba="0 1 1 1"/>
+    </material>
+    <!-- xacro property -->
+    <xacro:property name="PI" value="3.14159265359"/>
+    <xacro:property name="base_link_length" value="0.1" />
+    <xacro:property name="base_link_width" value="0.1" />
+    <xacro:property name="base_link_height" value="0.2" />
+    <xacro:property name="base_link_mass" value="10.0" />
+    <xacro:property name="wheel_radius" value="0.0675" />
+    <xacro:property name="wheel_length" value="0.04" />
+    <xacro:property name="wheel_spacing" value="0.15" />
+    <xacro:property name="wheel_mass" value="2.0" />
+    <xacro:property name="caster_wheel_radius" value="0.0275" />
+    <xacro:property name="caster_wheel_spacing" value="0.24" />
+    <xacro:property name="caster_wheel_mass" value="0.5" />
+    <link name="base_footprint">
+    </link>
+    <link name="base_link">
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 ${base_link_height / 2}"/>
+            <geometry>
+                <box size="${base_link_length} ${base_link_width} ${base_link_height}"/>
+            </geometry>
+            <material name="Blue"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${base_link_length} ${base_link_width} ${base_link_height}" />
+            </geometry>
+            <origin xyz="0.0 0.0 ${base_link_height / 2}" rpy="0.0 0.0 0.0" />
+        </collision>
+        <xacro:box_inertial_matrix m="${base_link_mass}" l="${base_link_length}" w="${base_link_width}" h="${base_link_height}" />
+    </link>
+    <!-- gazebo -->
+    <gazebo reference="base_link">
+        <material>Gazebo/Blue</material>
+    </gazebo>
+    <joint name="base_joint" type="fixed">
+        <parent link="base_footprint" />
+        <child link="base_link" />
+        <origin xyz="0 0 ${wheel_radius}" />
+    </joint>
+    <!-- macro add wheel -->
+    <xacro:macro name="add_wheel" params="name flag">
+        <link name="${name}_wheel">
+            <visual>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_length}" />
+                </geometry>
+                <origin xyz="0.0 0.0 0" rpy="${PI / 2} 0.0 0.0" />
+                <material name="Black" />
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_length}" />
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy="${PI / 2} 0.0 0.0" />
+            </collision>
+            <xacro:cylinder_inertial_matrix m="${wheel_mass}" r="${wheel_radius}" h="${wheel_length}" />
+        </link>
+        <!-- gazebo -->
+        <gazebo reference="${name}_wheel">
+            <material>Gazebo/Black</material>
+        </gazebo>
+        <joint name="${name}_wheel_joint" type="continuous">
+            <parent link="base_link" />
+            <child link="${name}_wheel" />
+            <origin xyz="0 ${flag * wheel_spacing} 0" />
+            <axis xyz="0 1 0" />
+        </joint>
+    </xacro:macro>
+    <xacro:add_wheel name="left" flag="1" />
+    <xacro:add_wheel name="right" flag="-1" />
+    <!-- macro: add caster wheel -->
+    <xacro:macro name="add_caster_wheel" params="id pos_1 pos_2" >
+        <link name="caster_wheel_${id}">
+            <visual>
+                <geometry>
+                    <sphere radius="${caster_wheel_radius}" />
+                </geometry>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
+                <material name="Black" />
+            </visual>
+            <collision>
+                <geometry>
+                    <sphere radius="${caster_wheel_radius}" />
+                </geometry>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+            </collision>
+            <xacro:sphere_inertial_matrix m="${caster_wheel_mass}" r="${caster_wheel_radius}" />
+        </link>
+        <!-- gazebo -->
+        <gazebo reference="caster_wheel_${id}">
+            <material>Gazebo/Black</material>
+        </gazebo>
+        <joint name="caster_wheel_${id}_joint" type="continuous">
+            <parent link="base_link" />
+            <child link="caster_wheel_${id}" />
+            <origin xyz="${0.12 * pos_1} ${0.075 * pos_2} -0.04" />
+        </joint>
+    </xacro:macro>
+    <xacro:add_caster_wheel id="1" pos_1="1" pos_2="1" />
+    <xacro:add_caster_wheel id="2" pos_1="1" pos_2="-1" />
+    <xacro:add_caster_wheel id="3" pos_1="-1" pos_2="1" />
+    <xacro:add_caster_wheel id="4" pos_1="-1" pos_2="-1" />
+</robot>
