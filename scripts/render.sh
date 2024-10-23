@@ -18,7 +18,7 @@ for dir in "$model_dir"/*/; do
     if [ -d "$dir" ]; then
         output_file="${dir}test.log"
         echo "文件夹: $output_file"
-        CUDA_VISIBLE_DEVICES=1 /home/user/.local/share/ov/pkg/isaac-sim-2023.1.1/python.sh -u ${current_dir}/render/render.py --env_name ${env} --algorithm_name ${algo} \
+        CUDA_VISIBLE_DEVICES=0 python -u ${current_dir}/render/render.py --env_name ${env} --algorithm_name ${algo} \
         --experiment_name ${exp} --scenario_name ${scenario} --num_agents ${num_agents} --num_landmarks ${num_landmarks} --seed ${seed} \
         --n_training_threads 1 --n_render_rollout_threads 300 --episode_length 2048 --render_episodes 10000 --use_render\
         --model_dir ${dir} --layer_N 3 --hidden_size 128 > "$output_file" 2>&1

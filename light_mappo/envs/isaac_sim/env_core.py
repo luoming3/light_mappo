@@ -4,6 +4,8 @@ from gym import spaces
 import torch
 import torch.distributions as D
 from typing import Optional, Union, Tuple
+import math
+import random
 
 import os
 import sys
@@ -14,22 +16,13 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 # Append the parent directory to sys.path, otherwise the following import will fail
 sys.path.append(parent_dir)
 
-<<<<<<< HEAD:envs/isaac_sim/env_core.py
-import math
-import random
-
-from envs.env_2d import map, plotting, Astar  # noqa: E402
-from envs.isaac_sim.utils.scene import get_world
-from utils.util import euler_to_quaternion, quaternion_to_euler
-=======
 from light_mappo.utils.util import euler_to_quaternion, quaternion_to_euler
 
-OBS_DIM = 5
+OBS_DIM = 7
 ACTION_SPACE = spaces.Box(
     np.array([-10, -10]).astype(np.float32),
     np.array([+10, +10]).astype(np.float32),
 )  # left_wheel velocity and right_wheel velocity
->>>>>>> origin/isaac-sim-maxbot-package:light_mappo/envs/isaac_sim/env_core.py
 
 
 class EnvCore(object):
@@ -43,11 +36,7 @@ class EnvCore(object):
         self.jetbot_view = self.world.scene.get_object("jetbot_chassis_view")
 
         self.agent_num = all_args.num_agents  # number of agent
-<<<<<<< HEAD:envs/isaac_sim/env_core.py
-        self.obs_dim = 7  # observation dimension of agents
-=======
         self.obs_dim = OBS_DIM  # observation dimension of agents
->>>>>>> origin/isaac-sim-maxbot-package:light_mappo/envs/isaac_sim/env_core.py
         self.action_dim = 3  # set the action dimension of agents
         self.env_indices = [i for i in range(self.env_num)]
         self.action_space = ACTION_SPACE

@@ -10,12 +10,9 @@ results
 build/
 dist/
 *.egg-info/
-<<<<<<< HEAD
-=======
 deploy.tar.sha256
 
 ## docker image
 *.tar.gz
 *.pt
 *.tar
->>>>>>> origin/isaac-sim-maxbot-package

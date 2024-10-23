@@ -8,13 +8,7 @@
 import time
 import numpy as np
 import torch
-<<<<<<< HEAD:runner/shared/env_runner.py
-from runner.shared.base_runner import Runner
-import pprint
 
-=======
->>>>>>> origin/isaac-sim-maxbot-package:light_mappo/runner/shared/env_runner.py
-import imageio
 from light_mappo.runner.shared.base_runner import Runner
 
 def _t2n(x):

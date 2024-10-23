@@ -56,13 +56,23 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
 
 ### 1.5. train
 
-1. modify *scripts/train.sh* to adjust args
-2. `bash scripts/train.sh` (under the project directory)
+1. modify *config.py* to adjust args
+    - add new argument `--num_save_model`
+2. `python scripts/train/train.py` (under the project directory)
 
 ### 1.6. render
 
 1. modify *scripts/render.sh*, select your model path
+    - add new argument `--use_render`
 2. `bash scripts/render.sh` (under the project directory)
+
+#### 1.6.1. render bad case
+
+- modify *scripts/render_badcase.sh*, select your model path
+    - add new argument `--use_render` and `--render_badcase` and `--isaac_sim_headless`
+    - change argument `--n_render_rollout_threads` to 1
+- `bash scripts/render_badcase.sh`
+- select 'target_cube' in isaac-sim interface, then press the 'F' key to check the car 
 
 ## 2. package & deployment
 
@@ -79,11 +89,6 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
 
 ### 2.2. deployment
 
-<<<<<<< HEAD
-1. modify *config.py* to adjust args
-    - add new argument `--num_save_model`
-2. `python train/train.py` (under the project directory)
-=======
 1. create new directory
     - export DEPLOY_TAG variable, see **DEPLOY_TAG** in *deploy/Makefile*
         - e.g. `export DEPLOY_TAG=release-20241021`
@@ -99,24 +104,9 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
 5. run container
     - `cd ~/${DEPLOY_TAG}/deploy`
     - `make run-container`
->>>>>>> origin/isaac-sim-maxbot-package
 
 ### 2.3. navigation usage for single maxbot
 
-<<<<<<< HEAD
-- modify *scripts/render.sh*, select your model path
-    - add new argument `--use_render`
-- `bash scripts/render.sh` (under the project directory)
-    - get the gif in *scrips/result/run/gif*
-
-### render badcase
-
-- modify *scripts/render_badcase.sh*, select your model path
-    - add new argument `--use_render` and `--render_badcase` and `--isaac_sim_headless`
-    - change argument `--n_render_rollout_threads` to 1
-- `bash scripts/render_badcase.sh`
-- select 'target_cube' in isaac-sim interface, then press the 'F' key to check the car 
-=======
 1. enter deploy diretory
     - `cd ~/${DEPLOY_TAG}/deploy`
 2. launch navigation
@@ -138,4 +128,3 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
     - `make start-all start=1,1 goal=0,0`
 4. stop mappo
     - `make stop-all`
->>>>>>> origin/isaac-sim-maxbot-package

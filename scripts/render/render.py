@@ -113,7 +113,7 @@ def main(args):
 
     # create SimulationApp for import isaac sim modules
     simulation_app = init_simulation_app(all_args.isaac_sim_headless)
-    from envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
+    from light_mappo.envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
 
     # set_up_scene(all_args.n_render_rollout_threads)
     set_up_new_scene(env_num=all_args.n_render_rollout_threads, bot_num=all_args.num_agents)
@@ -136,9 +136,9 @@ def main(args):
 
     # run experiments
     if all_args.share_policy:
-        from runner.shared.env_runner import EnvRunner as Runner
+        from light_mappo.runner.shared.env_runner import EnvRunner as Runner
     else:
-        from runner.separated.env_runner import EnvRunner as Runner
+        from light_mappo.runner.separated.env_runner import EnvRunner as Runner
 
     runner = Runner(config)
 
