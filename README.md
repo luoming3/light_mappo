@@ -109,3 +109,12 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
     - `make kill-mappo`
 
 ### 2.4. navigation usage for all maxbot
+
+1. modify MAXBOT_IP and set up ssh config 
+    - `make setup-ssh` (under `deploy/` folder)
+2. initialization before run mappo
+    - `make init-all`
+3. run mappo
+    - `make start-all`
+4. stop mappo
+    - `make stop-all`
