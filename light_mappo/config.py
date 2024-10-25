@@ -524,4 +524,11 @@ def get_config():
         help="number of agents",
     )
 
+    parser.add_argument(
+        "--use_random_point",
+        action="store_true",
+        default=False,
+        help="use random point in training, but not in render",
+    )
+
     return parser

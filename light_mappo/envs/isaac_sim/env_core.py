@@ -134,15 +134,8 @@ class EnvCore(object):
         
         # arrival
         arrival_indices = torch.where(current_dist_to_goal < 0.2)
-        # env_done[arrival_indices] = True
+        env_done[arrival_indices] = True
         env_reward[arrival_indices] = 100.
-
-        self.steps[arrival_indices] = 0
-        angle = 2 * math.pi * random.random()
-        next_point = torch.tensor([math.cos(angle), math.sin(angle)], device=self.device) + self.positions[arrival_indices]
-        next_point = torch.where(next_point > 4, 8 - next_point, next_point)
-        next_point = torch.where(next_point < -4, -8 - next_point, next_point)
-        self.target_pos[arrival_indices] = next_point
 
         # failure
         failure_indices = torch.where(current_dist_to_goal > 5)
@@ -152,8 +145,17 @@ class EnvCore(object):
         # truncation
         truncation_indices = torch.where(self.steps==self.truncation_step)
         env_done[truncation_indices] = True
-        self.target_pos[truncation_indices] = torch.zeros((1, 2), device=self.device)
         # env_reward[truncation_indices] = 0.
+
+        if self.all_args.use_random_point:
+            env_done[arrival_indices] = False
+            self.steps[arrival_indices] = 0
+            angle = 2 * math.pi * random.random()
+            next_point = torch.tensor([math.cos(angle), math.sin(angle)], device=self.device) + self.positions[arrival_indices]
+            next_point = torch.where(next_point > 4, 8 - next_point, next_point)
+            next_point = torch.where(next_point < -4, -8 - next_point, next_point)
+            self.target_pos[arrival_indices] = next_point
+            self.target_pos[truncation_indices] = torch.zeros((1, 2), device=self.device)
 
         env_info = [[{}] * self.agent_num for _ in range(self.env_num)]
         
