@@ -74,7 +74,7 @@ def get_world():
 
 def set_up_new_scene(env_num=1, bot_num=4):
     world = get_world()
-    jetbot_asset_path = os.path.join(ASSET_PATH, "jetbot_with_shell.usd")
+    jetbot_asset_path = os.path.join(ASSET_PATH, "jetbot_trim.usd")
     scene = world.scene
     scene.clear(True)
 
