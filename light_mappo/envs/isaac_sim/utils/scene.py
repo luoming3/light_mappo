@@ -53,7 +53,7 @@ def get_world():
     global _world
     if World._world_initialized:
         return _world
-    
+
     # GPU buffers
     sim_params = {
         "gpu_max_rigid_contact_count": 524288,
@@ -229,7 +229,7 @@ def set_up_scene(env_num=1):
 
     jetbot_asset_path = os.path.join(ASSET_PATH, "car_jetbot_new.usd")
     add_reference_to_stage(jetbot_asset_path, "/World/envs/env_0/car")
-    
+
     prim_path = "/World/envs/env_0/car"
     # payload setting
     board_prim_path =  f"{prim_path}/board"
@@ -302,5 +302,8 @@ def set_up_scene(env_num=1):
 
     # reset car env
     world.reset()
+    # wait 10 frames for stage loading
+    for i in range(10):
+        world.step()
 
     return scene
