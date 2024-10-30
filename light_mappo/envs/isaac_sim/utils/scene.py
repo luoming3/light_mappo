@@ -49,7 +49,7 @@ articulation_props = cfg.articulation_props
 _world = None
 
 
-def get_world():
+def get_world(dt=1. / 60.):
     global _world
     if World._world_initialized:
         return _world
@@ -68,7 +68,12 @@ def get_world():
         "gpu_max_num_partitions": 8,
     }
 
-    _world = World(stage_units_in_meters=1.0, backend="torch", device="cuda:0", sim_params=sim_params)
+    _world = World(physics_dt=dt,
+                   rendering_dt=dt,
+                   stage_units_in_meters=1.0,
+                   backend="torch",
+                   device="cuda:0",
+                   sim_params=sim_params)
 
     return _world
 

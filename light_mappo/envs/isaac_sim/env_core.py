@@ -30,10 +30,11 @@ class EnvCore(object):
         # isaac sim environment
         self.all_args = all_args
         from light_mappo.envs.isaac_sim.utils.scene import get_world
-        self.world = get_world()
+        self.world = get_world(all_args.dt)
         self.env_num = env_num  # TODO: setting in config.py
         self.car_view = self.world.scene.get_object("car_view")
         self.jetbot_view = self.world.scene.get_object("jetbot_chassis_view")
+        self.skip_frame=all_args.skip_frame
 
         self.agent_num = all_args.num_agents  # number of agent
         self.obs_dim = OBS_DIM  # observation dimension of agents
@@ -109,10 +110,12 @@ class EnvCore(object):
         previous_car_position= self.get_world_poses()[0][:, 0:2]
         previous_car_position.sub_(self.init_envs_positions[:, 0:2])
 
-        self.set_actions(actions)
-        self.world.step(not self.all_args.isaac_sim_headless)
-        env_obs = self.get_observations()
+        # set actions
+        for i in range(self.skip_frame):
+            self.set_actions(actions)
+            self.world.step(not self.all_args.isaac_sim_headless)
 
+        env_obs = self.get_observations()
         current_car_position = self.get_world_poses()[0][:, 0:2]
         current_car_position.sub_(self.init_envs_positions[:, 0:2])
         goal_world_position = self.target_pos
