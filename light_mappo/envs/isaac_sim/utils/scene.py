@@ -222,6 +222,9 @@ def set_up_new_scene(env_num=1, bot_num=4):
     scene.add(jetbot_view)
 
     world.reset()
+    # wait 10 frames for stage loading
+    for i in range(10):
+        world.step()
 
     return world
 
