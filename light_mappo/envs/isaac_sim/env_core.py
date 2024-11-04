@@ -210,7 +210,7 @@ class EnvCore(object):
         jetbot_orientation = jetbot_orientation[:, 2]
         jetbot_orientation = jetbot_orientation.reshape(self.env_num, self.agent_num, 1)
 
-        joint_forces = self.car_view.get_measured_joint_forces()[:,1:5,:2]
+        joint_forces = self.car_view.get_measured_joint_forces()[:,1:1+self.agent_num,:2]
         self.y_joint_force = joint_forces[:,:,1]
         self.x_joint_force = joint_forces[:,:,0]
         self.joint_forces = joint_forces
