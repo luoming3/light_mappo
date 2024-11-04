@@ -46,7 +46,7 @@ class EnvCore(object):
         else:
             self.device = device
         self.steps = torch.zeros(size=(self.env_num,), dtype=int, device=self.device)
-        self.truncation_step = 2048
+        self.truncation_step = all_args.truncation_step
 
         self.n_car_position = torch.zeros((self.env_num, 3), device=self.device)
         self.n_orientations = torch.zeros((self.env_num, 4), device=self.device)

@@ -545,4 +545,11 @@ def get_config():
         help="set low fps via this args and physics_dt",
     )
 
+    parser.add_argument(
+        "--truncation_step",
+        type=int,
+        default=256,
+        help="set truncation step",
+    )
+
     return parser
