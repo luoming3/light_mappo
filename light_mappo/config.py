@@ -541,7 +541,7 @@ def get_config():
     parser.add_argument(
         "--skip_frame",
         type=int,
-        default=1,
+        default=6,
         help="set low fps via this args and physics_dt",
     )
 
