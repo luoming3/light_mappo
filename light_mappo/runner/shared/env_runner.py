@@ -404,6 +404,7 @@ class EnvRunner(Runner):
         self.logger.info(f"model_dir: {self.model_dir}")
         self.logger.info(f"Overall average step: {avg_step}")
         self.logger.info(f"Overall success rate: {suc_rate}")
+        self.logger.info(f"render episodes: {self.all_args.render_episodes}")
         self.logger.info("=================\n")
 
         # 保存 badcase tensor 列表到文件
