@@ -49,11 +49,11 @@ articulation_props = cfg.articulation_props
 _world = None
 
 
-def get_world():
+def get_world(dt=1. / 60.):
     global _world
     if World._world_initialized:
         return _world
-    
+
     # GPU buffers
     sim_params = {
         "gpu_max_rigid_contact_count": 524288,
@@ -68,13 +68,18 @@ def get_world():
         "gpu_max_num_partitions": 8,
     }
 
-    _world = World(stage_units_in_meters=1.0, backend="torch", device="cuda:0", sim_params=sim_params)
+    _world = World(physics_dt=dt,
+                   rendering_dt=dt,
+                   stage_units_in_meters=1.0,
+                   backend="torch",
+                   device="cuda:0",
+                   sim_params=sim_params)
 
     return _world
 
 def set_up_new_scene(env_num=1, bot_num=4):
     world = get_world()
-    jetbot_asset_path = os.path.join(ASSET_PATH, "jetbot_with_shell.usd")
+    jetbot_asset_path = os.path.join(ASSET_PATH, "jetbot_trim.usd")
     scene = world.scene
     scene.clear(True)
 
@@ -217,6 +222,9 @@ def set_up_new_scene(env_num=1, bot_num=4):
     scene.add(jetbot_view)
 
     world.reset()
+    # wait 10 frames for stage loading
+    for i in range(10):
+        world.step()
 
     return world
 
@@ -229,7 +237,7 @@ def set_up_scene(env_num=1):
 
     jetbot_asset_path = os.path.join(ASSET_PATH, "car_jetbot_new.usd")
     add_reference_to_stage(jetbot_asset_path, "/World/envs/env_0/car")
-    
+
     prim_path = "/World/envs/env_0/car"
     # payload setting
     board_prim_path =  f"{prim_path}/board"
@@ -302,5 +310,8 @@ def set_up_scene(env_num=1):
 
     # reset car env
     world.reset()
+    # wait 10 frames for stage loading
+    for i in range(10):
+        world.step()
 
     return scene

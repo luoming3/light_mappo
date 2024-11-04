@@ -140,17 +140,31 @@ def main(args):
     else:
         from light_mappo.runner.separated.env_runner import EnvRunner as Runner
 
-    runner = Runner(config)
-
     # # for bad case
     if all_args.render_badcase:
         print('badcase!!!!!!')
+        runner = Runner(config)
         runner.render_specific_episode()
     else:
-        runner.render()
+        model_dir_input = Path(all_args.model_dir)
+        model_list = get_model_list(model_dir_input)
+        for model_dir in model_list:
+            all_args.model_dir = model_dir
+            runner = Runner(config)
+            runner.render()
+
     # post process
     envs.close()
     simulation_app.close()
+
+
+def get_model_list(model_dir_input: Path):
+    if not model_dir_input.exists():
+        raise RuntimeError("model_dir is no exist")
+    
+    model_list = model_dir_input.glob("**/actor.pt")
+    model_dir_list = [str(model.parent) for model in model_list]
+    return model_dir_list
 
 
 if __name__ == "__main__":

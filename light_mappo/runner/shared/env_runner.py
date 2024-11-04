@@ -8,8 +8,10 @@
 import time
 import numpy as np
 import torch
+from pathlib import Path
 
 from light_mappo.runner.shared.base_runner import Runner
+from light_mappo.utils.log import get_logger
 
 def _t2n(x):
     return x.detach().cpu().numpy()
@@ -20,6 +22,21 @@ class EnvRunner(Runner):
 
     def __init__(self, config):
         super(EnvRunner, self).__init__(config)
+
+        if self.all_args.use_render:  # render
+            log_path = (
+                Path(self.model_dir).parent
+                / f"render_{self.all_args.experiment_name}.log"
+            )
+        else:  # train
+            log_path = (
+                Path(self.save_dir).parent
+                / f"train_{self.all_args.experiment_name}.log"
+            )
+        logging_config = {
+            "filename": str(log_path),
+        }
+        self.logger = get_logger(__name__, logging_config)
 
     def run(self):
         self.warmup()
@@ -296,6 +313,7 @@ class EnvRunner(Runner):
     def render(self):
         """Visualize the env."""
         # torch.set_printoptions(precision=8)
+        self.logger.info("#######render model#######")
         envs = self.envs
         bad_case = []
         step_record = []
@@ -381,18 +399,20 @@ class EnvRunner(Runner):
             avg_step = envs.env.env.truncation_step
         else:
             avg_step = sum(step_record[step_record < envs.env.env.truncation_step]) / (len(step_record) * suc_rate)
-        print("Overall average step: " + str(avg_step))
-        print("Overall success rate: " + str(suc_rate))
+
+        # log info
+        self.logger.info(f"model_dir: {self.model_dir}")
+        self.logger.info(f"Overall average step: {avg_step}")
+        self.logger.info(f"Overall success rate: {suc_rate}")
+        self.logger.info("=================\n")
 
         # 保存 badcase tensor 列表到文件
         tensor_file_name = self.all_args.model_dir + '/tensors.pth'
         torch.save(bad_case, tensor_file_name)
 
-        file_name = '/'.join(self.all_args.model_dir.split('/')[:-2]) + '/render_result.log'
-        with open(file_name, 'a') as file:
-            file.write(f'Model Directory: {self.all_args.model_dir}, Avg Step: {avg_step}, Success Rate: {suc_rate}\n')
-
     def render_specific_episode(self):
+        self.logger.info("#######render bad case#######")
+
         from omni.isaac.core.objects import VisualCuboid
 
         """Visualize the env."""

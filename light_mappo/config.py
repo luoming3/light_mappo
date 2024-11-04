@@ -531,4 +531,25 @@ def get_config():
         help="use random point in training, but not in render",
     )
 
+    parser.add_argument(
+        "--dt",
+        type=float,
+        default=1.0 / 60.,
+        help="isaac sim physics fps",
+    )
+
+    parser.add_argument(
+        "--skip_frame",
+        type=int,
+        default=6,
+        help="set low fps via this args and physics_dt",
+    )
+
+    parser.add_argument(
+        "--truncation_step",
+        type=int,
+        default=256,
+        help="set truncation step",
+    )
+
     return parser
