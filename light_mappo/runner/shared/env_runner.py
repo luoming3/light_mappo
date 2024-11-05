@@ -105,7 +105,7 @@ class EnvRunner(Runner):
             # log information
             if episode % self.log_interval == 0:
                 end = time.time()
-                print(
+                self.logger.info(
                     "\n Scenario {} Algo {} Exp {} updates {}/{} episodes, total num timesteps {}/{}, FPS {}.\n".format(
                         self.all_args.scenario_name,
                         self.algorithm_name,
@@ -129,7 +129,7 @@ class EnvRunner(Runner):
                 #         env_infos[agent_k] = idv_rews
 
                 train_infos["average_episode_rewards"] = np.mean(self.buffer.rewards)
-                print("average episode rewards is {}".format(train_infos["average_episode_rewards"]))
+                self.logger.info("average episode rewards is {}".format(train_infos["average_episode_rewards"]))
                 self.log_train(train_infos, total_num_steps)
                 # self.log_env(env_infos, total_num_steps)
 
