@@ -53,6 +53,9 @@ class MappoNode:
                                                  self.process_force)  ## TODO
         self.rotation_subscriber = rospy.Subscriber(
             "/rotation", Float32, self.process_rotation)  # TODO
+        rospy.loginfo("starting mappo node")
+        rospy.loginfo(f"start position: {self.start}, goal position: {self.goal}")
+        rospy.loginfo(f"path: {self.path}")
 
     def process_amcl_pose(self, message):
         position = message.pose.pose.position
@@ -105,6 +108,7 @@ class MappoNode:
             if angle < 0:
                 pass
             else:
+                rospy.loginfo(f"the next guide point: {self.path[1]}")
                 self.path = self.path[1:]
             self.guide_point = self.path[0]
 
