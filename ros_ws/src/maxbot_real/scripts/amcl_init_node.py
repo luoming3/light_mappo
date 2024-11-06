@@ -38,13 +38,24 @@ def process_amcl_covariance(message):
         CONVERGENCE = True
 
 
+def topic_exists(topic_name):
+    topic_list = rospy.get_published_topics()
+    for topic, _ in topic_list:
+        if topic == topic_name:
+            return True
+    return False
+
+
 def init_amcl():
     rospy.init_node("amcl_init_node")
     rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped,
                      process_amcl_covariance)
+    amcl_topic = "/amcl_pose"
     # pub FPS: 10 Hz
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
+        if not topic_exists(amcl_topic):
+            raise RuntimeError("The topic /amcl_pose doesn't exist.")
         if not CONVERGENCE:
             publish_action(np.array([0, 1]))
             rate.sleep()
