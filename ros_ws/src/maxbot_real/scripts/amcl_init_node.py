@@ -13,7 +13,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 CONVERGENCE = False
-epsilon = 1e-3
+epsilon = 5e-3
 # /cmd_vel topic
 ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
