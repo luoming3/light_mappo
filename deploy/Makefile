@@ -97,6 +97,10 @@ clean-node:
 rotate: # TODO
 	@echo "rotate maxbot to the inital state"
 
+set-init-pose: # e.g. make set-init-pose x=1 y=-1 theta=0
+	@docker exec ${CONTAINER_NAME} /bin/bash -c \
+	'make -C ros_commands/ set-init-pose -e x=${x} -e y=${y} -e theta=${theta}'
+
 # remote command
 init-all:
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
