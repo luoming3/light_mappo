@@ -15,5 +15,8 @@ function handle_ctrlc() {
 # 捕获 SIGINT 信号并调用处理函数
 trap handle_ctrlc SIGINT
 
+# clear obstacles in the costmaps before make plan
+rosservice call /move_base/clear_costmaps "{}"
+
 cd /app ; \
-python3 ./ros_ws/src/maxbot_real/scripts/mappo_node.py "(${1})" "(${2})"
+python3 -u ./ros_ws/src/maxbot_real/scripts/mappo_node.py "(${1})" "(${2})"
