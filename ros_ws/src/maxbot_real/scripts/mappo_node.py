@@ -21,7 +21,7 @@ from light_mappo.agent import Agent
 from make_plan import get_path
 
 # /cmd_vel topic
-ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 STATUS_RUNNING = 0
 STATUS_SUCCESS = 1
 STATUS_FAILURE = 2
