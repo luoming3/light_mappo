@@ -21,6 +21,10 @@ MAXBOT_IPS=${MAXBOT_IP_1} ${MAXBOT_IP_2} ${MAXBOT_IP_3} ${MAXBOT_IP_4} \
 # ROS_IP=$(shell hostname -I | awk '{print $$1}')
 ROS_IP=127.0.0.1
 
+update-tag:
+	@last_release=$(shell grep -P -o "release-\d*" ../README.md) ; \
+	sed -i "s/$${last_release}/$(DEPLOY_TAG)/g" ../README.md
+
 setup-ssh:
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
 		bash scripts/setup_ssh.sh ${REMOTE_USER} $${REMOTE_HOST}; \
