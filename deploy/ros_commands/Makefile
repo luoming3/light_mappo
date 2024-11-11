@@ -15,6 +15,5 @@ rotate: # TODO
 	@echo "rotate maxbot to the inital state"
 
 set-init-pose:
-	@echo "${x} ${y} ${ori_z} ${ori_w}"
 	nohup bash set_init_pose.sh ${x} ${y} ${ori_z} ${ori_w} \
 	>> /app/logs/set_init_pose.log 2>&1 &
