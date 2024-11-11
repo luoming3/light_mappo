@@ -41,3 +41,9 @@ build-vnc-image: build-image
 
 run-vnc-container:
 	make -C deploy/ run-vnc-container
+
+update-tag:
+	@last_release=$(shell grep -P -o "release-\d*" README.md) ; \
+	latest_release=release-$(shell date +"%Y%m%d") ; \
+	sed -i "s/$${last_release}/$${latest_release}/g" deploy/Makefile ; \
+	sed -i "s/$${last_release}/$${latest_release}/g" README.md
