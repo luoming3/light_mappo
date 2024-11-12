@@ -82,6 +82,10 @@ launch-navigation:
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
 	'bash ros_commands/launch_navigation.sh'
 
+kill-navigation:
+	@docker exec ${CONTAINER_NAME} /bin/bash -c \
+	'bash ros_commands/kill_navigation.sh'
+
 init:
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
 	'make -C ros_commands/ init'
@@ -147,6 +151,12 @@ set-init-pose-all:
 
 launch-navigation-all:
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
-		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd /home/user/Desktop/git/light_mappo/deploy; \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
 			make launch-navigation'; \
+	done
+
+kill-navigation-all:
+	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
+			make kill-navigation'; \
 	done
