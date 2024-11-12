@@ -123,3 +123,24 @@ stop-all:
 
 rotate-all: # TODO
 	@echo "restore all maxbot oritations to their inital state"
+
+set-init-pose-all:
+	@if [ -n ${MAXBOT_IP_1} ]; then \
+		ssh ${REMOTE_USER}@${MAXBOT_IP_1} 'cd ${DEPLOY_TAG}/deploy; \
+			make set-init-pose x=0.6 y=0.4 ori_z=0 ori_w=1'; \
+	elif [ -n ${MAXBOT_IP_2} ]; then \
+		ssh ${REMOTE_USER}@${MAXBOT_IP_2} 'cd ${DEPLOY_TAG}/deploy; \
+			make set-init-pose x=0.6 y=-0.4 ori_z=0 ori_w=1'; \
+	elif [ -n ${MAXBOT_IP_3} ]; then \
+		ssh ${REMOTE_USER}@${MAXBOT_IP_3} 'cd ${DEPLOY_TAG}/deploy; \
+			make set-init-pose x=0 y=0.4 ori_z=0 ori_w=1'; \
+	elif [ -n ${MAXBOT_IP_4} ]; then \
+		ssh ${REMOTE_USER}@${MAXBOT_IP_4} 'cd ${DEPLOY_TAG}/deploy; \
+			make set-init-pose x=0 y=-0.4 ori_z=0 ori_w=1'; \
+	elif [ -n ${MAXBOT_IP_5} ]; then \
+		ssh ${REMOTE_USER}@${MAXBOT_IP_5} 'cd ${DEPLOY_TAG}/deploy; \
+			make set-init-pose x=-0.6 y=0.4 ori_z=0 ori_w=1'; \
+	elif [ -n ${MAXBOT_IP_6} ]; then \
+		ssh ${REMOTE_USER}@${MAXBOT_IP_6} 'cd ${DEPLOY_TAG}/deploy; \
+			make set-init-pose x=-0.6 y=-0.4 ori_z=0 ori_w=1'; \
+	fi
