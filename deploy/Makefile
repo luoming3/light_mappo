@@ -79,7 +79,7 @@ launch-amcl:
 	'bash ros_commands/launch_amcl.sh'
 
 launch-navigation:
-	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
+	@docker exec ${CONTAINER_NAME} /bin/bash -c \
 	'bash ros_commands/launch_navigation.sh'
 
 init:
@@ -144,3 +144,9 @@ set-init-pose-all:
 		ssh ${REMOTE_USER}@${MAXBOT_IP_6} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=-0.6 y=-0.4 ori_z=0 ori_w=1'; \
 	fi
+
+launch-navigation-all:
+	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd /home/user/Desktop/git/light_mappo/deploy; \
+			make launch-navigation'; \
+	done
