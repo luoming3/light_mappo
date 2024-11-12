@@ -21,7 +21,7 @@ from light_mappo.agent import Agent
 from make_plan import get_path
 
 # /cmd_vel topic
-ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 STATUS_RUNNING = 0
 STATUS_SUCCESS = 1
 STATUS_FAILURE = 2
@@ -221,4 +221,9 @@ if __name__ == "__main__":
         goal = ast.literal_eval(args[1])
     except:
         raise RuntimeError("input args is invalid")
-    main(start, goal)
+    else:
+        main(start, goal)
+    finally:
+        # stop maxbot
+        os.system("rostopic pub -1 /cmd_vel geometry_msgs/Twist \
+                  '{linear: {x: 0, y: 0, z: 0}, angular: {x: 0, y: 0, z: 0}}'")

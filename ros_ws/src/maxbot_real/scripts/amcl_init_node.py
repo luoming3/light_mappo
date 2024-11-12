@@ -13,7 +13,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 CONVERGENCE = False
-epsilon = 1e-3
+epsilon = 5e-3
 # /cmd_vel topic
 ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
@@ -66,5 +66,10 @@ def init_amcl():
 
 
 if __name__ == "__main__":
-    if_convergence = init_amcl()
-    print("initialize amcl successfully")
+    try:
+        if_convergence = init_amcl()
+        print("initialize amcl successfully")
+    finally:
+        # stop maxbot
+        os.system("rostopic pub -1 /cmd_vel geometry_msgs/Twist \
+            '{linear: {x: 0, y: 0, z: 0}, angular: {x: 0, y: 0, z: 0}}'")
