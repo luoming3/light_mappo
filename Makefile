@@ -21,6 +21,7 @@ save-vnc-image:
 
 package:
 	@rm -f deploy.tar*
+	@rm -rf deploy/logs/*.log
 	@tar -cvf deploy.tar deploy
 	@sha256sum deploy.tar > deploy.tar.sha256
 
