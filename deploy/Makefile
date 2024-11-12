@@ -68,43 +68,48 @@ load-image:
 # ros command
 launch-gmapping:
 	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
-	'bash ros_commands/launch_gmapping.sh'
+		'bash ros_commands/launch_gmapping.sh'
 
 launch-save-map:
 	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
-	'bash ros_commands/launch_save_map.sh'
+		'bash ros_commands/launch_save_map.sh'
 
 launch-amcl:
 	@docker exec -it ${CONTAINER_NAME} /bin/bash -c \
-	'bash ros_commands/launch_amcl.sh'
+		'bash ros_commands/launch_amcl.sh'
 
 launch-navigation:
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
-	'bash ros_commands/launch_navigation.sh'
+		'nohup bash ros_commands/launch_navigation.sh >> \
+			/app/logs/navigation.log 2>&1 &'
 
 kill-navigation:
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
-	'bash ros_commands/kill_navigation.sh'
+		'nohup bash ros_commands/kill_navigation.sh >> \
+			/app/logs/navigation.log 2>&1 &'
 
 init:
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
-	'make -C ros_commands/ init'
+		'nohup bash ros_commands/init.sh >> \
+			/app/logs/init_amcl.log 2>&1 &'
 
 run-mappo: # e.g. make run-mappo start=1,1 goal=0,0
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
-	'make -C ros_commands/ run-mappo -e start=${start} -e goal=${goal}'
+		'nohup bash ros_commands/run_mappo.sh ${start} ${goal} >> \
+			/app/logs/mappo_node.log 2>&1 &'
 
 clean-node:
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
-	'make -C ros_commands/ clean-node'
+		'nohup bash ros_commands/clean_node.sh >> \
+			/app/logs/clean_node.log 2>&1 &'
 
 rotate: # TODO
 	@echo "rotate maxbot to the inital state"
 
 set-init-pose: # e.g. make set-init-pose x=0 y=0 ori_z=0 ori_w=1
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
-	'make -C ros_commands/ set-init-pose \
-	-e x=${x} -e y=${y} -e ori_z=${ori_z} -e ori_w=${ori_w}'
+		'nohup bash ros_commands/set_init_pose.sh ${x} ${y} ${ori_z} ${ori_w} >> \
+			/app/logs/set_init_pose.log 2>&1 &'
 
 # remote command
 init-all:
