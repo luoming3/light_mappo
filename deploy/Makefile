@@ -122,22 +122,33 @@ rotate-all: # TODO
 	@echo "restore all maxbot oritations to their inital state"
 
 set-init-pose-all:
-	@if [ -n ${MAXBOT_IP_1} ]; then \
+	@if [ -n "${MAXBOT_IP_1}" ]; then \
+		echo "ssh MAXBOT_IP_1: ${MAXBOT_IP_1}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_1} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=0.6 y=0.4 ori_z=0 ori_w=1'; \
-	elif [ -n ${MAXBOT_IP_2} ]; then \
+	fi
+	@if [ -n "${MAXBOT_IP_2}" ]; then \
+		echo "ssh MAXBOT_IP_2: ${MAXBOT_IP_2}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_2} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=0.6 y=-0.4 ori_z=0 ori_w=1'; \
-	elif [ -n ${MAXBOT_IP_3} ]; then \
+	fi
+	@if [ -n "${MAXBOT_IP_3}" ]; then \
+		echo "ssh MAXBOT_IP_3: ${MAXBOT_IP_3}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_3} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=0 y=0.4 ori_z=0 ori_w=1'; \
-	elif [ -n ${MAXBOT_IP_4} ]; then \
+	fi
+	@if [ -n "${MAXBOT_IP_4}" ]; then \
+		echo "ssh MAXBOT_IP_4: ${MAXBOT_IP_4}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_4} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=0 y=-0.4 ori_z=0 ori_w=1'; \
-	elif [ -n ${MAXBOT_IP_5} ]; then \
+	fi
+	@if [ -n "${MAXBOT_IP_5}" ]; then \
+		echo "ssh MAXBOT_IP_5: ${MAXBOT_IP_5}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_5} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=-0.6 y=0.4 ori_z=0 ori_w=1'; \
-	elif [ -n ${MAXBOT_IP_6} ]; then \
+	fi
+	@if [ -n "${MAXBOT_IP_6}" ]; then \
+		echo "ssh MAXBOT_IP_6: ${MAXBOT_IP_6}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_6} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=-0.6 y=-0.4 ori_z=0 ori_w=1'; \
 	fi
