@@ -102,18 +102,21 @@ set-init-pose: # e.g. make set-init-pose x=0 y=0 ori_z=0 ori_w=1
 # remote command
 init-all:
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		echo "init on $${REMOTE_HOST}"; \
 		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
 			make init'; \
 	done
 
 start-all: # e.g. make start-all start=1,1 goal=0,0
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		echo "start mappo on $${REMOTE_HOST}"; \
 		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
 			make run-mappo start=${start} goal=${goal}'; \
 	done
 
 stop-all:
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		echo "stop mappo on $${REMOTE_HOST}"; \
 		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
 			make clean-node'; \
 	done
@@ -123,44 +126,46 @@ rotate-all: # TODO
 
 set-init-pose-all:
 	@if [ -n "${MAXBOT_IP_1}" ]; then \
-		echo "ssh MAXBOT_IP_1: ${MAXBOT_IP_1}"; \
+		echo "set init pose on ${MAXBOT_IP_1}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_1} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=0.6 y=0.4 ori_z=0 ori_w=1'; \
 	fi
 	@if [ -n "${MAXBOT_IP_2}" ]; then \
-		echo "ssh MAXBOT_IP_2: ${MAXBOT_IP_2}"; \
+		echo "set init pose on ${MAXBOT_IP_2}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_2} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=0.6 y=-0.4 ori_z=0 ori_w=1'; \
 	fi
 	@if [ -n "${MAXBOT_IP_3}" ]; then \
-		echo "ssh MAXBOT_IP_3: ${MAXBOT_IP_3}"; \
+		echo "set init pose on ${MAXBOT_IP_3}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_3} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=0 y=0.4 ori_z=0 ori_w=1'; \
 	fi
 	@if [ -n "${MAXBOT_IP_4}" ]; then \
-		echo "ssh MAXBOT_IP_4: ${MAXBOT_IP_4}"; \
+		echo "set init pose on ${MAXBOT_IP_4}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_4} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=0 y=-0.4 ori_z=0 ori_w=1'; \
 	fi
 	@if [ -n "${MAXBOT_IP_5}" ]; then \
-		echo "ssh MAXBOT_IP_5: ${MAXBOT_IP_5}"; \
+		echo "set init pose on ${MAXBOT_IP_5}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_5} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=-0.6 y=0.4 ori_z=0 ori_w=1'; \
 	fi
 	@if [ -n "${MAXBOT_IP_6}" ]; then \
-		echo "ssh MAXBOT_IP_6: ${MAXBOT_IP_6}"; \
+		echo "set init pose on ${MAXBOT_IP_6}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_6} 'cd ${DEPLOY_TAG}/deploy; \
 			make set-init-pose x=-0.6 y=-0.4 ori_z=0 ori_w=1'; \
 	fi
 
 launch-navigation-all:
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		echo "launch navigation on $${REMOTE_HOST}"; \
 		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
 			make launch-navigation'; \
 	done
 
 kill-navigation-all:
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		echo "kill navigation on $${REMOTE_HOST}"; \
 		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
 			make kill-navigation'; \
 	done
