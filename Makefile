@@ -40,9 +40,6 @@ exec-container:
 build-vnc-image: build-image
 	docker build -t ${IMAGE_NAME}:${IMAGE_TAG}-vnc -f Dockerfile_vnc .
 
-run-vnc-container:
-	make -C deploy/ run-vnc-container
-
 update-tag:
 	@last_release=$(shell grep -P -o "release-\d*" README.md) ; \
 	latest_release=release-$(shell date +"%Y%m%d") ; \

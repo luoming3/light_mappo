@@ -38,18 +38,6 @@ run-container:
 	-e ROS_HOSTNAME="${ROS_IP}" \
 	${IMAGE_NAME}:${IMAGE_TAG}
 
-run-vnc-container:
-	@docker run --init -it -d --name ${CONTAINER_NAME}-vnc --network=host \
-	--restart=always \
-	-v $(shell pwd)/models:/app/models \
-	-v $(shell pwd)/ros_ws/src/maxbot_real/map:/app/ros_ws/src/maxbot_real/map \
-	-v $(shell pwd)/ros_commands:/app/ros_commands \
-	-v $(shell pwd)/logs:/app/logs \
-	-e ROS_IP="${ROS_IP}" \
-	-e ROS_MASTER_URI="http://${ROS_IP}:13131" \
-	-e ROS_HOSTNAME="${ROS_IP}" \
-	${IMAGE_NAME}:${IMAGE_TAG}-vnc
-
 remove-container:
 	@docker rm -f ${CONTAINER_NAME}
 
