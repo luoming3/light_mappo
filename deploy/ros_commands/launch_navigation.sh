@@ -6,4 +6,4 @@ set -e
 source "/opt/ros/$ROS_DISTRO/setup.bash"
 source "/app/ros_ws/devel/setup.bash" || echo ""
 
-roslaunch maxbot_real maxbot_real_navigation.launch
+stdbuf -oL roslaunch maxbot_sim maxbot_sim_navigation.launch
