@@ -120,11 +120,15 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
 
 ### 2.4. navigation usage for all maxbot
 
-1. modify MAXBOT_IP and set up ssh config 
-    - `make setup-ssh` (under `deploy/` folder)
-2. initialization before run mappo
+1. enter deploy diretory
+    - `cd ~/${DEPLOY_TAG}/deploy`
+2. modify MAXBOT_IP and set up ssh config
+    - `make setup-ssh`
+3. launch all navigation
+    - `make launch-navigation-all`
+4. initialization before run mappo
     - `make init-all`
-3. run mappo
-    - `make start-all start=1,1 goal=0,0`
-4. stop mappo
+5. run mappo
+    - `make start-all start=0,0 goal=2,2`
+6. stop mappo
     - `make stop-all`
