@@ -100,7 +100,7 @@ set-init-pose: # e.g. make set-init-pose x=0 y=0 ori_z=0 ori_w=1
 			/app/logs/set_init_pose.log 2>&1 &'
 
 # remote command
-init-all:
+init-all: set-init-pose-all
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
 		echo "init on $${REMOTE_HOST}"; \
 		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
