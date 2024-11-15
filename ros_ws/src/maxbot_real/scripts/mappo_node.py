@@ -1,12 +1,12 @@
 import rospy
 from std_msgs.msg import String
-from std_msgs.msg import Float32
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 import numpy as np
 import math
 import copy
+import re
 
 import os
 import sys
@@ -49,10 +49,8 @@ class MappoNode:
                                                 self.process_amcl_pose)
         self.odom_subscriber = rospy.Subscriber("/odom", Odometry,
                                                 self.process_odom)
-        self.force_subscriber = rospy.Subscriber("/force", Float32,
-                                                 self.process_force)  ## TODO
-        self.rotation_subscriber = rospy.Subscriber(
-            "/rotation", Float32, self.process_rotation)  # TODO
+        self.sensor_data_subscriber = rospy.Subscriber("/sensor_data", String,
+                                                 self.process_sensor_data)
         rospy.loginfo("starting mappo node")
         rospy.loginfo(f"start position: {self.start}, goal position: {self.goal}")
         rospy.loginfo(f"path: {self.path}")
@@ -70,9 +68,15 @@ class MappoNode:
             self.euler_ori = quaternion_to_euler(self.orientation)
             self.velocities = get_vel_from_linear(linear_x, self.euler_ori)
 
-    def process_force(self):
-        # TODO
-        self.force = np.array([0., 0.])
+    def process_sensor_data(self, sensor_data):
+        pattern = "LoadA:(-?[0-9]*\.?[0-9]*),LoadB:(-?[0-9]*\.?[0-9]*)"
+        searcher = re.search(pattern, sensor_data)
+        if searcher:
+            force_x = float(searcher.group(1))
+            force_y = float(searcher.group(2))
+            self.force = np.array([force_x, force_y])
+        else:
+            raise RuntimeError(f"invalid sensor_data: {sensor_data}")
 
     def process_rotation(self):
         # TODO
