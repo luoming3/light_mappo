@@ -91,8 +91,10 @@ clean-node:
 		'nohup bash ros_commands/clean_node.sh >> \
 			/app/logs/clean_node.log 2>&1 &'
 
-rotate: # TODO
-	@echo "rotate maxbot to the inital state"
+rotate:
+	@docker exec ${CONTAINER_NAME} /bin/bash -c \
+		'nohup bash ros_commands/init_encoder.sh >> \
+			/app/logs/init_encoder.log 2>&1 &'
 
 set-init-pose: # e.g. make set-init-pose x=0 y=0 ori_z=0 ori_w=1
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
