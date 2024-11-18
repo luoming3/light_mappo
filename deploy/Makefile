@@ -5,7 +5,7 @@ IMAGE_NAME=mappo
 IMAGE_TAG=ros-noetic-focal
 CONTAINER_NAME=mappo
 
-DEPLOY_TAG=release-20241114
+DEPLOY_TAG=release-20241118
 
 MAXBOT_IP_1=
 MAXBOT_IP_2=
