@@ -123,8 +123,12 @@ stop-all:
 			make clean-node'; \
 	done
 
-rotate-all: # TODO
-	@echo "restore all maxbot oritations to their inital state"
+rotate-all:
+	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		echo "init on $${REMOTE_HOST}"; \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
+			make rotate'; \
+	done
 
 set-init-pose-all:
 	@if [ -n "${MAXBOT_IP_1}" ]; then \
