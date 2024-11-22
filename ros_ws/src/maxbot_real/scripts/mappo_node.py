@@ -31,9 +31,9 @@ STATUS_UNKNOWN = 3
 
 class MappoNode:
 
-    def __init__(self, start, goal, id, gamma_, w, l) -> None:
+    def __init__(self, start, goal, id, gamma, w, l) -> None:
         self.id = id
-        self.gamma_ = gamma_
+        self.gamma = gamma
         self.w = w
         self.l = l
         self.position = np.array([])
@@ -103,30 +103,41 @@ class MappoNode:
     def get_car_position(self):
         alpha = euler_from_quaternion(self.orientation)[2]
         beta = self.rotation # should be between 0 ~ 2pi or -pi ~ pi
-        phi = beta - alpha - self.gamma_
         x = self.position[0]
         y = self.position[1]
         if self.id == 1:
+            gamma_ = self.gamma
+            phi = beta - alpha - gamma_
             l_ = math.sqrt(self.w**2 + self.l**2) / 2
             x0 = x - math.cos(phi) * l_
             y0 = y + math.sin(phi) * l_
         elif self.id == 2:
+            gamma_ = math.pi / 2 - self.gamma
+            phi = beta - alpha - gamma_
             l_ = math.sqrt(self.w**2 + self.l**2) / 2
             x0 = x + math.sin(phi) * l_
             y0 = y + math.cos(phi) * l_
         elif self.id == 3:
+            gamma_ = 0
+            phi = beta - alpha - gamma_
             l_ = self.w / 2
             x0 = x - math.sin(phi) * l_
             y0 = y - math.cos(phi) * l_
         elif self.id == 4:
+            gamma_ = 0
+            phi = beta - alpha - gamma_
             l_ = self.w / 2
             x0 = x + math.sin(phi) * l_
             y0 = y + math.cos(phi) * l_
         elif self.id == 5:
+            gamma_ = math.pi / 2 - self.gamma
+            phi = beta - alpha - gamma_
             l_ = math.sqrt(self.w**2 + self.l**2) / 2
             x0 = x - math.sin(phi) * l_
             y0 = y - math.cos(phi) * l_
         elif self.id == 6:
+            gamma_ = self.gamma
+            phi = beta - alpha - gamma_
             l_ = math.sqrt(self.w**2 + self.l**2) / 2
             x0 = x + math.cos(phi) * l_
             y0 = y - math.sin(phi) * l_
@@ -227,8 +238,8 @@ def normalized(v, axis=0):
 
 def main(*args):
     rospy.init_node("mappo_node")
-    start, goal, id, gamma_, w, l = args
-    mappo_node = MappoNode(start, goal, id, gamma_, w, l)
+    start, goal, id, gamma, w, l = args
+    mappo_node = MappoNode(start, goal, id, gamma, w, l)
 
     # pub FPS: 10 Hz
     rate = rospy.Rate(10)
@@ -257,13 +268,13 @@ if __name__ == "__main__":
         start = ast.literal_eval(args[0])
         goal = ast.literal_eval(args[1])
         id = int(args[2])
-        gamma_ = float(args[3])
+        gamma = float(args[3])
         w = float(args[4])
         l = float(args[5])
     except:
         raise RuntimeError("input args is invalid")
     else:
-        main(start, goal, id, gamma_, w, l)
+        main(start, goal, id, gamma, w, l)
     finally:
         # stop maxbot
         os.system("rostopic pub -1 /cmd_vel geometry_msgs/Twist \
