@@ -3,6 +3,7 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
+from tf.transformations import euler_from_quaternion
 import numpy as np
 import math
 import copy
@@ -30,12 +31,16 @@ STATUS_UNKNOWN = 3
 
 class MappoNode:
 
-    def __init__(self, start, goal) -> None:
+    def __init__(self, start, goal, id, gamma_, l_) -> None:
+        self.id = id
+        self.gamma_ = gamma_
+        self.l_ = l_
         self.position = np.array([])
         self.orientation = np.array([])
         self.euler_ori = np.array([])
         self.velocities = np.array([])
         self.force = np.array([0., 0.])
+        self.rotation = 0.0
         self.path = []
         self.start = np.array(start)
         self.goal = np.array(goal)
@@ -69,25 +74,22 @@ class MappoNode:
             self.velocities = get_vel_from_linear(linear_x, self.euler_ori)
 
     def process_sensor_data(self, sensor_data):
-        pattern = "LoadA:(-?[0-9]*\.?[0-9]*),LoadB:(-?[0-9]*\.?[0-9]*)"
+        pattern = '"LoadA:(.+?),LoadB:(.+?),encoder:(.+?)"'
         searcher = re.search(pattern, sensor_data)
         if searcher:
             force_x = float(searcher.group(1))
             force_y = float(searcher.group(2))
             self.force = np.array([force_x, force_y])
+            self.rotation = float(searcher.group(3))
         else:
             raise RuntimeError(f"invalid sensor_data: {sensor_data}")
 
-    def process_rotation(self):
-        # TODO
-        self.rotation = None
-
     def get_obs(self):
-        ## TODO: calculate the rpos of car and dest
         if (self.position.size == 0) or (self.velocities.size== 0) or \
             (self.orientation.size == 0):
             return np.array([])
-        rpos_car_dest_norm = normalized(self.guide_point - self.position)
+        car_position = self.get_car_position()
+        rpos_car_dest_norm = normalized(self.guide_point - car_position)
         maxbot_linear_velocities = self.velocities
         maxbot_orientation = np.array([self.euler_ori[2]])
         force = self.force
@@ -98,8 +100,32 @@ class MappoNode:
         return obs
 
     def get_car_position(self):
-        # TODO
-        pass
+        alpha = euler_from_quaternion(self.orientation)[2]
+        beta = self.rotation # should be between 0 ~ 2pi or -pi ~ pi
+        phi = beta - alpha - self.gamma_
+        x = self.position[0]
+        y = self.position[1]
+        if self.id == 1:
+            x0 = x - math.cos(phi) * self.l_
+            y0 = y + math.sin(phi) * self.l_
+        elif self.id == 2:
+            x0 = x + math.sin(phi) * self.l_
+            y0 = y + math.cos(phi) * self.l_
+        elif self.id == 3:
+            x0 = x - math.sin(phi) * self.l_
+            y0 = y - math.cos(phi) * self.l_
+        elif self.id == 4:
+            x0 = x + math.sin(phi) * self.l_
+            y0 = y + math.cos(phi) * self.l_
+        elif self.id == 5:
+            x0 = x - math.sin(phi) * self.l_
+            y0 = y - math.cos(phi) * self.l_
+        elif self.id == 6:
+            x0 = x + math.cos(phi) * self.l_
+            y0 = y - math.sin(phi) * self.l_
+        else:
+            raise RuntimeError("unknown id")
+        self.car_position = np.array([x0, y0])
 
     def clip_path(self):
         path = copy.deepcopy(self.path)
@@ -192,10 +218,10 @@ def normalized(v, axis=0):
     return result
 
 
-def main(start, goal):
+def main(*args):
     rospy.init_node("mappo_node")
-
-    mappo_node = MappoNode(start, goal)
+    start, goal, id, gamma_, l_ = args
+    mappo_node = MappoNode(start, goal, id, gamma_, l_)
 
     # pub FPS: 10 Hz
     rate = rospy.Rate(10)
@@ -223,10 +249,13 @@ if __name__ == "__main__":
     try:
         start = ast.literal_eval(args[0])
         goal = ast.literal_eval(args[1])
+        id = int(args[2])
+        gamma_ = float(args[3])
+        l_ = float(args[4])
     except:
         raise RuntimeError("input args is invalid")
     else:
-        main(start, goal)
+        main(start, goal, id, gamma_, l_)
     finally:
         # stop maxbot
         os.system("rostopic pub -1 /cmd_vel geometry_msgs/Twist \
