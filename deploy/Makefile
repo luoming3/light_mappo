@@ -21,6 +21,11 @@ MAXBOT_IPS=${MAXBOT_IP_1} ${MAXBOT_IP_2} ${MAXBOT_IP_3} ${MAXBOT_IP_4} \
 # ROS_IP=$(shell hostname -I | awk '{print $$1}')
 ROS_IP=127.0.0.1
 
+# TODO: maxbot_car parameters
+GAMMA=
+WIDTH=
+LENGTH=
+
 setup-ssh:
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
 		bash scripts/setup_ssh.sh ${REMOTE_USER} $${REMOTE_HOST}; \
@@ -81,9 +86,9 @@ init: # e.g. make init x=0 y=0 ori_z=0 ori_w=1
 		'nohup bash ros_commands/init.sh ${x} ${y} ${ori_z} ${ori_w} >> \
 			/app/logs/init.log 2>&1 &'
 
-run-mappo: # e.g. make run-mappo start=1,1 goal=0,0
+run-mappo: # e.g. make run-mappo start=1,1 goal=0,0 id=1
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
-		'nohup bash ros_commands/run_mappo.sh ${start} ${goal} >> \
+		'nohup bash ros_commands/run_mappo.sh ${start} ${goal} ${id} ${GAMMA} ${WIDTH} ${LENGTH} >> \
 			/app/logs/mappo_node.log 2>&1 &'
 
 clean-node:
@@ -103,11 +108,36 @@ set-init-pose: # e.g. make set-init-pose x=0 y=0 ori_z=0 ori_w=1
 
 # remote command
 start-all: # e.g. make start-all start=1,1 goal=0,0
-	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+	@if [ -n "${MAXBOT_IP_1}" ]; then \
 		echo "start mappo on $${REMOTE_HOST}"; \
 		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
-			make run-mappo start=${start} goal=${goal}'; \
-	done
+			make run-mappo start=${start} goal=${goal} id=1'; \
+	fi
+	@if [ -n "${MAXBOT_IP_2}" ]; then \
+		echo "start mappo on $${REMOTE_HOST}"; \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
+			make run-mappo start=${start} goal=${goal} id=2'; \
+	fi
+	@if [ -n "${MAXBOT_IP_3}" ]; then \
+		echo "start mappo on $${REMOTE_HOST}"; \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
+			make run-mappo start=${start} goal=${goal} id=3'; \
+	fi
+	@if [ -n "${MAXBOT_IP_4}" ]; then \
+		echo "start mappo on $${REMOTE_HOST}"; \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
+			make run-mappo start=${start} goal=${goal} id=4'; \
+	fi
+	@if [ -n "${MAXBOT_IP_5}" ]; then \
+		echo "start mappo on $${REMOTE_HOST}"; \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
+			make run-mappo start=${start} goal=${goal} id=5'; \
+	fi
+	@if [ -n "${MAXBOT_IP_6}" ]; then \
+		echo "start mappo on $${REMOTE_HOST}"; \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
+			make run-mappo start=${start} goal=${goal} id=6'; \
+	fi
 
 stop-all:
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
