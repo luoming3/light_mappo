@@ -17,6 +17,8 @@ from omni.kit.commands import execute
 
 from pxr import UsdGeom, PhysxSchema, UsdPhysics
 
+import yaml
+
 import os
 import sys
 
@@ -27,6 +29,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from light_mappo.envs.isaac_sim.utils.config import RobotCfg
+from light_mappo.envs.isaac_sim.utils.randomize import Randomizer
 from light_mappo.envs.isaac_sim import ASSET_PATH
 
 if os.environ.get("OMNI_SERVER"):
@@ -47,7 +50,7 @@ rigid_props = cfg.rigid_props
 articulation_props = cfg.articulation_props
 
 _world = None
-
+_randomizer = None
 
 def get_world(dt=1. / 60.):
     global _world
@@ -77,7 +80,12 @@ def get_world(dt=1. / 60.):
 
     return _world
 
-def set_up_new_scene(env_num=1, bot_num=4):
+# def set_up_new_scene(env_num=1, bot_num=4, device=torch.device("cuda:0")):
+def set_up_new_scene(config):
+    all_args = config["all_args"]
+    bot_num = all_args.num_agents
+    env_num = all_args.n_render_rollout_threads if all_args.use_render else all_args.n_rollout_threads
+
     world = get_world()
     jetbot_asset_path = os.path.join(ASSET_PATH, "jetbot_trim.usd")
     scene = world.scene
@@ -226,8 +234,31 @@ def set_up_new_scene(env_num=1, bot_num=4):
     for i in range(10):
         world.step()
 
+    global _randomizer
+    if all_args.use_randomize:
+        view_list = {}
+        view_list[jetbot_view.name] = jetbot_view
+        view_list[car_view.name] = car_view
+        _randomizer = get_randomizer(world, config, view_list)
+
+        if _randomizer:
+            _randomizer.set_up_domain_randomization()
+
+
     return world
 
+def get_randomizer(world, config, view_list):
+    with open(os.path.join(parent_dir, 'light_mappo/domain_randomization.yaml'), 'r') as file:
+        dr_config = yaml.safe_load(file)
+    print(dr_config)
+    dr_config = dr_config.get("domain_randomization", None)
+    # randomization_params = randomization_params["randomization_params"]
+    if dr_config:
+        dr_randomizer = Randomizer(world, dr_config, config, view_list)
+    else:
+        raise ValueError("No domain randomization parameters are specified in the task yaml config file")
+
+    return dr_randomizer
 
 
 def set_up_scene(env_num=1):

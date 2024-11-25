@@ -172,7 +172,8 @@ def main(args):
     from light_mappo.envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
 
     # set_up_scene(all_args.n_rollout_threads)
-    set_up_new_scene(all_args.n_rollout_threads, all_args.num_agents)
+    set_up_new_scene(config={"all_args": all_args, "device": device,})
+    # set_up_new_scene(all_args.n_rollout_threads, all_args.num_agents, all_args.use_randomize)
 
     # env init
     envs = make_train_env(all_args)

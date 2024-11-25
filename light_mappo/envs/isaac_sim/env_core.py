@@ -10,6 +10,8 @@ import random
 import os
 import sys
 
+import omni.replicator.isaac as dr
+
 # Get the parent directory of the current file
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 
@@ -62,6 +64,10 @@ class EnvCore(object):
             torch.tensor([1e-8, 1e-8, 1.], dtype=torch.float32, device=self.device) * torch.pi
         )
 
+        if self.all_args.use_randomize:
+            from light_mappo.envs.isaac_sim.utils.scene import _randomizer
+            self.dr_randomizer = _randomizer
+
     def reset(self, indices=[]):
         if len(indices) == 0:
             indices = self.env_indices
@@ -79,6 +85,8 @@ class EnvCore(object):
         observations = self.get_observations()
 
         self.steps[indices] = 0
+        
+        dr.physics_view.step_randomization(np.array([indices]))
 
         return observations
     
@@ -110,12 +118,35 @@ class EnvCore(object):
         previous_car_position= self.get_world_poses()[0][:, 0:2]
         previous_car_position.sub_(self.init_envs_positions[:, 0:2])
 
+        actions = np.tanh(actions) * 5
+        actions = torch.from_numpy(actions)
+
+        # Add action randomization
+        print('action:', actions)
+        if hasattr(self, 'dr_randomizer') and self.dr_randomizer.randomize_actions:
+            actions = self.dr_randomizer.apply_actions_randomization(
+                actions=actions, reset_buf=torch.tensor([])
+            )
+        print('action randomize:', actions)
+
+        actions = actions.reshape(self.env_num, -1)
+
         # set actions
         for i in range(self.skip_frame):
             self.set_actions(actions)
+            dr.physics_view.step_randomization()
             self.world.step(not self.all_args.isaac_sim_headless)
 
         env_obs = self.get_observations()
+
+        # Add obs randomization
+        print('observation:', env_obs)
+        if hasattr(self, 'dr_randomizer') and self.dr_randomizer.randomize_observations:
+            env_obs = self.dr_randomizer.apply_observations_randomization(
+                observations=env_obs, reset_buf=torch.tensor([])
+            )
+        print('observation randomize:', env_obs)
+
         current_car_position = self.get_world_poses()[0][:, 0:2]
         current_car_position.sub_(self.init_envs_positions[:, 0:2])
         goal_world_position = self.target_pos
@@ -229,9 +260,9 @@ class EnvCore(object):
         return observations
     
     def set_actions(self, actions):
-        actions = np.tanh(actions) * 5
-        actions = torch.from_numpy(actions)
-        actions = actions.reshape(self.env_num, -1)
+        # actions = np.tanh(actions) * 5
+        # actions = torch.from_numpy(actions)
+        # actions = actions.reshape(self.env_num, -1)
         revolution_joint_indices = torch.arange(self.agent_num, self.agent_num * 3)
         self.car_view.set_joint_velocities(
             velocities=actions, 

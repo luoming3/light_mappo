@@ -38,257 +38,110 @@ from omni.isaac.core.utils.extensions import enable_extension
 
 
 class Randomizer:
-    def __init__(self, main_config, task_config):
-        self._cfg = task_config
-        self._config = main_config
+    def __init__(self, world, dr_config, config, view_list):
+        self.dr_cfg = dr_config
+        # self.device = device
+        self.world = world
+        self.all_config = config["all_args"]
+        self.view_list = view_list
+        self.env_num = self.all_config.n_render_rollout_threads if self.all_config.use_render else self.all_config.n_rollout_threads
+        self.device = config["device"]
 
-        self.randomize = False
-        dr_config = self._cfg.get("domain_randomization", None)
+        # self.randomize = False
+        # dr_config = self.dr_cfg.get("domain_randomization", None)
         self.distributions = dict()
         self.active_domain_randomizations = dict()
         self._observations_dr_params = None
         self._actions_dr_params = None
 
-        if dr_config is not None:
-            randomize = dr_config.get("randomize", False)
-            randomization_params = dr_config.get("randomization_params", None)
-            if randomize and randomization_params is not None:
-                self.randomize = True
-                self.min_frequency = dr_config.get("min_frequency", 1)
+        # if dr_config is not None:
+            # randomize = dr_config.get("randomize", False)
+        randomization_params = self.dr_cfg.get("randomization_params", None)
+        if randomization_params is not None:
+            # self.randomize = True
+            self.min_frequency = self.dr_cfg.get("min_frequency", 1)
 
-                # import DR extensions
-                enable_extension("omni.replicator.isaac")
-                import omni.replicator.core as rep
-                import omni.replicator.isaac as dr
+            # import DR extensions
+            enable_extension("omni.replicator.isaac")
+            import omni.replicator.core as rep
+            import omni.replicator.isaac as dr
 
-                self.rep = rep
-                self.dr = dr
+            self.rep = rep
+            self.dr = dr
+        else:
+            raise ValueError("No domain randomization parameters are specified in the task yaml config file")
 
-    # no need
-    def apply_on_startup_domain_randomization(self, task):
-        if self.randomize:
-            torch.manual_seed(self._config["seed"])
-            randomization_params = self._cfg["domain_randomization"]["randomization_params"]
+    def set_up_domain_randomization(self):
+        # if self.randomize:
+        randomization_params = self.dr_cfg["randomization_params"]
+        self.rep.set_global_seed(self.all_config.seed)
+        with self.dr.trigger.on_rl_frame(num_envs=self.env_num):
             for opt in randomization_params.keys():
-                if opt == "rigid_prim_views":
+                if opt == "observations":
+                    self._set_up_observations_randomization()
+                elif opt == "actions":
+                    self._set_up_actions_randomization()
+                elif opt == "simulation":
+                    if randomization_params["simulation"] is not None:
+                        self.distributions["simulation"] = dict()
+                        self.dr.physics_view.register_simulation_context(self.world)
+                        for attribute, params in randomization_params["simulation"].items():
+                            self._set_up_simulation_randomization(attribute, params)
+                elif opt == "rigid_prim_views":
                     if randomization_params["rigid_prim_views"] is not None:
+                        self.distributions["rigid_prim_views"] = dict()
                         for view_name in randomization_params["rigid_prim_views"].keys():
                             if randomization_params["rigid_prim_views"][view_name] is not None:
-                                for attribute, params in randomization_params["rigid_prim_views"][view_name].items():
-                                    params = randomization_params["rigid_prim_views"][view_name][attribute]
-                                    if attribute in ["scale", "mass", "density"] and params is not None:
-                                        if "on_startup" in params.keys():
-                                            if not set(
-                                                ("operation", "distribution", "distribution_parameters")
-                                            ).issubset(params["on_startup"]):
-                                                raise ValueError(
-                                                    f"Please ensure the following randomization parameters for {view_name} {attribute} "
-                                                    + "on_startup are provided: operation, distribution, distribution_parameters."
-                                                )
-                                            view = task.world.scene._scene_registry.rigid_prim_views[view_name]
-                                            if attribute == "scale":
-                                                self.randomize_scale_on_startup(
-                                                    view=view,
-                                                    distribution=params["on_startup"]["distribution"],
-                                                    distribution_parameters=params["on_startup"][
-                                                        "distribution_parameters"
-                                                    ],
-                                                    operation=params["on_startup"]["operation"],
-                                                    sync_dim_noise=True,
-                                                )
-                                            elif attribute == "mass":
-                                                self.randomize_mass_on_startup(
-                                                    view=view,
-                                                    distribution=params["on_startup"]["distribution"],
-                                                    distribution_parameters=params["on_startup"][
-                                                        "distribution_parameters"
-                                                    ],
-                                                    operation=params["on_startup"]["operation"],
-                                                )
-                                            elif attribute == "density":
-                                                self.randomize_density_on_startup(
-                                                    view=view,
-                                                    distribution=params["on_startup"]["distribution"],
-                                                    distribution_parameters=params["on_startup"][
-                                                        "distribution_parameters"
-                                                    ],
-                                                    operation=params["on_startup"]["operation"],
-                                                )
-                if opt == "articulation_views":
+                                self.distributions["rigid_prim_views"][view_name] = dict()
+                                self.dr.physics_view.register_rigid_prim_view(self.view_list[view_name])
+                                for attribute, params in randomization_params["rigid_prim_views"][
+                                    view_name
+                                ].items():
+                                    if attribute not in ["scale", "density"]:
+                                        self._set_up_rigid_prim_view_randomization(view_name, attribute, params)
+                elif opt == "articulation_views":
                     if randomization_params["articulation_views"] is not None:
+                        self.distributions["articulation_views"] = dict()
                         for view_name in randomization_params["articulation_views"].keys():
+                            if view_name not in self.view_list:
+                                print(f"The articulation_views {view_name} doesn't existed.")
                             if randomization_params["articulation_views"][view_name] is not None:
-                                for attribute, params in randomization_params["articulation_views"][view_name].items():
-                                    params = randomization_params["articulation_views"][view_name][attribute]
-                                    if attribute in ["scale"] and params is not None:
-                                        if "on_startup" in params.keys():
-                                            if not set(
-                                                ("operation", "distribution", "distribution_parameters")
-                                            ).issubset(params["on_startup"]):
-                                                raise ValueError(
-                                                    f"Please ensure the following randomization parameters for {view_name} {attribute} "
-                                                    + "on_startup are provided: operation, distribution, distribution_parameters."
-                                                )
-                                            view = task.world.scene._scene_registry.articulated_views[view_name]
-                                            if attribute == "scale":
-                                                self.randomize_scale_on_startup(
-                                                    view=view,
-                                                    distribution=params["on_startup"]["distribution"],
-                                                    distribution_parameters=params["on_startup"][
-                                                        "distribution_parameters"
-                                                    ],
-                                                    operation=params["on_startup"]["operation"],
-                                                    sync_dim_noise=True,
-                                                )
-        else:
-            dr_config = self._cfg.get("domain_randomization", None)
-            if dr_config is None:
-                raise ValueError("No domain randomization parameters are specified in the task yaml config file")
-            randomize = dr_config.get("randomize", False)
-            randomization_params = dr_config.get("randomization_params", None)
-            if randomize == False or randomization_params is None:
-                print("On Startup Domain randomization will not be applied.")
+                                self.distributions["articulation_views"][view_name] = dict()
+                                self.dr.physics_view.register_articulation_view(self.view_list[view_name])
+                                for attribute, params in randomization_params["articulation_views"][
+                                    view_name
+                                ].items():
+                                    if attribute not in ["scale"]:
+                                        self._set_up_articulation_view_randomization(view_name, attribute, params)
+        # self.rep.orchestrator.run()
 
-    def set_up_domain_randomization(self, task):
-        if self.randomize:
-            randomization_params = self._cfg["domain_randomization"]["randomization_params"]
-            self.rep.set_global_seed(self._config["seed"])
-            with self.dr.trigger.on_rl_frame(num_envs=self._cfg["env"]["numEnvs"]):
-                for opt in randomization_params.keys():
-                    if opt == "observations":
-                        self._set_up_observations_randomization(task)
-                    elif opt == "actions":
-                        self._set_up_actions_randomization(task)
-                    elif opt == "simulation":
-                        if randomization_params["simulation"] is not None:
-                            self.distributions["simulation"] = dict()
-                            self.dr.physics_view.register_simulation_context(task.world)
-                            for attribute, params in randomization_params["simulation"].items():
-                                self._set_up_simulation_randomization(attribute, params)
-                    elif opt == "rigid_prim_views":
-                        if randomization_params["rigid_prim_views"] is not None:
-                            self.distributions["rigid_prim_views"] = dict()
-                            for view_name in randomization_params["rigid_prim_views"].keys():
-                                if randomization_params["rigid_prim_views"][view_name] is not None:
-                                    self.distributions["rigid_prim_views"][view_name] = dict()
-                                    self.dr.physics_view.register_rigid_prim_view(
-                                        rigid_prim_view=task.world.scene._scene_registry.rigid_prim_views[
-                                            view_name
-                                        ],
-                                    )
-                                    for attribute, params in randomization_params["rigid_prim_views"][
-                                        view_name
-                                    ].items():
-                                        if attribute not in ["scale", "density"]:
-                                            self._set_up_rigid_prim_view_randomization(view_name, attribute, params)
-                    elif opt == "articulation_views":
-                        if randomization_params["articulation_views"] is not None:
-                            self.distributions["articulation_views"] = dict()
-                            for view_name in randomization_params["articulation_views"].keys():
-                                if randomization_params["articulation_views"][view_name] is not None:
-                                    self.distributions["articulation_views"][view_name] = dict()
-                                    self.dr.physics_view.register_articulation_view(
-                                        articulation_view=task.world.scene._scene_registry.articulated_views[
-                                            view_name
-                                        ],
-                                    )
-                                    for attribute, params in randomization_params["articulation_views"][
-                                        view_name
-                                    ].items():
-                                        if attribute not in ["scale"]:
-                                            self._set_up_articulation_view_randomization(view_name, attribute, params)
-            self.rep.orchestrator.run()
-            if self._config.get("enable_recording", False):
-                # we need to deal with initializing render product here because it has to be initialized after orchestrator.run.
-                # otherwise, replicator will stop the simulation
-                task._env.create_viewport_render_product(resolution=(task.viewport_camera_width, task.viewport_camera_height))
-                if not task.is_extension:
-                    task.world.render()
-        else:
-            dr_config = self._cfg.get("domain_randomization", None)
-            if dr_config is None:
-                raise ValueError("No domain randomization parameters are specified in the task yaml config file")
-            randomize = dr_config.get("randomize", False)
-            randomization_params = dr_config.get("randomization_params", None)
-            if randomize == False or randomization_params is None:
-                print("Domain randomization will not be applied.")
-
-    def _set_up_observations_randomization(self, task):
-        task.randomize_observations = True
-        self._observations_dr_params = self._cfg["domain_randomization"]["randomization_params"]["observations"]
+    def _set_up_observations_randomization(self):
+        self.randomize_observations = True
+        self._observations_dr_params = self.dr_cfg["randomization_params"]["observations"]
         if self._observations_dr_params is None:
             raise ValueError(f"Observations randomization parameters are not provided.")
-        if "on_reset" in self._observations_dr_params.keys():
-            if not set(("operation", "distribution", "distribution_parameters")).issubset(
-                self._observations_dr_params["on_reset"].keys()
-            ):
-                raise ValueError(
-                    f"Please ensure the following observations on_reset randomization parameters are provided: "
-                    + "operation, distribution, distribution_parameters."
-                )
-            self.active_domain_randomizations[("observations", "on_reset")] = np.array(
-                self._observations_dr_params["on_reset"]["distribution_parameters"]
-            )
-        if "on_interval" in self._observations_dr_params.keys():
-            if not set(("frequency_interval", "operation", "distribution", "distribution_parameters")).issubset(
-                self._observations_dr_params["on_interval"].keys()
-            ):
-                raise ValueError(
-                    f"Please ensure the following observations on_interval randomization parameters are provided: "
-                    + "frequency_interval, operation, distribution, distribution_parameters."
-                )
-            self.active_domain_randomizations[("observations", "on_interval")] = np.array(
-                self._observations_dr_params["on_interval"]["distribution_parameters"]
-            )
         self._observations_counter_buffer = torch.zeros(
-            (self._cfg["env"]["numEnvs"]), dtype=torch.int, device=self._config["rl_device"]
-        )
-        self._observations_correlated_noise = torch.zeros(
-            (self._cfg["env"]["numEnvs"], task.num_observations), device=self._config["rl_device"]
+            (self.env_num), dtype=torch.int, device=self.device
         )
 
-    def _set_up_actions_randomization(self, task):
-        task.randomize_actions = True
-        self._actions_dr_params = self._cfg["domain_randomization"]["randomization_params"]["actions"]
+    def _set_up_actions_randomization(self):
+        self.randomize_actions = True
+        self._actions_dr_params = self.dr_cfg["randomization_params"]["actions"]
         if self._actions_dr_params is None:
             raise ValueError(f"Actions randomization parameters are not provided.")
-        if "on_reset" in self._actions_dr_params.keys():
-            if not set(("operation", "distribution", "distribution_parameters")).issubset(
-                self._actions_dr_params["on_reset"].keys()
-            ):
-                raise ValueError(
-                    f"Please ensure the following actions on_reset randomization parameters are provided: "
-                    + "operation, distribution, distribution_parameters."
-                )
-            self.active_domain_randomizations[("actions", "on_reset")] = np.array(
-                self._actions_dr_params["on_reset"]["distribution_parameters"]
-            )
-        if "on_interval" in self._actions_dr_params.keys():
-            if not set(("frequency_interval", "operation", "distribution", "distribution_parameters")).issubset(
-                self._actions_dr_params["on_interval"].keys()
-            ):
-                raise ValueError(
-                    f"Please ensure the following actions on_interval randomization parameters are provided: "
-                    + "frequency_interval, operation, distribution, distribution_parameters."
-                )
-            self.active_domain_randomizations[("actions", "on_interval")] = np.array(
-                self._actions_dr_params["on_interval"]["distribution_parameters"]
-            )
         self._actions_counter_buffer = torch.zeros(
-            (self._cfg["env"]["numEnvs"]), dtype=torch.int, device=self._config["rl_device"]
-        )
-        self._actions_correlated_noise = torch.zeros(
-            (self._cfg["env"]["numEnvs"], task.num_actions), device=self._config["rl_device"]
+            (self.env_num), dtype=torch.int, device=self.device
         )
 
     def apply_observations_randomization(self, observations, reset_buf):
-        env_ids = reset_buf.nonzero(as_tuple=False).squeeze(-1)
+        env_ids = reset_buf.to(torch.int64)
+        # env_ids = reset_buf.nonzero(as_tuple=False).squeeze(-1)
         self._observations_counter_buffer[env_ids] = 0
         self._observations_counter_buffer += 1
 
         if "on_reset" in self._observations_dr_params.keys():
             observations[:] = self._apply_correlated_noise(
-                buffer_type="observations",
+                # buffer_type="observations",
                 buffer=observations,
                 reset_ids=env_ids,
                 operation=self._observations_dr_params["on_reset"]["operation"],
@@ -304,7 +157,7 @@ class Randomizer:
             )
             self._observations_counter_buffer[randomize_ids] = 0
             observations[:] = self._apply_uncorrelated_noise(
-                buffer=observations,
+                buffer=observations.to(self.device),
                 randomize_ids=randomize_ids,
                 operation=self._observations_dr_params["on_interval"]["operation"],
                 distribution=self._observations_dr_params["on_interval"]["distribution"],
@@ -313,13 +166,14 @@ class Randomizer:
         return observations
 
     def apply_actions_randomization(self, actions, reset_buf):
-        env_ids = reset_buf.nonzero(as_tuple=False).squeeze(-1)
+        env_ids = reset_buf.to(torch.int64)
+        # env_ids = reset_buf.nonzero(as_tuple=False).squeeze(-1)
         self._actions_counter_buffer[env_ids] = 0
         self._actions_counter_buffer += 1
 
         if "on_reset" in self._actions_dr_params.keys():
             actions[:] = self._apply_correlated_noise(
-                buffer_type="actions",
+                # buffer_type="actions",
                 buffer=actions,
                 reset_ids=env_ids,
                 operation=self._actions_dr_params["on_reset"]["operation"],
@@ -334,7 +188,7 @@ class Randomizer:
             )
             self._actions_counter_buffer[randomize_ids] = 0
             actions[:] = self._apply_uncorrelated_noise(
-                buffer=actions,
+                buffer=actions.to(self.device),
                 randomize_ids=randomize_ids,
                 operation=self._actions_dr_params["on_interval"]["operation"],
                 distribution=self._actions_dr_params["on_interval"]["distribution"],
@@ -347,22 +201,22 @@ class Randomizer:
             noise = torch.normal(
                 mean=distribution_parameters[0],
                 std=distribution_parameters[1],
-                size=(len(randomize_ids), buffer.shape[1]),
-                device=self._config["rl_device"],
+                size=(len(randomize_ids), *buffer.size()[1:]),
+                device=self.device,
             )
         elif distribution == "uniform":
             noise = (distribution_parameters[1] - distribution_parameters[0]) * torch.rand(
-                (len(randomize_ids), buffer.shape[1]), device=self._config["rl_device"]
+                (len(randomize_ids), *buffer.size()[1:]), device=self.device
             ) + distribution_parameters[0]
         elif distribution == "loguniform" or distribution == "log_uniform":
             noise = torch.exp(
                 (np.log(distribution_parameters[1]) - np.log(distribution_parameters[0]))
-                * torch.rand((len(randomize_ids), buffer.shape[1]), device=self._config["rl_device"])
+                * torch.rand((len(randomize_ids), *buffer.size()[1:]), device=self.device)
                 + np.log(distribution_parameters[0])
             )
         else:
             print(f"The specified {distribution} distribution is not supported.")
-
+        
         if operation == "additive":
             buffer[randomize_ids] += noise
         elif operation == "scaling":
@@ -371,32 +225,31 @@ class Randomizer:
             print(f"The specified {operation} operation type is not supported.")
         return buffer
 
-    def _apply_correlated_noise(self, buffer_type, buffer, reset_ids, operation, distribution, distribution_parameters):
-        if buffer_type == "observations":
-            correlated_noise_buffer = self._observations_correlated_noise
-        elif buffer_type == "actions":
-            correlated_noise_buffer = self._actions_correlated_noise
+    def _apply_correlated_noise(self, buffer, reset_ids, operation, distribution, distribution_parameters):
+        correlated_noise_buffer = torch.zeros(
+            (buffer), device=self.device
+        )
 
         if len(reset_ids) > 0:
             if distribution == "gaussian" or distribution == "normal":
                 correlated_noise_buffer[reset_ids] = torch.normal(
                     mean=distribution_parameters[0],
                     std=distribution_parameters[1],
-                    size=(len(reset_ids), buffer.shape[1]),
-                    device=self._config["rl_device"],
+                    size=(len(reset_ids),  *buffer.size()[1:]),
+                    device=self.device,
                 )
             elif distribution == "uniform":
                 correlated_noise_buffer[reset_ids] = (
                     distribution_parameters[1] - distribution_parameters[0]
                 ) * torch.rand(
-                    (len(reset_ids), buffer.shape[1]), device=self._config["rl_device"]
+                    (len(reset_ids),  *buffer.size()[1:]), device=self.device
                 ) + distribution_parameters[
                     0
                 ]
             elif distribution == "loguniform" or distribution == "log_uniform":
                 correlated_noise_buffer[reset_ids] = torch.exp(
                     (np.log(distribution_parameters[1]) - np.log(distribution_parameters[0]))
-                    * torch.rand((len(reset_ids), buffer.shape[1]), device=self._config["rl_device"])
+                    * torch.rand((len(reset_ids),  *buffer.size()[1:]), device=self.device)
                     + np.log(distribution_parameters[0])
                 )
             else:
@@ -701,72 +554,3 @@ class Randomizer:
         else:
             print(f"The specified {distribution} distribution is not supported.")
         return noise
-
-    def randomize_scale_on_startup(self, view, distribution, distribution_parameters, operation, sync_dim_noise=True):
-        scales = view.get_local_scales()
-        if sync_dim_noise:
-            dist_params = np.asarray(
-                self._sanitize_distribution_parameters(attribute="scale", dimension=1, params=distribution_parameters)
-            )
-            noise = (
-                self._generate_noise(distribution, dist_params.squeeze(), (view.count,), view._device).repeat(3, 1).T
-            )
-        else:
-            dist_params = np.asarray(
-                self._sanitize_distribution_parameters(attribute="scale", dimension=3, params=distribution_parameters)
-            )
-            noise = torch.zeros((view.count, 3), device=view._device)
-            for i in range(3):
-                noise[:, i] = self._generate_noise(distribution, dist_params[:, i], (view.count,), view._device)
-
-        if operation == "additive":
-            scales += noise
-        elif operation == "scaling":
-            scales *= noise
-        elif operation == "direct":
-            scales = noise
-        else:
-            print(f"The specified {operation} operation type is not supported.")
-        view.set_local_scales(scales=scales)
-
-    def randomize_mass_on_startup(self, view, distribution, distribution_parameters, operation):
-        if isinstance(view, omni.isaac.core.prims.RigidPrimView) or isinstance(view, RigidPrimView):
-            masses = view.get_masses()
-            dist_params = np.asarray(
-                self._sanitize_distribution_parameters(
-                    attribute=f"{view.name} mass", dimension=1, params=distribution_parameters
-                )
-            )
-            noise = self._generate_noise(distribution, dist_params.squeeze(), (view.count,), view._device)
-            set_masses = view.set_masses
-
-        if operation == "additive":
-            masses += noise
-        elif operation == "scaling":
-            masses *= noise
-        elif operation == "direct":
-            masses = noise
-        else:
-            print(f"The specified {operation} operation type is not supported.")
-        set_masses(masses)
-
-    def randomize_density_on_startup(self, view, distribution, distribution_parameters, operation):
-        if isinstance(view, omni.isaac.core.prims.RigidPrimView) or isinstance(view, RigidPrimView):
-            densities = view.get_densities()
-            dist_params = np.asarray(
-                self._sanitize_distribution_parameters(
-                    attribute=f"{view.name} density", dimension=1, params=distribution_parameters
-                )
-            )
-            noise = self._generate_noise(distribution, dist_params.squeeze(), (view.count,), view._device)
-            set_densities = view.set_densities
-
-        if operation == "additive":
-            densities += noise
-        elif operation == "scaling":
-            densities *= noise
-        elif operation == "direct":
-            densities = noise
-        else:
-            print(f"The specified {operation} operation type is not supported.")
-        set_densities(densities)

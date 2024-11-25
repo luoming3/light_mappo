@@ -156,6 +156,10 @@ def get_config():
     Pretrained parameters:
         --model_dir <str>
             by default None. set the path to pretrained model.
+
+    Domain randomization:
+        --use_randomize
+            by default False, will use domain randomization during training or rendering.
     """
     parser = argparse.ArgumentParser(
         description="onpolicy", formatter_class=argparse.RawDescriptionHelpFormatter
@@ -550,6 +554,14 @@ def get_config():
         type=int,
         default=256,
         help="set truncation step",
+    )
+
+    # domain randomization
+    parser.add_argument(
+        "--use_randomize",
+        action="store_true",
+        default=False,
+        help="use domain randomization",
     )
 
     return parser
