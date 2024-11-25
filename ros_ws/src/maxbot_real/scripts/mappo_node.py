@@ -31,11 +31,11 @@ STATUS_UNKNOWN = 3
 
 class MappoNode:
 
-    def __init__(self, start, goal, id, gamma, w, l) -> None:
+    def __init__(self, start, goal, id, w, l) -> None:
         self.id = id
-        self.gamma = gamma
         self.w = w
         self.l = l
+        self.gamma = math.atan(w / l)
         self.position = np.array([])
         self.orientation = np.array([])
         self.euler_ori = np.array([])
@@ -238,8 +238,8 @@ def normalized(v, axis=0):
 
 def main(*args):
     rospy.init_node("mappo_node")
-    start, goal, id, gamma, w, l = args
-    mappo_node = MappoNode(start, goal, id, gamma, w, l)
+    start, goal, id, w, l = args
+    mappo_node = MappoNode(start, goal, id, w, l)
 
     # pub FPS: 10 Hz
     rate = rospy.Rate(10)
@@ -268,13 +268,12 @@ if __name__ == "__main__":
         start = ast.literal_eval(args[0])
         goal = ast.literal_eval(args[1])
         id = int(args[2])
-        gamma = float(args[3])
-        w = float(args[4])
-        l = float(args[5])
+        w = float(args[3])
+        l = float(args[4])
     except:
         raise RuntimeError("input args is invalid")
     else:
-        main(start, goal, id, gamma, w, l)
+        main(start, goal, id, w, l)
     finally:
         # stop maxbot
         os.system("rostopic pub -1 /cmd_vel geometry_msgs/Twist \
