@@ -22,6 +22,7 @@ MAXBOT_IPS=${MAXBOT_IP_1} ${MAXBOT_IP_2} ${MAXBOT_IP_3} ${MAXBOT_IP_4} \
 ROS_IP=127.0.0.1
 
 # TODO: maxbot_car parameters
+# WIDTH = width / 2, LENGTH = length / 2
 WIDTH=
 LENGTH=
 

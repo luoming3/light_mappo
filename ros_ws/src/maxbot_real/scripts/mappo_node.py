@@ -32,6 +32,10 @@ STATUS_UNKNOWN = 3
 class MappoNode:
 
     def __init__(self, start, goal, id, w, l) -> None:
+        '''
+        self.w is half the width of the assembled car
+        self.l is half the length of the assembled car
+        '''
         self.id = id
         self.w = w
         self.l = l
@@ -109,37 +113,37 @@ class MappoNode:
         if self.id == 1:
             gamma_ = self.gamma
             phi = beta - alpha - gamma_
-            l_ = math.sqrt(self.w**2 + self.l**2) / 2
+            l_ = math.sqrt(self.w**2 + self.l**2)
             x0 = x - math.cos(phi) * l_
             y0 = y + math.sin(phi) * l_
         elif self.id == 2:
             gamma_ = math.pi / 2 - self.gamma
             phi = beta - alpha - gamma_
-            l_ = math.sqrt(self.w**2 + self.l**2) / 2
+            l_ = math.sqrt(self.w**2 + self.l**2)
             x0 = x + math.sin(phi) * l_
             y0 = y + math.cos(phi) * l_
         elif self.id == 3:
             gamma_ = 0
             phi = beta - alpha - gamma_
-            l_ = self.w / 2
+            l_ = self.w
             x0 = x - math.sin(phi) * l_
             y0 = y - math.cos(phi) * l_
         elif self.id == 4:
             gamma_ = 0
             phi = beta - alpha - gamma_
-            l_ = self.w / 2
+            l_ = self.w
             x0 = x + math.sin(phi) * l_
             y0 = y + math.cos(phi) * l_
         elif self.id == 5:
             gamma_ = math.pi / 2 - self.gamma
             phi = beta - alpha - gamma_
-            l_ = math.sqrt(self.w**2 + self.l**2) / 2
+            l_ = math.sqrt(self.w**2 + self.l**2)
             x0 = x - math.sin(phi) * l_
             y0 = y - math.cos(phi) * l_
         elif self.id == 6:
             gamma_ = self.gamma
             phi = beta - alpha - gamma_
-            l_ = math.sqrt(self.w**2 + self.l**2) / 2
+            l_ = math.sqrt(self.w**2 + self.l**2)
             x0 = x + math.cos(phi) * l_
             y0 = y - math.sin(phi) * l_
         else:
