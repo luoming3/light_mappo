@@ -86,7 +86,8 @@ class EnvCore(object):
 
         self.steps[indices] = 0
         
-        dr.physics_view.step_randomization(np.array([indices]))
+        if self.all_args.use_randomize:
+            dr.physics_view.step_randomization(np.array([indices]))
 
         return observations
     
@@ -134,7 +135,8 @@ class EnvCore(object):
         # set actions
         for i in range(self.skip_frame):
             self.set_actions(actions)
-            dr.physics_view.step_randomization()
+            if self.all_args.use_randomize:
+                dr.physics_view.step_randomization()
             self.world.step(not self.all_args.isaac_sim_headless)
 
         env_obs = self.get_observations()
