@@ -56,9 +56,10 @@ class MappoNode:
         self.odom_subscriber = rospy.Subscriber("/odom", Odometry,
                                                 self.process_odom)
         self.sensor_data_subscriber = rospy.Subscriber("/sensor_data", String,
-                                                 self.process_sensor_data)
+                                                       self.process_sensor_data)
         rospy.loginfo("starting mappo node")
-        rospy.loginfo(f"start position: {self.start}, goal position: {self.goal}")
+        rospy.loginfo(
+            f"start position: {self.start}, goal position: {self.goal}")
         rospy.loginfo(f"path: {self.path}")
 
     def process_amcl_pose(self, message):
@@ -143,7 +144,9 @@ class MappoNode:
             y0 = y - math.sin(phi) * l_
         else:
             raise RuntimeError("unknown id")
+
         self.car_position = np.array([x0, y0])
+        return self.car_position
 
     def clip_path(self):
         path = copy.deepcopy(self.path)
@@ -158,7 +161,7 @@ class MappoNode:
             else:
                 rospy.loginfo(f"the next guide point: {self.path[1]}")
                 self.path = self.path[1:]
-            self.guide_point = self.path[0]
+        self.guide_point = self.path[0]
 
     def step(self):
         done = False
@@ -169,14 +172,16 @@ class MappoNode:
             rospy.logwarn("observation is None")
             return done, status
         # arrival
-        current_dist_to_goal = np.linalg.norm(self.position - self.goal)
-        current_dist_to_point = np.linalg.norm(self.position - self.guide_point)
-        if current_dist_to_goal < 0.5:
+        current_dist_to_goal = np.linalg.norm(self.car_position - self.goal)
+        current_dist_to_point = np.linalg.norm(self.car_position - self.guide_point)
+        if current_dist_to_goal < 0.2:
             done = True
             status = STATUS_SUCCESS
         if current_dist_to_point > 5:
             done = False
             status = STATUS_FAILURE
+        if current_dist_to_point < 0.1:
+            self.path = self.path[1:]
 
         self.clip_path()
         action = get_action(obs)
