@@ -20,6 +20,7 @@ def publish_action(action):
 
 def process_sensor_data(sensor_data):
     global ENCODER
+    sensor_data = str(sensor_data)
     pattern = "encoder:(-?[0-9]*\.?[0-9]*)"
     searcher = re.search(pattern, sensor_data)
     if searcher:

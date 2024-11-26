@@ -80,12 +80,13 @@ class MappoNode:
             self.velocities = get_vel_from_linear(linear_x, self.euler_ori)
 
     def process_sensor_data(self, sensor_data):
+        sensor_data = str(sensor_data)
         pattern = '"LoadA:(.+?),LoadB:(.+?),encoder:(.+?)"'
         searcher = re.search(pattern, sensor_data)
         if searcher:
-            force_x = float(searcher.group(1))
-            force_y = float(searcher.group(2))
-            self.force = np.array([force_x, force_y])
+            LoadA = float(searcher.group(1))
+            LoadB = float(searcher.group(2))
+            self.force = np.array([LoadB, LoadA])
             self.rotation = float(searcher.group(3))
         else:
             raise RuntimeError(f"invalid sensor_data: {sensor_data}")
