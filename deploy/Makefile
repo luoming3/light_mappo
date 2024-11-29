@@ -14,6 +14,9 @@ MAXBOT_IP_4=
 MAXBOT_IP_5=
 MAXBOT_IP_6=
 
+SOCKET_HOST=${MAXBOT_IP_1}
+SOCKET_PORT=50007
+
 REMOTE_USER=ubuntu
 MAXBOT_IPS=${MAXBOT_IP_1} ${MAXBOT_IP_2} ${MAXBOT_IP_3} ${MAXBOT_IP_4} \
 	${MAXBOT_IP_5} ${MAXBOT_IP_6}
@@ -88,7 +91,7 @@ init: # e.g. make init x=0 y=0 ori_z=0 ori_w=1
 
 run-mappo: # e.g. make run-mappo start=1,1 goal=0,0 id=1
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
-		'nohup bash ros_commands/run_mappo.sh ${start} ${goal} ${id} ${WIDTH} ${LENGTH} >> \
+		'nohup bash ros_commands/run_mappo.sh ${start} ${goal} ${id} ${SOCKET_HOST} ${SOCKET_PORT} >> \
 			/app/logs/mappo_node.log 2>&1 &'
 
 clean-node:

@@ -3,11 +3,13 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
-from tf.transformations import euler_from_quaternion
 import numpy as np
 import math
 import copy
 import re
+import socket
+import threading
+import time
 
 import os
 import sys
@@ -31,16 +33,12 @@ STATUS_UNKNOWN = 3
 
 class MappoNode:
 
-    def __init__(self, start, goal, id, w, l) -> None:
-        '''
-        self.w is half the width of the assembled car
-        self.l is half the length of the assembled car
-        '''
+    def __init__(self, start, goal, id, host, port) -> None:
         self.id = id
-        self.w = w
-        self.l = l
-        self.gamma = math.atan(w / l)
+        self.host = host
+        self.port = port
         self.position = np.array([])
+        self.car_center = np.array([])
         self.orientation = np.array([])
         self.euler_ori = np.array([])
         self.velocities = np.array([])
@@ -61,6 +59,9 @@ class MappoNode:
                                                 self.process_odom)
         self.sensor_data_subscriber = rospy.Subscriber("/sensor_data", String,
                                                        self.process_sensor_data)
+        # get car center from remote master
+        sc_th = threading.Thread(target=self.car_center_socket_client, daemon=True)
+        sc_th.start()
         rospy.loginfo("starting mappo node")
         rospy.loginfo(
             f"start position: {self.start}, goal position: {self.goal}")
@@ -92,11 +93,10 @@ class MappoNode:
             raise RuntimeError(f"invalid sensor_data: {sensor_data}")
 
     def get_obs(self):
-        if (self.position.size == 0) or (self.velocities.size== 0) or \
+        if (self.car_center.size == 0) or (self.velocities.size== 0) or \
             (self.orientation.size == 0):
             return np.array([])
-        car_position = self.get_car_position()
-        rpos_car_dest_norm = normalized(self.guide_point - car_position)
+        rpos_car_dest_norm = normalized(self.guide_point - self.car_center)
         maxbot_linear_velocities = self.velocities
         maxbot_orientation = np.array([self.euler_ori[2]])
         force = self.force
@@ -105,53 +105,6 @@ class MappoNode:
                              axis=0)
         obs = np.expand_dims(obs, axis=0)
         return obs
-
-    def get_car_position(self):
-        alpha = euler_from_quaternion(self.orientation)[2]
-        beta = self.rotation # should be between 0 ~ 2pi or -pi ~ pi
-        x = self.position[0]
-        y = self.position[1]
-        if self.id == 1:
-            gamma_ = self.gamma
-            phi = beta - alpha - gamma_
-            l_ = math.sqrt(self.w**2 + self.l**2)
-            x0 = x - math.cos(phi) * l_
-            y0 = y + math.sin(phi) * l_
-        elif self.id == 2:
-            gamma_ = math.pi / 2 - self.gamma
-            phi = beta - alpha - gamma_
-            l_ = math.sqrt(self.w**2 + self.l**2)
-            x0 = x + math.sin(phi) * l_
-            y0 = y + math.cos(phi) * l_
-        elif self.id == 3:
-            gamma_ = 0
-            phi = beta - alpha - gamma_
-            l_ = self.w
-            x0 = x - math.sin(phi) * l_
-            y0 = y - math.cos(phi) * l_
-        elif self.id == 4:
-            gamma_ = 0
-            phi = beta - alpha - gamma_
-            l_ = self.w
-            x0 = x + math.sin(phi) * l_
-            y0 = y + math.cos(phi) * l_
-        elif self.id == 5:
-            gamma_ = math.pi / 2 - self.gamma
-            phi = beta - alpha - gamma_
-            l_ = math.sqrt(self.w**2 + self.l**2)
-            x0 = x - math.sin(phi) * l_
-            y0 = y - math.cos(phi) * l_
-        elif self.id == 6:
-            gamma_ = self.gamma
-            phi = beta - alpha - gamma_
-            l_ = math.sqrt(self.w**2 + self.l**2)
-            x0 = x + math.cos(phi) * l_
-            y0 = y - math.sin(phi) * l_
-        else:
-            raise RuntimeError("unknown id")
-
-        self.car_position = np.array([x0, y0])
-        return self.car_position
 
     def clip_path(self):
         path = copy.deepcopy(self.path)
@@ -178,7 +131,8 @@ class MappoNode:
             return done, status
         # arrival
         current_dist_to_goal = np.linalg.norm(self.car_position - self.goal)
-        current_dist_to_point = np.linalg.norm(self.car_position - self.guide_point)
+        current_dist_to_point = np.linalg.norm(self.car_position -
+                                               self.guide_point)
         if current_dist_to_goal < 0.2:
             done = True
             status = STATUS_SUCCESS
@@ -193,6 +147,32 @@ class MappoNode:
         publish_action(action)
 
         return done, status
+
+    def car_center_socket_client(self):
+        retry_count = 0
+        while True:
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.connect((self.host, self.port))
+
+                    while True:
+                        send_str = f'{self.id},{self.position[0]},{self.position[1]}'
+                        s.sendall(bytes(send_str, "utf8"))
+                        data_str = s.recv(1024)
+
+                        data_str = data_str.decode("utf8")
+                        if len(data_str) > 0:
+                            data_split = data_str.split(",")
+                            self.car_center = np.array([data_split[0], data_split[1]])
+
+                        time.sleep(1 / 30.)
+            except ConnectionRefusedError:
+                rospy.logwarn("Connection refused, and then wait 1s")
+                time.sleep(1)
+
+                retry_count += 1
+                if retry_count == 5:
+                    raise RuntimeError("Connection refused")
 
 
 def get_action(obs):
@@ -248,8 +228,8 @@ def normalized(v, axis=0):
 
 def main(*args):
     rospy.init_node("mappo_node")
-    start, goal, id, w, l = args
-    mappo_node = MappoNode(start, goal, id, w, l)
+    start, goal, id, host, port = args
+    mappo_node = MappoNode(start, goal, id, host, port)
 
     # pub FPS: 10 Hz
     rate = rospy.Rate(10)
@@ -278,12 +258,12 @@ if __name__ == "__main__":
         start = ast.literal_eval(args[0])
         goal = ast.literal_eval(args[1])
         id = int(args[2])
-        w = float(args[3])
-        l = float(args[4])
+        host = args[3]
+        port = int(args[4])
     except:
         raise RuntimeError("input args is invalid")
     else:
-        main(start, goal, id, w, l)
+        main(start, goal, id, host, port)
     finally:
         # stop maxbot
         os.system("rostopic pub -1 /cmd_vel geometry_msgs/Twist \
