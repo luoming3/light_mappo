@@ -123,12 +123,12 @@ class EnvCore(object):
         actions = torch.from_numpy(actions)
 
         # Add action randomization
-        print('action:', actions)
+        # print('action:', actions)
         if hasattr(self, 'dr_randomizer') and self.dr_randomizer.randomize_actions:
             actions = self.dr_randomizer.apply_actions_randomization(
                 actions=actions, reset_buf=torch.tensor([])
             )
-        print('action randomize:', actions)
+        # print('action randomize:', actions)
 
         actions = actions.reshape(self.env_num, -1)
 
@@ -142,12 +142,24 @@ class EnvCore(object):
         env_obs = self.get_observations()
 
         # Add obs randomization
-        print('observation:', env_obs)
+        # print('observation:', env_obs)
         if hasattr(self, 'dr_randomizer') and self.dr_randomizer.randomize_observations:
             env_obs = self.dr_randomizer.apply_observations_randomization(
                 observations=env_obs, reset_buf=torch.tensor([])
             )
-        print('observation randomize:', env_obs)
+        # print('observation randomize:', env_obs)
+
+        rpos_car_dest_extracted = env_obs[:, :, :2]  # 切片提取 rpos_car_dest 的部分
+        rpos_car_dest_norm = normalized(rpos_car_dest_extracted)
+        jetbot_linear_velocities_part = env_obs[:, :, 2:4]  
+        jetbot_orientation_part = env_obs[:, :, 4:5]  
+        joint_forces_part = env_obs[:, :, 5:]  
+
+        env_obs = torch.cat(
+            (rpos_car_dest_norm, jetbot_linear_velocities_part, jetbot_orientation_part, joint_forces_part),
+            dim=2
+        )
+        # print('observation nomalized:', env_obs)
 
         current_car_position = self.get_world_poses()[0][:, 0:2]
         current_car_position.sub_(self.init_envs_positions[:, 0:2])
@@ -218,8 +230,8 @@ class EnvCore(object):
         self.positions = self.positions[:, 0:2]
         # only need x,y axis
         self.rpos_car_dest = self.target_pos - self.positions
-        rpos_car_dest_norm = normalized(self.rpos_car_dest)
-        rpos_car_dest_norm = rpos_car_dest_norm.unsqueeze(1).repeat(1, self.agent_num, 1)
+        # rpos_car_dest_norm = normalized(self.rpos_car_dest)
+        rpos_car_dest = self.rpos_car_dest.unsqueeze(1).repeat(1, self.agent_num, 1)
 
         self.car_linear_velocities = car.get_linear_velocities()[:, 0:2]
         car_linear_velocities = self.car_linear_velocities.unsqueeze(1).repeat(1, self.agent_num, 1)
@@ -251,7 +263,7 @@ class EnvCore(object):
 
         observations = torch.cat(
             (
-                rpos_car_dest_norm,
+                rpos_car_dest,
                 jetbot_linear_velocities,
                 jetbot_orientation,
                 joint_forces

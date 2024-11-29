@@ -53,6 +53,8 @@ class Randomizer:
         self.active_domain_randomizations = dict()
         self._observations_dr_params = None
         self._actions_dr_params = None
+        self.randomize_actions = False
+        self.randomize_observations = False
 
         # if dr_config is not None:
             # randomize = dr_config.get("randomize", False)
@@ -453,7 +455,7 @@ class Randomizer:
             ]
         else:
             raise ValueError(
-                f"The provided distribution_parameters for {view_name} {attribute} is invalid due to incorrect dimensions."
+                f"The provided distribution_parameters for {attribute} is invalid due to incorrect dimensions."
             )
         return dist_params
 
