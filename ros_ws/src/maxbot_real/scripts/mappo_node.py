@@ -21,6 +21,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from light_mappo.agent import Agent
+from light_mappo.utils.log import get_logger
 from make_plan import get_path
 
 # /cmd_vel topic
@@ -29,6 +30,13 @@ STATUS_RUNNING = 0
 STATUS_SUCCESS = 1
 STATUS_FAILURE = 2
 STATUS_UNKNOWN = 3
+
+
+log_path = "/app/logs/mappo_node_step.log"
+logging_config = {
+    "filename": log_path,
+}
+logger = get_logger(__name__, logging_config, console=False)
 
 
 class MappoNode:
@@ -131,6 +139,10 @@ class MappoNode:
         obs = self.get_obs()
         action = get_action(obs)
         publish_action(action)
+
+        logger.info(f"path: {self.path}")
+        logger.info(f"obs: {obs}")
+        logger.info(f"action: {action}")
 
         # arrival
         current_dist_to_goal = np.linalg.norm(self.car_center - self.goal)
