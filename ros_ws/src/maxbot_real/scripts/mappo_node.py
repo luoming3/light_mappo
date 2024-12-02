@@ -93,9 +93,6 @@ class MappoNode:
             raise RuntimeError(f"invalid sensor_data: {sensor_data}")
 
     def get_obs(self):
-        if (self.car_center.size == 0) or (self.velocities.size== 0) or \
-            (self.orientation.size == 0):
-            return np.array([])
         rpos_car_dest_norm = normalized(self.guide_point - self.car_center)
         maxbot_linear_velocities = self.velocities
         maxbot_orientation = np.array([self.euler_ori[2]])
@@ -112,7 +109,7 @@ class MappoNode:
             first_point = path[0]
             second_point = path[1]
             angle = np.dot(second_point - first_point,
-                           self.position - first_point)
+                           self.car_center - first_point)
 
             if angle < 0:
                 pass
@@ -125,13 +122,19 @@ class MappoNode:
         done = False
         status = STATUS_RUNNING
 
-        obs = self.get_obs()
-        if obs.size == 0:
+        if (self.car_center.size == 0) or (self.velocities.size== 0) or \
+            (self.orientation.size == 0):
             rospy.logwarn("observation is None")
             return done, status
+
+        self.clip_path()
+        obs = self.get_obs()
+        action = get_action(obs)
+        publish_action(action)
+
         # arrival
-        current_dist_to_goal = np.linalg.norm(self.car_position - self.goal)
-        current_dist_to_point = np.linalg.norm(self.car_position -
+        current_dist_to_goal = np.linalg.norm(self.car_center - self.goal)
+        current_dist_to_point = np.linalg.norm(self.car_center -
                                                self.guide_point)
         if current_dist_to_goal < 0.2:
             done = True
@@ -141,10 +144,6 @@ class MappoNode:
             status = STATUS_FAILURE
         if current_dist_to_point < 0.1:
             self.path = self.path[1:]
-
-        self.clip_path()
-        action = get_action(obs)
-        publish_action(action)
 
         return done, status
 
