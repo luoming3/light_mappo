@@ -161,11 +161,11 @@ class MappoNode:
                         data_str = s.recv(1024)
 
                         data_str = data_str.decode("utf8")
-                        if len(data_str) > 0:
+                        if len(data_str) > 1:
                             data_split = data_str.split(",")
                             self.car_center = np.array([data_split[0], data_split[1]])
 
-                        time.sleep(1 / 30.)
+                        time.sleep(1 / 50.)
             except ConnectionRefusedError:
                 rospy.logwarn("Connection refused, and then wait 1s")
                 time.sleep(1)

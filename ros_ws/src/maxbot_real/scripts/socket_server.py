@@ -12,7 +12,7 @@ def get_car_center_str(data):
         car_center = (data[2] + data[5]) / 2
         data_str = f"{car_center[0]},{car_center[1]}"
     else:
-        data_str = ""
+        data_str = "0"
 
     return data_str
 
