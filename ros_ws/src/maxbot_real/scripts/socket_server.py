@@ -42,7 +42,8 @@ def car_center_socket_server(host, port):
         while True:
             conn, addr = s.accept()
             sub_threading = threading.Thread(target=process_req,
-                                             args=(conn, addr, data))
+                                             args=(conn, addr, data),
+                                             daemon=True)
             sub_threading.start()
 
 
