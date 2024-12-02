@@ -50,9 +50,9 @@ def car_center_socket_server(host, port):
 if __name__ == "__main__":
     args = sys.argv[1:]
     try:
-        id = int(args[1])
-        host = args[2]
-        port = int(args[3])
+        id = int(args[0])
+        host = args[1]
+        port = int(args[2])
     except:
         raise RuntimeError("input args is invalid")
     else:
