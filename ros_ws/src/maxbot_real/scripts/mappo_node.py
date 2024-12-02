@@ -167,14 +167,15 @@ class MappoNode:
                     s.connect((self.host, self.port))
 
                     while True:
-                        send_str = f'{self.id},{self.position[0]},{self.position[1]}'
-                        s.sendall(bytes(send_str, "utf8"))
-                        data_str = s.recv(1024)
+                        if self.position.size > 0:
+                            send_str = f'{self.id},{self.position[0]},{self.position[1]}'
+                            s.sendall(bytes(send_str, "utf8"))
+                            data_str = s.recv(1024)
 
-                        data_str = data_str.decode("utf8")
-                        if len(data_str) > 1:
-                            data_split = data_str.split(",")
-                            self.car_center = np.array([data_split[0], data_split[1]])
+                            data_str = data_str.decode("utf8")
+                            if len(data_str) > 1:
+                                data_split = data_str.split(",")
+                                self.car_center = np.array([data_split[0],data_split[1]], dtype=np.float32)
 
                         time.sleep(1 / 50.)
             except ConnectionRefusedError:
