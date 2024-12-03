@@ -46,9 +46,9 @@ class MappoNode:
         self.velocities = np.array([])
         self.force = np.array([0., 0.])
         self.rotation = 0.0
-        self.path = []
         self.start = np.array(start)
         self.goal = np.array(goal)
+        self.status = STATUS_RUNNING
         self.path = get_path(start, goal)
         if len(self.path) == 0:
             raise RuntimeError("can't find a path")
@@ -121,13 +121,10 @@ class MappoNode:
         self.guide_point = self.path[0]
 
     def step(self):
-        done = False
-        status = STATUS_RUNNING
-
         if (self.car_center.size == 0) or (self.velocities.size== 0) or \
             (self.orientation.size == 0):
             rospy.logwarn("observation is None")
-            return done, status
+            return STATUS_RUNNING
 
         self.clip_path()
         obs = self.get_obs()
@@ -147,15 +144,13 @@ class MappoNode:
         current_dist_to_point = np.linalg.norm(self.car_center -
                                                self.guide_point)
         if current_dist_to_goal < 0.2:
-            done = True
-            status = STATUS_SUCCESS
+            self.status = STATUS_SUCCESS
         if current_dist_to_point > 5:
-            done = False
-            status = STATUS_FAILURE
+            self.status = STATUS_FAILURE
         if current_dist_to_point < 0.1:
             self.path = self.path[1:]
 
-        return done, status
+        return self.status
 
     def car_center_socket_client(self):
         retry_count = 0
@@ -166,7 +161,7 @@ class MappoNode:
 
                     while True:
                         if self.position.size > 0:
-                            send_str = f'{self.id},{self.position[0]},{self.position[1]}'
+                            send_str = f'{self.id},{self.position[0]},{self.position[1]},{self.status}'
                             s.sendall(bytes(send_str, "utf8"))
                             data_str = s.recv(1024)
 
@@ -174,6 +169,9 @@ class MappoNode:
                             if len(data_str) > 1:
                                 data_split = data_str.split(",")
                                 self.car_center = np.array([data_split[0],data_split[1]], dtype=np.float32)
+                                status = int(data_split[2])
+                                if status != STATUS_RUNNING:
+                                    self.status = status
 
                         time.sleep(1 / 50.)
             except ConnectionRefusedError:
@@ -244,8 +242,8 @@ def main(*args):
     # pub FPS: 10 Hz
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-        done, status = mappo_node.step()
-        if not done:
+        status = mappo_node.step()
+        if status == STATUS_RUNNING:
             rate.sleep()
             continue
 
