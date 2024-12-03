@@ -246,16 +246,18 @@ def main(*args):
         if status == STATUS_RUNNING:
             rate.sleep()
             continue
-
-        if status == STATUS_SUCCESS:
+        elif status == STATUS_SUCCESS:
             rospy.loginfo("task success")
             publish_action(np.array([0, 0]))
             return
-        if status == STATUS_FAILURE:
+        elif status == STATUS_FAILURE:
             rospy.logerr("task failure")
             publish_action(np.array([0, 0]))
             return
-
+        else:
+            rospy.logerr("unknown error")
+            publish_action(np.array([0, 0]))
+            raise RuntimeError("unknown error")
     rospy.spin()
 
 
