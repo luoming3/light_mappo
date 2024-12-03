@@ -278,4 +278,4 @@ if __name__ == "__main__":
         # stop maxbot
         os.system("rostopic pub -1 /cmd_vel geometry_msgs/Twist \
                   '{linear: {x: 0, y: 0, z: 0}, angular: {x: 0, y: 0, z: 0}}'")
-        np.save("/app/logs/step_record.npy", records)
+        np.save(f"/app/logs/step_record_{id}.npy", records)
