@@ -30,6 +30,8 @@ STATUS_SUCCESS = 1
 STATUS_FAILURE = 2
 STATUS_UNKNOWN = 3
 
+records = []
+
 
 class MappoNode:
 
@@ -131,6 +133,14 @@ class MappoNode:
         obs = self.get_obs()
         action = get_action(obs)
         publish_action(action)
+        record = []
+        # car_center, guide_point, velocity, orientation, force
+        record.append(self.car_center.copy())
+        record.append(self.guide_point.copy())
+        record.append(self.velocities.copy())
+        record.append(self.euler_ori[2])
+        record.append(self.force.copy())
+        records.append(record)
 
         # arrival
         current_dist_to_goal = np.linalg.norm(self.car_center - self.goal)
@@ -268,3 +278,4 @@ if __name__ == "__main__":
         # stop maxbot
         os.system("rostopic pub -1 /cmd_vel geometry_msgs/Twist \
                   '{linear: {x: 0, y: 0, z: 0}, angular: {x: 0, y: 0, z: 0}}'")
+        np.save("/app/logs/step_record.npy", records)
