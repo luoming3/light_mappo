@@ -13,10 +13,10 @@ def get_car_center_str(data, status):
         STATUS = status
     if 1 in data and 6 in data:
         car_center = (data[1] + data[6]) / 2
-        data_str = f"{car_center[0]},{car_center[1]},{STATUS}"
+        data_str = f"1,{car_center[0]},{car_center[1]},{STATUS}"
     elif 2 in data and 5 in data:
         car_center = (data[2] + data[5]) / 2
-        data_str = f"{car_center[0]},{car_center[1]},{STATUS}"
+        data_str = f"1,{car_center[0]},{car_center[1]},{STATUS}"
     else:
         data_str = "0"
 

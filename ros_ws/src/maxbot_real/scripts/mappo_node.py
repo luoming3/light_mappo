@@ -168,8 +168,8 @@ class MappoNode:
                             data_str = data_str.decode("utf8")
                             if len(data_str) > 1:
                                 data_split = data_str.split(",")
-                                self.car_center = np.array([data_split[0],data_split[1]], dtype=np.float32)
-                                status = int(data_split[2])
+                                self.car_center = np.array([data_split[1],data_split[2]], dtype=np.float32)
+                                status = int(data_split[3])
                                 if status != STATUS_RUNNING:
                                     self.status = status
 
