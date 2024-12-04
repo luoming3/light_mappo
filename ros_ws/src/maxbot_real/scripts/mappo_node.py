@@ -63,7 +63,8 @@ class MappoNode:
                                                        self.process_sensor_data)
         # startup socket server
         if id == 1:
-            self.car_center_socket_server()
+            sc_th = threading.Thread(target=self.car_center_socket_server, daemon=True)
+            sc_th.start()
         # get car center from remote master
         sc_th = threading.Thread(target=self.car_center_socket_client, daemon=True)
         sc_th.start()
