@@ -182,6 +182,49 @@ class MappoNode:
                 if retry_count == 5:
                     raise RuntimeError("Connection refused")
 
+    def car_center_socket_server(self):
+
+        def get_car_center_str(data, status):
+            if status != STATUS_RUNNING:
+                self.status = status
+            if 1 in data and 6 in data:
+                car_center = (data[1] + data[6]) / 2
+                data_str = f"1,{car_center[0]},{car_center[1]},{status}"
+            elif 2 in data and 5 in data:
+                car_center = (data[2] + data[5]) / 2
+                data_str = f"1,{car_center[0]},{car_center[1]},{status}"
+            else:
+                data_str = "0"
+
+            return data_str
+
+        def process_req(conn, addr, data):
+            with conn:
+                print('Connected by', addr)
+                while True:
+                    data_recv = conn.recv(1024)
+                    if not data_recv:
+                        break
+                    data_split = data_recv.decode("utf8").split(",")
+                    id = int(data_split[0])
+                    position = np.array([data_split[1], data_split[2]],
+                                        dtype=np.float32)
+                    data[id] = position
+                    status = int(data_split[3])
+
+                    center_str = get_car_center_str(data, status)
+                    conn.sendall(bytes(center_str, "utf8"))
+        data = {}
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind((self.host, self.port))
+            s.listen()
+            while True:
+                conn, addr = s.accept()
+                sub_threading = threading.Thread(target=process_req,
+                                                args=(conn, addr, data),
+                                                daemon=True)
+                sub_threading.start()
+
 
 def get_action(obs):
     '''

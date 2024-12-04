@@ -17,5 +17,4 @@ source "/app/ros_ws/devel/setup.bash" || echo ""
 # clear obstacles in the costmaps before make plan
 rosservice call /move_base/clear_costmaps "{}"
 
-python3 -u ${SCRIPTS_PATH}/socket_server.py "${id}" "${host}" "${port}" &
 python3 -u ${SCRIPTS_PATH}/mappo_node.py "(${start})" "(${goal})" "${id}" "${host}" "${port}"
