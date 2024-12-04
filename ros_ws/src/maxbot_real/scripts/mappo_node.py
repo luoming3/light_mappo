@@ -61,6 +61,9 @@ class MappoNode:
                                                 self.process_odom)
         self.sensor_data_subscriber = rospy.Subscriber("/sensor_data", String,
                                                        self.process_sensor_data)
+        # startup socket server
+        if id == 1:
+            self.car_center_socket_server()
         # get car center from remote master
         sc_th = threading.Thread(target=self.car_center_socket_client, daemon=True)
         sc_th.start()
