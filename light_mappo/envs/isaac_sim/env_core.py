@@ -83,6 +83,14 @@ class EnvCore(object):
 
         # observations, shape is (env_num, agent_num, obs_dim)
         observations = self.get_observations()
+        rpos_car_dest_extracted = observations[:, :, :2]  # 切片提取 rpos_car_dest 的部分
+        rpos_car_dest_norm = normalized(rpos_car_dest_extracted, dim=2)
+        observation_other_part =  observations[:, :, 2:] 
+
+        observations = torch.cat(
+            (rpos_car_dest_norm, observation_other_part),
+            dim=2
+        )
 
         self.steps[indices] = 0
         
@@ -102,6 +110,14 @@ class EnvCore(object):
 
         # observations, shape is (env_num, agent_num, obs_dim)
         observations = self.get_observations()
+        rpos_car_dest_extracted = observations[:, :, :2]  # 切片提取 rpos_car_dest 的部分
+        rpos_car_dest_norm = normalized(rpos_car_dest_extracted)
+        observation_other_part =  observations[:, :, 2:] 
+
+        observations = torch.cat(
+            (rpos_car_dest_norm, observation_other_part),
+            dim=2
+        )
         
         self.steps[indices] = 0
 
@@ -150,16 +166,13 @@ class EnvCore(object):
         # print('observation randomize:', env_obs)
 
         rpos_car_dest_extracted = env_obs[:, :, :2]  # 切片提取 rpos_car_dest 的部分
-        rpos_car_dest_norm = normalized(rpos_car_dest_extracted)
-        jetbot_linear_velocities_part = env_obs[:, :, 2:4]  
-        jetbot_orientation_part = env_obs[:, :, 4:5]  
-        joint_forces_part = env_obs[:, :, 5:]  
+        rpos_car_dest_norm = normalized(rpos_car_dest_extracted, dim=2)
+        env_obs_other_part =  env_obs[:, :, 2:] 
 
         env_obs = torch.cat(
-            (rpos_car_dest_norm, jetbot_linear_velocities_part, jetbot_orientation_part, joint_forces_part),
+            (rpos_car_dest_norm, env_obs_other_part),
             dim=2
         )
-        # print('observation nomalized:', env_obs)
 
         current_car_position = self.get_world_poses()[0][:, 0:2]
         current_car_position.sub_(self.init_envs_positions[:, 0:2])
