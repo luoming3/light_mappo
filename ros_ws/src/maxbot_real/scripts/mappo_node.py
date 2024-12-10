@@ -10,6 +10,7 @@ import re
 import socket
 import threading
 import time
+from tf.transformations import euler_from_quaternion
 
 import os
 import sys
@@ -132,7 +133,7 @@ class MappoNode:
 
         self.clip_path()
         obs = self.get_obs()
-        action = get_action(obs)
+        action = self.get_action_hardcode()
         publish_action(action)
         record = []
         # car_center, guide_point, velocity, orientation, force
@@ -229,6 +230,34 @@ class MappoNode:
                                                 args=(conn, addr, data),
                                                 daemon=True)
                 sub_threading.start()
+
+    def get_action_hardcode(self):
+        ori = euler_from_quaternion(self.orientation)
+        alpha = self.calculate_angle(self.car_center, self.guide_point)
+        
+        angle_tolerance = 5 / 180 * math.pi
+        diff_angle = ori - alpha
+        turn_right_condition = (0 < diff_angle and diff_angle < math.pi / 2) or \
+            (-math.pi < diff_angle and diff_angle < -math.pi / 2) or \
+            (math.pi < diff_angle and diff_angle < 3 * math.pi / 2) or \
+            (-2 * math.pi < diff_angle and diff_angle < -3 * math.pi / 2)
+        
+        if turn_right_condition:
+            return np.array([0, -0.5])
+        else:
+            return np.array([0, 0.5])
+
+    def calculate_angle(self, car_center, guide_point):
+        x1, y1 = car_center[0], car_center[1]
+        x2, y2 = guide_point[0], guide_point[1]
+        if x1 == x2:
+            return math.pi / 2 if y1 < y2 else -math.pi / 2
+        elif y1 == y2:
+            return 0. if x1 < x2 else math.pi
+        else:
+            m = (y2 - y1) / (x2 - x1)
+            angle = math.atan(m)
+            return angle if y1 < y2 else angle - math.pi
 
 
 def get_action(obs):
