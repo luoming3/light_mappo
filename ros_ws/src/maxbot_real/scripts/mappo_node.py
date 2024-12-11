@@ -30,6 +30,12 @@ from socket_server import car_center_socket_server
 ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
 records = []
+angle_tolerance = 5 / 180 * math.pi
+turn_threshold = 30 / 180 * math.pi
+force_threshold = 100000
+running_v = 0.25
+running_omega = 0.25
+turn_omega = 0.5
 
 
 class MappoNode:
@@ -203,17 +209,13 @@ class MappoNode:
     def get_action_hardcode(self):
         ori = euler_from_quaternion(self.orientation)[2]
         alpha = self.calculate_angle(self.car_center, self.guide_point)
-        angle_tolerance = 10 / 180 * math.pi
-        force = max(self.force)
-        force_threshold = 100000
-        
+
         if abs(ori - alpha) < math.pi:
             abs_diff = abs(ori - alpha)
         else:
             abs_diff = 2 * math.pi - abs(ori - alpha)
         same_direction = True if abs_diff < math.pi / 2 else False
 
-        turn_threshold = 30 / 180 * math.pi
         if abs_diff > turn_threshold:
             self.status = STATUS_TURN
             turn_right_condition = False
@@ -224,17 +226,18 @@ class MappoNode:
             else:
                 turn_right_condition = True
             if turn_right_condition:
-                return np.array([0, -0.5])
+                return np.array([0, -turn_omega])
             else:
-                return np.array([0, 0.5])
+                return np.array([0, turn_omega])
 
+        force = max(self.force)
         if abs_diff < angle_tolerance and force < force_threshold:
             if self.master_status == STATUS_TURN:
                 self.status = STATUS_STOP
                 return np.array([0., 0.])
             else:
                 self.status = STATUS_RUNNING
-                return np.array([0.25, 0.])
+                return np.array([running_v, 0.])
         else:
             self.status = STATUS_RUNNING
             turn_right_condition = False
@@ -245,9 +248,9 @@ class MappoNode:
             else:
                 turn_right_condition = True
             if turn_right_condition:
-                return np.array([0.25, -0.25])
+                return np.array([running_v, -running_omega])
             else:
-                return np.array([0.25, 0.25])
+                return np.array([running_v, running_omega])
 
     def calculate_angle(self, car_center, guide_point):
         x1, y1 = car_center[0], car_center[1]
