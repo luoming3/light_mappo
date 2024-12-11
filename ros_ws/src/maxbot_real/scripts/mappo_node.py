@@ -201,7 +201,7 @@ class MappoNode:
                     raise RuntimeError("Connection refused")
 
     def get_action_hardcode(self):
-        ori = euler_from_quaternion(self.orientation)
+        ori = euler_from_quaternion(self.orientation)[2]
         alpha = self.calculate_angle(self.car_center, self.guide_point)
         angle_tolerance = 10 / 180 * math.pi
         force = max(self.force)
@@ -213,14 +213,8 @@ class MappoNode:
             abs_diff = 2 * math.pi - abs(ori - alpha)
         same_direction = True if abs_diff < math.pi / 2 else False
 
-        if abs_diff < angle_tolerance and force < force_threshold:
-            if self.master_status == STATUS_TURN:
-                self.status = STATUS_STOP
-                return np.array([0., 0.])
-            else:
-                self.status = STATUS_RUNNING
-                return np.array([0.25, 0.])
-        else:
+        turn_threshold = 30 / 180 * math.pi
+        if abs_diff > turn_threshold:
             self.status = STATUS_TURN
             turn_right_condition = False
             diff_angle = ori - alpha
@@ -234,17 +228,38 @@ class MappoNode:
             else:
                 return np.array([0, 0.5])
 
+        if abs_diff < angle_tolerance and force < force_threshold:
+            if self.master_status == STATUS_TURN:
+                self.status = STATUS_STOP
+                return np.array([0., 0.])
+            else:
+                self.status = STATUS_RUNNING
+                return np.array([0.25, 0.])
+        else:
+            self.status = STATUS_RUNNING
+            turn_right_condition = False
+            diff_angle = ori - alpha
+            if same_direction:
+                turn_right_condition = (0 < diff_angle and diff_angle < math.pi / 2) or \
+                    (-2 * math.pi < diff_angle and diff_angle < -3 * math.pi / 2)
+            else:
+                turn_right_condition = True
+            if turn_right_condition:
+                return np.array([0.25, -0.25])
+            else:
+                return np.array([0.25, 0.25])
+
     def calculate_angle(self, car_center, guide_point):
         x1, y1 = car_center[0], car_center[1]
         x2, y2 = guide_point[0], guide_point[1]
-        if x1 == x2:
-            return math.pi / 2 if y1 < y2 else -math.pi / 2
-        elif y1 == y2:
-            return 0. if x1 < x2 else math.pi
-        else:
-            m = (y2 - y1) / (x2 - x1)
-            angle = math.atan(m)
-            return angle if y1 < y2 else angle - math.pi
+
+        dx = x2 - x1
+        dy = y2 - y1
+        magnitude =  math.sqrt(dx**2 + dy**2)
+
+        cos_theta = dx / magnitude
+        theta = math.acos(cos_theta)
+        return theta if y2 > y1 else -theta
 
 
 def get_action(obs):

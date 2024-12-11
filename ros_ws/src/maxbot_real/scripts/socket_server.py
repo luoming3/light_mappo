@@ -8,7 +8,7 @@ id_position = {}
 id_status = {}
 
 def process_data(id, status):
-    global all_status, master_status
+    global id_status, master_status
 
     id_status[id] = status
     if status == STATUS_RUNNING:
