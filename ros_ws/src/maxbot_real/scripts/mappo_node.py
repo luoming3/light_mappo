@@ -23,13 +23,11 @@ sys.path.append(parent_dir)
 
 from light_mappo.agent import Agent
 from make_plan import get_path
+from status import *
+from socket_server import car_center_socket_server
 
 # /cmd_vel topic
 ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
-STATUS_RUNNING = 0
-STATUS_SUCCESS = 1
-STATUS_FAILURE = 2
-STATUS_UNKNOWN = 3
 
 records = []
 
@@ -49,7 +47,8 @@ class MappoNode:
         self.rotation = 0.0
         self.start = np.array(start)
         self.goal = np.array(goal)
-        self.status = STATUS_RUNNING
+        self.status = STATUS_STOP
+        self.master_status = STATUS_STOP
         self.path = get_path(start, goal)
         if len(self.path) == 0:
             raise RuntimeError("can't find a path")
@@ -64,7 +63,8 @@ class MappoNode:
                                                        self.process_sensor_data)
         # startup socket server
         if id == 1:
-            sc_th = threading.Thread(target=self.car_center_socket_server, daemon=True)
+            sc_th = threading.Thread(target=car_center_socket_server, daemon=True,
+                                     args=(host, port))
             sc_th.start()
         # get car center from remote master
         sc_th = threading.Thread(target=self.car_center_socket_client, daemon=True)
@@ -73,6 +73,8 @@ class MappoNode:
         rospy.loginfo(
             f"start position: {self.start}, goal position: {self.goal}")
         rospy.loginfo(f"path: {self.path}")
+        # sleep for 1s to ensure that the socket server obtains the status of all MaxBots
+        time.sleep(1)
 
     def process_amcl_pose(self, message):
         position = message.pose.pose.position
@@ -128,9 +130,21 @@ class MappoNode:
     def step(self):
         if (self.car_center.size == 0) or (self.velocities.size== 0) or \
             (self.orientation.size == 0):
+            self.status = STATUS_STOP
             rospy.logwarn("observation is None")
-            return STATUS_RUNNING
-
+            return STATUS_STOP
+        if self.master_status == STATUS_STOP:
+            self.status = STATUS_STOP
+            publish_action(np.array([0, 0]))
+            return STATUS_STOP
+        if self.master_status == STATUS_SUCCESS:
+            self.status = STATUS_SUCCESS
+            publish_action(np.array([0, 0]))
+            return STATUS_SUCCESS
+        if self.master_status == STATUS_FAILURE:
+            self.status = STATUS_FAILURE
+            publish_action(np.array([0, 0]))
+            return STATUS_FAILURE
         self.clip_path()
         obs = self.get_obs()
         action = self.get_action_hardcode()
@@ -174,9 +188,8 @@ class MappoNode:
                             if len(data_str) > 1:
                                 data_split = data_str.split(",")
                                 self.car_center = np.array([data_split[1],data_split[2]], dtype=np.float32)
-                                status = int(data_split[3])
-                                if status != STATUS_RUNNING:
-                                    self.status = status
+                                master_status = int(data_split[3])
+                                self.master_status = master_status
 
                         time.sleep(1 / 50.)
             except ConnectionRefusedError:
@@ -187,65 +200,39 @@ class MappoNode:
                 if retry_count == 5:
                     raise RuntimeError("Connection refused")
 
-    def car_center_socket_server(self):
-
-        def get_car_center_str(data, status):
-            if status != STATUS_RUNNING:
-                self.status = status
-            if 1 in data and 6 in data:
-                car_center = (data[1] + data[6]) / 2
-                data_str = f"1,{car_center[0]},{car_center[1]},{self.status}"
-            elif 2 in data and 5 in data:
-                car_center = (data[2] + data[5]) / 2
-                data_str = f"1,{car_center[0]},{car_center[1]},{self.status}"
-            else:
-                data_str = "0"
-
-            return data_str
-
-        def process_req(conn, addr, data):
-            with conn:
-                print('Connected by', addr)
-                while True:
-                    data_recv = conn.recv(1024)
-                    if not data_recv:
-                        break
-                    data_split = data_recv.decode("utf8").split(",")
-                    id = int(data_split[0])
-                    position = np.array([data_split[1], data_split[2]],
-                                        dtype=np.float32)
-                    data[id] = position
-                    status = int(data_split[3])
-
-                    center_str = get_car_center_str(data, status)
-                    conn.sendall(bytes(center_str, "utf8"))
-        data = {}
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            s.bind((self.host, self.port))
-            s.listen()
-            while True:
-                conn, addr = s.accept()
-                sub_threading = threading.Thread(target=process_req,
-                                                args=(conn, addr, data),
-                                                daemon=True)
-                sub_threading.start()
-
     def get_action_hardcode(self):
         ori = euler_from_quaternion(self.orientation)
         alpha = self.calculate_angle(self.car_center, self.guide_point)
+        angle_tolerance = 10 / 180 * math.pi
+        force = max(self.force)
+        force_threshold = 100000
         
-        angle_tolerance = 5 / 180 * math.pi
-        diff_angle = ori - alpha
-        turn_right_condition = (0 < diff_angle and diff_angle < math.pi / 2) or \
-            (-math.pi < diff_angle and diff_angle < -math.pi / 2) or \
-            (math.pi < diff_angle and diff_angle < 3 * math.pi / 2) or \
-            (-2 * math.pi < diff_angle and diff_angle < -3 * math.pi / 2)
-        
-        if turn_right_condition:
-            return np.array([0, -0.5])
+        if abs(ori - alpha) < math.pi:
+            abs_diff = abs(ori - alpha)
         else:
-            return np.array([0, 0.5])
+            abs_diff = 2 * math.pi - abs(ori - alpha)
+        same_direction = True if abs_diff < math.pi / 2 else False
+
+        if abs_diff < angle_tolerance and force < force_threshold:
+            if self.master_status == STATUS_TURN:
+                self.status = STATUS_STOP
+                return np.array([0., 0.])
+            else:
+                self.status = STATUS_RUNNING
+                return np.array([0.25, 0.])
+        else:
+            self.status = STATUS_TURN
+            turn_right_condition = False
+            diff_angle = ori - alpha
+            if same_direction:
+                turn_right_condition = (0 < diff_angle and diff_angle < math.pi / 2) or \
+                    (-2 * math.pi < diff_angle and diff_angle < -3 * math.pi / 2)
+            else:
+                turn_right_condition = True
+            if turn_right_condition:
+                return np.array([0, -0.5])
+            else:
+                return np.array([0, 0.5])
 
     def calculate_angle(self, car_center, guide_point):
         x1, y1 = car_center[0], car_center[1]
@@ -325,12 +312,17 @@ def main(*args):
             continue
         elif status == STATUS_SUCCESS:
             rospy.loginfo("task success")
-            publish_action(np.array([0, 0]))
             return
         elif status == STATUS_FAILURE:
             rospy.logerr("task failure")
-            publish_action(np.array([0, 0]))
             return
+        elif status == STATUS_TURN:
+            rospy.loginfo("turn direction")
+            rate.sleep()
+            continue
+        elif status == STATUS_STOP:
+            rospy.loginfo("waiting")
+            continue
         else:
             rospy.logerr("unknown error")
             publish_action(np.array([0, 0]))
