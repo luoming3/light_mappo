@@ -1,0 +1,7 @@
+image: /app/ros_ws/src/maxbot_real/map/demo_scene.pgm
+resolution: 0.020000
+origin: [-16.360000, -15.080000, 0.000000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+
