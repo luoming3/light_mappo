@@ -7,54 +7,54 @@ domain_randomization:
       #   operation: "additive"
       #   distribution: "uniform"
       #   distribution_parameters: [2, 2]
-      on_interval:
-        frequency_interval: 2
-        operation: "additive"
-        distribution: "uniform"
-        distribution_parameters: [3, 3]
+      # on_interval:
+      #   frequency_interval: 2
+      #   operation: "additive"
+      #   distribution: "uniform"
+      #   distribution_parameters: [-0.1, 0.1]
       # on_reset:
       #   operation: "additive"
       #   distribution: "gaussian"
       #   distribution_parameters: [0, .0001]
-      # on_interval:
-      #   frequency_interval: 1
-      #   operation: "additive"
-      #   distribution: "gaussian"
-      #   distribution_parameters: [0, .002]
+      on_interval:
+        frequency_interval: 1
+        operation: "additive"
+        distribution: "gaussian"
+        distribution_parameters: [[0.0, 0.1], [0.0, 0.05], [0.0, 0.1], [0.0, 10.0], [0.0, 40.0]]
     actions:
       # on_reset:
       #   operation: "additive"
       #   distribution: "uniform"
       #   distribution_parameters: [2, 2]
-      on_interval:
-        frequency_interval: 2
-        operation: "additive"
-        distribution: "uniform"
-        distribution_parameters: [3, 3]
+      # on_interval:
+      #   frequency_interval: 2
+      #   operation: "additive"
+      #   distribution: "uniform"
+      #   distribution_parameters: [-0.1, 0.1]
       # on_reset:
       #   operation: "additive"
       #   distribution: "gaussian"
       #   distribution_parameters: [0, 0.015]
-      # on_interval:
-      #   frequency_interval: 1
-      #   operation: "additive"
-      #   distribution: "gaussian"
-      #   distribution_parameters: [0., 0.05]
+      on_interval:
+        frequency_interval: 1
+        operation: "additive"
+        distribution: "gaussian"
+        distribution_parameters: [0., 1.0]
     simulation:
-      gravity:
-        on_interval:
-          frequency_interval: 720
-          operation: "additive"
-          distribution: "gaussian"
-          distribution_parameters: [[0.0, 0.0, 0.0], [0.0, 0.0, 0.4]]
+      # gravity:
+      #   on_interval:
+      #     frequency_interval: 720
+      #     operation: "additive"
+      #     distribution: "gaussian"
+      #     distribution_parameters: [[0.0, 0.0, 0.0], [0.0, 0.0, 0.4]]
     rigid_prim_views:
       jetbot_chassis_view:
         force:
           on_interval:
             frequency_interval: 2
             operation: "direct"
-            distribution: "uniform"
-            distribution_parameters: [[0, 0, 5.0], [0, 0, 5.1]]
+            distribution: "gaussian"
+            distribution_parameters: [[0, 0, 0.0], [0, 0, 10]]
         # material_properties:
         #   on_reset:
         #     num_buckets: 250
@@ -65,24 +65,31 @@ domain_randomization:
         #   on_startup:
         #     operation: "scaling"
         #     distribution: "uniform"
-        #     distribution_parameters: [0.95, 1.05]
+        #     distribution_parameters: [0.95, 0.15]
     articulation_views:
-      car_view:
-        position:
-          on_reset:
-            operation: "additive"
-            distribution: "uniform"
-            distribution_parameters: [[50.0, 50.0, 0.0], [50.1, 50.1, 0.0]]
-          on_interval:
-            frequency_interval: 2
-            operation: "additive"
-            distribution: "uniform"
-            distribution_parameters: [[10.0, 10.0, 0.0], [20.0, 20.0, 0.0]]
-        # orientation:
+      # car_view:
+      #   orientation:
+      #     on_reset:
+      #       operation: "additive"
+      #       distribution: "uniform"
+      #       distribution_parameters: [[0.0, 0.0, 0.0], [0.0, 0.0, 0.1]]
+        # position:
+        #     on_reset:
+        #       operation: "additive"
+        #       distribution: "uniform"
+        #       distribution_parameters: [[-0.1, -0.1, 0.0], [0.1, 0.1, 0.0]]
+
+        # position:
         #   on_reset:
         #     operation: "additive"
         #     distribution: "uniform"
-        #     distribution_parameters: [[0.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]]
+        #     distribution_parameters: [[50.0, 50.0, 0.0], [50.1, 50.1, 0.0]]
+          # on_interval:
+          #   frequency_interval: 2
+          #   operation: "additive"
+          #   distribution: "uniform"
+          #   distribution_parameters: [[10.0, 10.0, 0.0], [20.0, 20.0, 0.0]]
+        
         # stiffness:
         #   on_reset:
         #     operation: "scaling"
