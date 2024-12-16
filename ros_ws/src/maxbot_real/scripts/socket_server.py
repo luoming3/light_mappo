@@ -5,7 +5,10 @@ from status import *
 
 master_status = STATUS_STOP
 id_position = {}
+#id_position = {6: np.array([0., 0.])}
 id_status = {}
+id_guide_point = {}
+
 
 def process_data(id, status):
     global id_status, master_status
@@ -26,20 +29,17 @@ def process_data(id, status):
     else:
         raise RuntimeError("unknown status")
 
-    if 1 in id_position and 6 in id_position:
-        car_center = (id_position[1] + id_position[6]) / 2
-        data_str = f"1,{car_center[0]},{car_center[1]},{master_status}"
-    elif 2 in id_position and 5 in id_position:
-        car_center = (id_position[2] + id_position[5]) / 2
-        data_str = f"1,{car_center[0]},{car_center[1]},{master_status}"
-    else:
-        data_str = "0"
+    if 1 not in id_guide_point or 1 not in id_position or 6 not in id_position:
+        return "1"
 
+    car_center = (id_position[1] + id_position[6]) / 2
+    guide_point = id_guide_point[1] # master guide point
+    data_str = ",".join("1", car_center[0], car_center[1], master_status,
+                        guide_point[0], guide_point[1])
     return data_str
 
-
 def process_req(conn, addr):
-    global id_position
+    global id_position, id_guide_point
     with conn:
         print('Connected by', addr)
         while True:
@@ -52,6 +52,8 @@ def process_req(conn, addr):
                                 dtype=np.float32)
             id_position[id] = position
             status = int(data_split[3])
+            guide_point = np.array([data_split[4], data_split[5]], dtype=np.float32)
+            id_guide_point[id] = guide_point
 
             center_str = process_data(id, status)
             conn.sendall(bytes(center_str, "utf8"))

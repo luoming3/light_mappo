@@ -59,6 +59,7 @@ class MappoNode:
         if len(self.path) == 0:
             raise RuntimeError("can't find a path")
         self.guide_point = self.path[0]
+        self.master_guide_point = np.array([])
 
         self.amcl_subscriber = rospy.Subscriber("/amcl_pose",
                                                 PoseWithCovarianceStamped,
@@ -135,7 +136,7 @@ class MappoNode:
 
     def step(self):
         if (self.car_center.size == 0) or (self.velocities.size== 0) or \
-            (self.orientation.size == 0):
+            (self.orientation.size == 0) or (self.master_guide_point.size == 0):
             self.status = STATUS_STOP
             rospy.logwarn("observation is None")
             return STATUS_STOP
@@ -186,7 +187,8 @@ class MappoNode:
 
                     while True:
                         if self.position.size > 0:
-                            send_str = f'{self.id},{self.position[0]},{self.position[1]},{self.status}'
+                            send_str = f'{self.id},{self.position[0]},{self.position[1]},{self.status},\
+                                {self.guide_point[0]},{self.guide_point[1]}'
                             s.sendall(bytes(send_str, "utf8"))
                             data_str = s.recv(1024)
 
@@ -194,8 +196,10 @@ class MappoNode:
                             if len(data_str) > 1:
                                 data_split = data_str.split(",")
                                 self.car_center = np.array([data_split[1],data_split[2]], dtype=np.float32)
+                                #self.car_center = self.position
                                 master_status = int(data_split[3])
                                 self.master_status = master_status
+                                self.master_guide_point = np.array([data_split[4], data_split[5]], dtype=np.float32)
 
                         time.sleep(1 / 50.)
             except ConnectionRefusedError:
@@ -208,7 +212,7 @@ class MappoNode:
 
     def get_action_hardcode(self):
         ori = euler_from_quaternion(self.orientation)[2]
-        alpha = self.calculate_angle(self.car_center, self.guide_point)
+        alpha = self.calculate_angle(self.car_center, self.master_guide_point)
 
         if abs(ori - alpha) < math.pi:
             abs_diff = abs(ori - alpha)
@@ -326,6 +330,7 @@ def main(*args):
     while not rospy.is_shutdown():
         status = mappo_node.step()
         if status == STATUS_RUNNING:
+            rospy.loginfo("running")
             rate.sleep()
             continue
         elif status == STATUS_SUCCESS:
