@@ -65,8 +65,9 @@ class EnvCore(object):
         )
 
         if self.all_args.use_randomize:
-            from light_mappo.envs.isaac_sim.utils.scene import _randomizer
-            self.dr_randomizer = _randomizer
+            self.dr_randomizer = None
+            # from light_mappo.envs.isaac_sim.utils.scene import _randomizer
+            # self.dr_randomizer = _randomizer
 
     def reset(self, indices=[]):
         if len(indices) == 0:
@@ -85,10 +86,12 @@ class EnvCore(object):
         observations = self.get_observations()
         rpos_car_dest_extracted = observations[:, :, :2]  # 切片提取 rpos_car_dest 的部分
         rpos_car_dest_norm = normalized(rpos_car_dest_extracted, dim=2)
-        observation_other_part =  observations[:, :, 2:] 
+        joint_forces = observations[:, :, 5:]
+        joint_forces = torch.tanh(joint_forces/50)
+        env_obs_other_part =  observations[:, :, 2:5] 
 
         observations = torch.cat(
-            (rpos_car_dest_norm, observation_other_part),
+            (rpos_car_dest_norm, env_obs_other_part, joint_forces),
             dim=2
         )
 
@@ -112,10 +115,12 @@ class EnvCore(object):
         observations = self.get_observations()
         rpos_car_dest_extracted = observations[:, :, :2]  # 切片提取 rpos_car_dest 的部分
         rpos_car_dest_norm = normalized(rpos_car_dest_extracted)
-        observation_other_part =  observations[:, :, 2:] 
+        joint_forces = observations[:, :, 5:]
+        joint_forces = torch.tanh(joint_forces/50)
+        env_obs_other_part =  observations[:, :, 2:5] 
 
         observations = torch.cat(
-            (rpos_car_dest_norm, observation_other_part),
+            (rpos_car_dest_norm, env_obs_other_part, joint_forces),
             dim=2
         )
         
@@ -167,10 +172,12 @@ class EnvCore(object):
 
         rpos_car_dest_extracted = env_obs[:, :, :2]  # 切片提取 rpos_car_dest 的部分
         rpos_car_dest_norm = normalized(rpos_car_dest_extracted, dim=2)
-        env_obs_other_part =  env_obs[:, :, 2:] 
+        joint_forces = env_obs[:, :, 5:]
+        joint_forces = torch.tanh(joint_forces/50)
+        env_obs_other_part =  env_obs[:, :, 2:5] 
 
         env_obs = torch.cat(
-            (rpos_car_dest_norm, env_obs_other_part),
+            (rpos_car_dest_norm, env_obs_other_part, joint_forces),
             dim=2
         )
 
@@ -272,7 +279,7 @@ class EnvCore(object):
         self.y_joint_force = joint_forces[:,:,1]
         self.x_joint_force = joint_forces[:,:,0]
         self.joint_forces = joint_forces
-        joint_forces = torch.tanh(joint_forces/50)
+        # joint_forces = torch.tanh(joint_forces/50)
 
         observations = torch.cat(
             (

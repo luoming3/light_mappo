@@ -234,27 +234,13 @@ def set_up_new_scene(config):
     for i in range(10):
         world.step()
 
-    global _randomizer
-    if all_args.use_randomize:
-        view_list = {}
-        view_list[jetbot_view.name] = jetbot_view
-        view_list[car_view.name] = car_view
-        _randomizer = get_randomizer(world, config, view_list)
-
-        if _randomizer:
-            _randomizer.set_up_domain_randomization()
-
-
     return world
 
-def get_randomizer(world, config, view_list):
-    with open(os.path.join(parent_dir, 'light_mappo/domain_randomization.yaml'), 'r') as file:
-        dr_config = yaml.safe_load(file)
-    print(dr_config)
+def get_randomizer(world, config, dr_config):
     dr_config = dr_config.get("domain_randomization", None)
     # randomization_params = randomization_params["randomization_params"]
     if dr_config:
-        dr_randomizer = Randomizer(world, dr_config, config, view_list)
+        dr_randomizer = Randomizer(world, dr_config, config)
     else:
         raise ValueError("No domain randomization parameters are specified in the task yaml config file")
 

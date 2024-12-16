@@ -15,6 +15,7 @@ import torch
 import time
 import pprint
 import random
+import yaml
 
 # Get the parent directory of the current file
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
@@ -170,10 +171,10 @@ def main(args):
 
     # create SimulationApp for import isaac sim modules
     simulation_app = init_simulation_app(all_args.isaac_sim_headless)
-    from light_mappo.envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene
+    from light_mappo.envs.isaac_sim.utils.scene import set_up_scene, set_up_new_scene, get_randomizer
 
     # set_up_scene(all_args.n_rollout_threads)
-    set_up_new_scene(config={"all_args": all_args, "device": device,})
+    world = set_up_new_scene(config={"all_args": all_args, "device": device,})
     # set_up_new_scene(all_args.n_rollout_threads, all_args.num_agents, all_args.use_randomize)
 
     # env init
@@ -195,6 +196,19 @@ def main(args):
         from light_mappo.runner.shared.env_runner import EnvRunner as Runner
     else:
         from light_mappo.runner.separated.env_runner import EnvRunner as Runner
+
+    if all_args.use_randomize:
+        with open(os.path.join(parent_dir, 'light_mappo/dr_config/domain_randomization.yaml'), 'r') as file:
+            dr_config = yaml.safe_load(file)
+
+        print('model!!!!!!', dr_config)
+        print(f"run_dir: {run_dir}")
+
+        _randomizer = get_randomizer(world, config, dr_config)
+
+        if _randomizer:
+            _randomizer.set_up_domain_randomization()
+            envs.env.env.dr_randomizer = _randomizer
 
     runner = Runner(config)
     runner.run()

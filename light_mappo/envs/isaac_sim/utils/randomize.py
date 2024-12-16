@@ -38,12 +38,11 @@ from omni.isaac.core.utils.extensions import enable_extension
 
 
 class Randomizer:
-    def __init__(self, world, dr_config, config, view_list):
+    def __init__(self, world, dr_config, config):
         self.dr_cfg = dr_config
         # self.device = device
         self.world = world
         self.all_config = config["all_args"]
-        self.view_list = view_list
         self.env_num = self.all_config.n_render_rollout_threads if self.all_config.use_render else self.all_config.n_rollout_threads
         self.device = config["device"]
 
@@ -95,26 +94,32 @@ class Randomizer:
                         for view_name in randomization_params["rigid_prim_views"].keys():
                             if randomization_params["rigid_prim_views"][view_name] is not None:
                                 self.distributions["rigid_prim_views"][view_name] = dict()
-                                self.dr.physics_view.register_rigid_prim_view(self.view_list[view_name])
-                                for attribute, params in randomization_params["rigid_prim_views"][
-                                    view_name
-                                ].items():
-                                    if attribute not in ["scale", "density"]:
-                                        self._set_up_rigid_prim_view_randomization(view_name, attribute, params)
+                                view_obj = self.world.scene.get_object(view_name)
+                                if not view_obj:
+                                    print(f"The rigid_prim_views {view_name} doesn't existed.")
+                                else:
+                                    self.dr.physics_view.register_rigid_prim_view(view_obj)
+                                    for attribute, params in randomization_params["rigid_prim_views"][
+                                        view_name
+                                    ].items():
+                                        if attribute not in ["scale", "density"]:
+                                            self._set_up_rigid_prim_view_randomization(view_name, attribute, params)
                 elif opt == "articulation_views":
                     if randomization_params["articulation_views"] is not None:
                         self.distributions["articulation_views"] = dict()
                         for view_name in randomization_params["articulation_views"].keys():
-                            if view_name not in self.view_list:
-                                print(f"The articulation_views {view_name} doesn't existed.")
                             if randomization_params["articulation_views"][view_name] is not None:
                                 self.distributions["articulation_views"][view_name] = dict()
-                                self.dr.physics_view.register_articulation_view(self.view_list[view_name])
-                                for attribute, params in randomization_params["articulation_views"][
-                                    view_name
-                                ].items():
-                                    if attribute not in ["scale"]:
-                                        self._set_up_articulation_view_randomization(view_name, attribute, params)
+                                view_obj = self.world.scene.get_object(view_name)
+                                if not view_obj:
+                                    print(f"The articulation_views {view_name} doesn't existed.")
+                                else:
+                                    self.dr.physics_view.register_articulation_view(view_obj)
+                                    for attribute, params in randomization_params["articulation_views"][
+                                        view_name
+                                    ].items():
+                                        if attribute not in ["scale"]:
+                                            self._set_up_articulation_view_randomization(view_name, attribute, params)
         # self.rep.orchestrator.run()
 
     def _set_up_observations_randomization(self):
@@ -158,7 +163,14 @@ class Randomizer:
                 .squeeze(-1)
             )
             self._observations_counter_buffer[randomize_ids] = 0
-            observations[:] = self._apply_uncorrelated_noise(
+            # observations[:] = self._apply_uncorrelated_noise(
+            #     buffer=observations.to(self.device),
+            #     randomize_ids=randomize_ids,
+            #     operation=self._observations_dr_params["on_interval"]["operation"],
+            #     distribution=self._observations_dr_params["on_interval"]["distribution"],
+            #     distribution_parameters=self._observations_dr_params["on_interval"]["distribution_parameters"],
+            # )
+            observations[:] = self._apply_obs_uncorrelated_noise(
                 buffer=observations.to(self.device),
                 randomize_ids=randomize_ids,
                 operation=self._observations_dr_params["on_interval"]["operation"],
@@ -197,6 +209,65 @@ class Randomizer:
                 distribution_parameters=self._actions_dr_params["on_interval"]["distribution_parameters"],
             )
         return actions
+
+    def _apply_obs_uncorrelated_noise(self, buffer, randomize_ids, operation, distribution, distribution_parameters):
+        if distribution == "gaussian" or distribution == "normal":
+            agent_num = buffer.size()[1]
+            pos_noise = torch.normal(
+                mean=distribution_parameters[0][0],
+                std=distribution_parameters[0][1],
+                size=(len(randomize_ids), agent_num, 2),
+                device=self.device,
+            )
+            vel_noise = torch.normal(
+                mean=distribution_parameters[1][0],
+                std=distribution_parameters[1][1],
+                size=(len(randomize_ids), agent_num, 2),
+                device=self.device,
+            )
+            orien_noise = torch.normal(
+                mean=distribution_parameters[2][0],
+                std=distribution_parameters[2][1],
+                size=(len(randomize_ids), agent_num, 1),
+                device=self.device,
+            )
+            x_force_noise = torch.normal(
+                mean=distribution_parameters[3][0],
+                std=distribution_parameters[3][1],
+                size=(len(randomize_ids), agent_num, 1),
+                device=self.device,
+            )
+            y_force_noise = torch.normal(
+                mean=distribution_parameters[4][0],
+                std=distribution_parameters[4][1],
+                size=(len(randomize_ids), agent_num, 1),
+                device=self.device,
+            )
+            noise = torch.cat(
+                (pos_noise, vel_noise, orien_noise, x_force_noise, y_force_noise),
+                dim=2
+            )
+        # elif distribution == "uniform":
+        #     noise = (distribution_parameters[1] - distribution_parameters[0]) * torch.rand(
+        #         (len(randomize_ids), *buffer.size()[1:]), device=self.device
+        #     ) + distribution_parameters[0]
+        # elif distribution == "loguniform" or distribution == "log_uniform":
+        #     noise = torch.exp(
+        #         (np.log(distribution_parameters[1]) - np.log(distribution_parameters[0]))
+        #         * torch.rand((len(randomize_ids), *buffer.size()[1:]), device=self.device)
+        #         + np.log(distribution_parameters[0])
+        #     )
+        else:
+            print(f"The specified {distribution} distribution is not supported.")
+        
+        if operation == "additive":
+            buffer[randomize_ids] += noise
+        elif operation == "scaling":
+            buffer[randomize_ids] *= noise
+        else:
+            print(f"The specified {operation} operation type is not supported.")
+        return buffer
+
 
     def _apply_uncorrelated_noise(self, buffer, randomize_ids, operation, distribution, distribution_parameters):
         if distribution == "gaussian" or distribution == "normal":
