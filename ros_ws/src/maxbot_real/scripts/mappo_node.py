@@ -331,8 +331,6 @@ def main(*args):
         status = mappo_node.step()
         if status == STATUS_RUNNING:
             rospy.loginfo("running")
-            rate.sleep()
-            continue
         elif status == STATUS_SUCCESS:
             rospy.loginfo("task success")
             return
@@ -341,15 +339,14 @@ def main(*args):
             return
         elif status == STATUS_TURN:
             rospy.loginfo("turn direction")
-            rate.sleep()
-            continue
         elif status == STATUS_STOP:
             rospy.loginfo("waiting")
-            continue
         else:
             rospy.logerr("unknown error")
             publish_action(np.array([0, 0]))
             raise RuntimeError("unknown error")
+        rate.sleep()
+
     rospy.spin()
 
 

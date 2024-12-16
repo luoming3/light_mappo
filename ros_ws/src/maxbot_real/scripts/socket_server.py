@@ -34,8 +34,8 @@ def process_data(id, status):
 
     car_center = (id_position[1] + id_position[6]) / 2
     guide_point = id_guide_point[1] # master guide point
-    data_str = ",".join("1", car_center[0], car_center[1], master_status,
-                        guide_point[0], guide_point[1])
+    data_str = f"1,{car_center[0]},{car_center[1]},{master_status},\
+        {guide_point[0]},{guide_point[1]}"
     return data_str
 
 def process_req(conn, addr):
