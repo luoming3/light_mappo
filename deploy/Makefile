@@ -114,32 +114,38 @@ start-all: # e.g. make start-all start=1,1 goal=0,0
 	@if [ -n "${MAXBOT_IP_1}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_1}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_1} 'cd ${DEPLOY_TAG}/deploy; \
-			make run-mappo start=${start} goal=${goal} id=1'; \
+			make run-mappo start=${start} goal=${goal} id=1 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
 	fi
 	@if [ -n "${MAXBOT_IP_2}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_2}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_2} 'cd ${DEPLOY_TAG}/deploy; \
-			make run-mappo start=${start} goal=${goal} id=2'; \
+			make run-mappo start=${start} goal=${goal} id=2 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
 	fi
 	@if [ -n "${MAXBOT_IP_3}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_3}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_3} 'cd ${DEPLOY_TAG}/deploy; \
-			make run-mappo start=${start} goal=${goal} id=3'; \
+			make run-mappo start=${start} goal=${goal} id=3 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
 	fi
 	@if [ -n "${MAXBOT_IP_4}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_4}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_4} 'cd ${DEPLOY_TAG}/deploy; \
-			make run-mappo start=${start} goal=${goal} id=4'; \
+			make run-mappo start=${start} goal=${goal} id=4 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
 	fi
 	@if [ -n "${MAXBOT_IP_5}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_5}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_5} 'cd ${DEPLOY_TAG}/deploy; \
-			make run-mappo start=${start} goal=${goal} id=5'; \
+			make run-mappo start=${start} goal=${goal} id=5 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
 	fi
 	@if [ -n "${MAXBOT_IP_6}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_6}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_6} 'cd ${DEPLOY_TAG}/deploy; \
-			make run-mappo start=${start} goal=${goal} id=6'; \
+			make run-mappo start=${start} goal=${goal} id=6 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
 	fi
 
 stop-all:
