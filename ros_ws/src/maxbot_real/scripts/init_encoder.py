@@ -35,10 +35,10 @@ def main():
     # pub FPS: 10 Hz
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-        if -5 < ENCODER % 360 < 5:
+        if -5 < ENCODER < 5:
             rospy.loginfo(f"init rotary encoder successfully.")
             return
-        publish_action(np.array([0.5, 0]))
+        publish_action(np.array([0., 0.5]))
         rate.sleep()
     rospy.spin()
 
