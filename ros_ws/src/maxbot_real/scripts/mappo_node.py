@@ -53,6 +53,8 @@ class MappoNode:
         if len(self.path) == 0:
             raise RuntimeError("can't find a path")
         self.guide_point = self.path[0]
+        with open("/app/.init_angle", "r") as f:
+            self.init_angle = float(f.read())
 
         self.amcl_subscriber = rospy.Subscriber("/amcl_pose",
                                                 PoseWithCovarianceStamped,
@@ -87,7 +89,12 @@ class MappoNode:
             LoadA = float(searcher.group(1))
             LoadB = float(searcher.group(2))
             self.force = np.array([LoadB, LoadA])
-            self.rotation = float(searcher.group(3))
+            encoder = float(searcher.group(3))
+            rotation = math.radians(self.init_angle - encoder)
+            if rotation >= 0:
+                self.rotation = rotation
+            else:
+                self.rotation = 2 * math.pi + rotation
         else:
             raise RuntimeError(f"invalid sensor_data: {sensor_data}")
 
