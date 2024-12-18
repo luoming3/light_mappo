@@ -40,7 +40,7 @@ turn_omega = 0.5
 
 class MappoNode:
 
-    def __init__(self, start, goal, id, host, port) -> None:
+    def __init__(self, start, goal, id, host, port, method) -> None:
         self.id = id
         self.host = host
         self.port = port
@@ -62,6 +62,7 @@ class MappoNode:
         with open("/app/.init_angle", "r") as f:
             self.init_angle = float(f.read())
         self.master_guide_point = np.array([])
+        self.method = method
 
         self.amcl_subscriber = rospy.Subscriber("/amcl_pose",
                                                 PoseWithCovarianceStamped,
@@ -116,7 +117,23 @@ class MappoNode:
             raise RuntimeError(f"invalid sensor_data: {sensor_data}")
 
     def get_obs(self):
-        rpos_car_dest_norm = normalized(self.guide_point - self.car_center)
+        # get obs from different methods
+        if self.method == "physics": # physics + mappo
+            car_center = self.get_car_position_physics()
+            guide_point = self.guide_point
+        elif self.method == "socket": # socket + mappo
+            car_center = self.car_center
+            guide_point = self.master_guide_point
+        elif self.method == "hard": # socket + hard
+            car_center = self.car_center
+            guide_point = self.master_guide_point
+        else:
+            raise RuntimeError("unknown execute method")
+
+        # clip path for update own guide point
+        self.clip_path(car_center)
+
+        rpos_car_dest_norm = normalized(guide_point - car_center)
         maxbot_linear_velocities = self.velocities
         maxbot_orientation = np.array([self.euler_ori[2]])
         force = self.force
@@ -124,15 +141,15 @@ class MappoNode:
                               maxbot_orientation, force),
                              axis=0)
         obs = np.expand_dims(obs, axis=0)
-        return obs
+        return obs, car_center, guide_point
 
-    def clip_path(self):
+    def clip_path(self, car_center):
         path = copy.deepcopy(self.path)
         if len(path) > 1:
             first_point = path[0]
             second_point = path[1]
             angle = np.dot(second_point - first_point,
-                           self.car_center - first_point)
+                           car_center - first_point)
 
             if angle < 0:
                 pass
@@ -159,14 +176,21 @@ class MappoNode:
             self.status = STATUS_FAILURE
             publish_action(np.array([0, 0]))
             return STATUS_FAILURE
-        self.clip_path()
-        obs = self.get_obs()
-        action = self.get_action_hardcode()
+        obs, car_center, guide_point = self.get_obs()
+        # get action from different method
+        if self.method == "physics": # physics + mappo
+            action = get_action(obs)
+        elif self.method == "socket": # socket + mappo
+            action = get_action(obs)
+        elif self.method == "hard": # socket + hard
+            action = self.get_action_hardcode()
+        else:
+            raise RuntimeError("unknown execute method")
         publish_action(action)
         record = []
         # car_center, guide_point, velocity, orientation, force
-        record.append(self.car_center.copy())
-        record.append(self.guide_point.copy())
+        record.append(car_center.copy())
+        record.append(guide_point.copy())
         record.append(self.velocities.copy())
         record.append(self.euler_ori[2])
         record.append(self.force.copy())
@@ -275,6 +299,52 @@ class MappoNode:
         theta = math.acos(cos_theta)
         return theta if y2 > y1 else -theta
 
+    def get_car_position_physics(self):
+        alpha = euler_from_quaternion(self.orientation)[2]
+        beta = self.rotation # should be between 0 ~ 2pi or -pi ~ pi
+        x = self.position[0]
+        y = self.position[1]
+        if self.id == 1:
+            gamma_ = self.gamma
+            phi = beta - alpha - gamma_
+            l_ = math.sqrt(self.w**2 + self.l**2)
+            x0 = x - math.cos(phi) * l_
+            y0 = y + math.sin(phi) * l_
+        elif self.id == 2:
+            gamma_ = math.pi / 2 - self.gamma
+            phi = beta - alpha - gamma_
+            l_ = math.sqrt(self.w**2 + self.l**2)
+            x0 = x + math.sin(phi) * l_
+            y0 = y + math.cos(phi) * l_
+        elif self.id == 3:
+            gamma_ = 0
+            phi = beta - alpha - gamma_
+            l_ = self.w
+            x0 = x - math.sin(phi) * l_
+            y0 = y - math.cos(phi) * l_
+        elif self.id == 4:
+            gamma_ = 0
+            phi = beta - alpha - gamma_
+            l_ = self.w
+            x0 = x + math.sin(phi) * l_
+            y0 = y + math.cos(phi) * l_
+        elif self.id == 5:
+            gamma_ = math.pi / 2 - self.gamma
+            phi = beta - alpha - gamma_
+            l_ = math.sqrt(self.w**2 + self.l**2)
+            x0 = x - math.sin(phi) * l_
+            y0 = y - math.cos(phi) * l_
+        elif self.id == 6:
+            gamma_ = self.gamma
+            phi = beta - alpha - gamma_
+            l_ = math.sqrt(self.w**2 + self.l**2)
+            x0 = x + math.cos(phi) * l_
+            y0 = y - math.sin(phi) * l_
+        else:
+            raise RuntimeError("unknown id")
+
+        car_center = np.array([x0, y0])
+        return car_center
 
 def get_action(obs):
     '''
@@ -329,8 +399,7 @@ def normalized(v, axis=0):
 
 def main(*args):
     rospy.init_node("mappo_node")
-    start, goal, id, host, port = args
-    mappo_node = MappoNode(start, goal, id, host, port)
+    mappo_node = MappoNode(*args)
 
     # pub FPS: 10 Hz
     rate = rospy.Rate(10)
@@ -366,10 +435,11 @@ if __name__ == "__main__":
         id = int(args[2])
         host = args[3]
         port = int(args[4])
+        method = args[5]
     except:
         raise RuntimeError("input args is invalid")
     else:
-        main(start, goal, id, host, port)
+        main(start, goal, id, host, port, method)
     finally:
         # stop maxbot
         os.system("rostopic pub -1 /cmd_vel geometry_msgs/Twist \
