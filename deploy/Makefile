@@ -5,7 +5,11 @@ IMAGE_NAME=mappo
 IMAGE_TAG=ros-noetic-focal
 CONTAINER_NAME=mappo
 
+<<<<<<< HEAD
 DEPLOY_TAG=release-physics-20241217
+=======
+DEPLOY_TAG=release-hardcode
+>>>>>>> isaac-sim-maxbot-car-center-socket-hardcode
 
 MAXBOT_IP_1=
 MAXBOT_IP_2=
@@ -13,6 +17,9 @@ MAXBOT_IP_3=
 MAXBOT_IP_4=
 MAXBOT_IP_5=
 MAXBOT_IP_6=
+
+SOCKET_HOST=${MAXBOT_IP_1}
+SOCKET_PORT=50007
 
 REMOTE_USER=ubuntu
 MAXBOT_IPS=${MAXBOT_IP_1} ${MAXBOT_IP_2} ${MAXBOT_IP_3} ${MAXBOT_IP_4} \
@@ -88,7 +95,7 @@ init: # e.g. make init x=0 y=0 ori_z=0 ori_w=1
 
 run-mappo: # e.g. make run-mappo start=1,1 goal=0,0 id=1
 	@docker exec ${CONTAINER_NAME} /bin/bash -c \
-		'nohup bash ros_commands/run_mappo.sh ${start} ${goal} ${id} ${WIDTH} ${LENGTH} >> \
+		'nohup bash ros_commands/run_mappo.sh ${start} ${goal} ${id} ${SOCKET_HOST} ${SOCKET_PORT} >> \
 			/app/logs/mappo_node.log 2>&1 &'
 
 clean-node:
@@ -111,32 +118,62 @@ start-all: # e.g. make start-all start=1,1 goal=0,0
 	@if [ -n "${MAXBOT_IP_1}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_1}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_1} 'cd ${DEPLOY_TAG}/deploy; \
+<<<<<<< HEAD
 			make run-mappo start=${start} goal=${goal} id=1'; \
+=======
+			make run-mappo start=${start} goal=${goal} id=1 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
+>>>>>>> isaac-sim-maxbot-car-center-socket-hardcode
 	fi
 	@if [ -n "${MAXBOT_IP_2}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_2}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_2} 'cd ${DEPLOY_TAG}/deploy; \
+<<<<<<< HEAD
 			make run-mappo start=${start} goal=${goal} id=2'; \
+=======
+			make run-mappo start=${start} goal=${goal} id=2 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
+>>>>>>> isaac-sim-maxbot-car-center-socket-hardcode
 	fi
 	@if [ -n "${MAXBOT_IP_3}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_3}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_3} 'cd ${DEPLOY_TAG}/deploy; \
+<<<<<<< HEAD
 			make run-mappo start=${start} goal=${goal} id=3'; \
+=======
+			make run-mappo start=${start} goal=${goal} id=3 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
+>>>>>>> isaac-sim-maxbot-car-center-socket-hardcode
 	fi
 	@if [ -n "${MAXBOT_IP_4}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_4}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_4} 'cd ${DEPLOY_TAG}/deploy; \
+<<<<<<< HEAD
 			make run-mappo start=${start} goal=${goal} id=4'; \
+=======
+			make run-mappo start=${start} goal=${goal} id=4 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
+>>>>>>> isaac-sim-maxbot-car-center-socket-hardcode
 	fi
 	@if [ -n "${MAXBOT_IP_5}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_5}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_5} 'cd ${DEPLOY_TAG}/deploy; \
+<<<<<<< HEAD
 			make run-mappo start=${start} goal=${goal} id=5'; \
+=======
+			make run-mappo start=${start} goal=${goal} id=5 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
+>>>>>>> isaac-sim-maxbot-car-center-socket-hardcode
 	fi
 	@if [ -n "${MAXBOT_IP_6}" ]; then \
 		echo "start mappo on ${MAXBOT_IP_6}"; \
 		ssh ${REMOTE_USER}@${MAXBOT_IP_6} 'cd ${DEPLOY_TAG}/deploy; \
+<<<<<<< HEAD
 			make run-mappo start=${start} goal=${goal} id=6'; \
+=======
+			make run-mappo start=${start} goal=${goal} id=6 \
+				SOCKET_HOST=${SOCKET_HOST}'; \
+>>>>>>> isaac-sim-maxbot-car-center-socket-hardcode
 	fi
 
 stop-all:
