@@ -53,6 +53,8 @@ def main():
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         if -math.radians(5) < euler_angle < math.radians(5):
+            publish_action(np.array([0., 0.]))
+            time.sleep(0.5) # sleep to get the latest value
             with open("/app/.init_angle", "w") as f:
                 f.write(f"{ENCODER}")
             rospy.loginfo(f"get init rotary encoder successfully.")
