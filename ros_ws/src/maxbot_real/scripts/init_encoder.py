@@ -52,7 +52,6 @@ def main():
     # pub FPS: 10 Hz
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-<<<<<<< HEAD
         if -math.radians(5) < euler_angle < math.radians(5):
             publish_action(np.array([0., 0.]))
             time.sleep(0.5) # sleep to get the latest value
@@ -64,12 +63,6 @@ def main():
             publish_action(np.array([0., -0.5]))
         else:
             publish_action(np.array([0., 0.5]))
-=======
-        if -5 < ENCODER < 5:
-            rospy.loginfo(f"init rotary encoder successfully.")
-            return
-        publish_action(np.array([0., 0.5]))
->>>>>>> isaac-sim-maxbot-car-center-socket-hardcode
         rate.sleep()
     rospy.spin()
 

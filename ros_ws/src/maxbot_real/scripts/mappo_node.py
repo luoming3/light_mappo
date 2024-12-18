@@ -59,12 +59,9 @@ class MappoNode:
         if len(self.path) == 0:
             raise RuntimeError("can't find a path")
         self.guide_point = self.path[0]
-<<<<<<< HEAD
         with open("/app/.init_angle", "r") as f:
             self.init_angle = float(f.read())
-=======
         self.master_guide_point = np.array([])
->>>>>>> isaac-sim-maxbot-car-center-socket-hardcode
 
         self.amcl_subscriber = rospy.Subscriber("/amcl_pose",
                                                 PoseWithCovarianceStamped,

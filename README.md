@@ -91,11 +91,7 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
 
 1. create new directory
     - export DEPLOY_TAG variable, see **DEPLOY_TAG** in *deploy/Makefile*
-<<<<<<< HEAD
         - e.g. `export DEPLOY_TAG=release-physics-20241217`
-=======
-        - e.g. `export DEPLOY_TAG=release-hardcode`
->>>>>>> isaac-sim-maxbot-car-center-socket-hardcode
     - `mkdir -p ~/${DEPLOY_TAG}`
 2. move the package `deploy.tar` and `deploy.tar.sha256` to the created directory
 3. check and uncompress
