@@ -182,6 +182,9 @@ class MappoNode:
             self.status = STATUS_FAILURE
             publish_action(np.array([0, 0]))
             return STATUS_FAILURE
+        if self.master_status == STATUS_RUNNING:
+            self.status = STATUS_RUNNING
+
         obs, car_center, guide_point = self.get_obs()
         # get action from different method
         if self.method == "physics": # physics + mappo
@@ -203,9 +206,8 @@ class MappoNode:
         records.append(record)
 
         # arrival
-        current_dist_to_goal = np.linalg.norm(self.car_center - self.goal)
-        current_dist_to_point = np.linalg.norm(self.car_center -
-                                               self.guide_point)
+        current_dist_to_goal = np.linalg.norm(car_center - self.goal)
+        current_dist_to_point = np.linalg.norm(car_center - guide_point)
         if current_dist_to_goal < 0.2:
             self.status = STATUS_SUCCESS
         if current_dist_to_point > 5:
