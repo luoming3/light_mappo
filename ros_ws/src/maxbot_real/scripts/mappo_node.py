@@ -36,7 +36,10 @@ force_threshold = 100000
 running_v = 0.25
 running_omega = 0.25
 turn_omega = 0.5
-
+# w is half the width of the assembled car
+# l is half the length of the assembled car
+w = 0.4
+l = 0.6
 
 class MappoNode:
 
@@ -63,6 +66,9 @@ class MappoNode:
             self.init_angle = float(f.read())
         self.master_guide_point = np.array([])
         self.method = method
+        self.w = w
+        self.l = l
+        self.gamma = math.atan(w / l)
 
         self.amcl_subscriber = rospy.Subscriber("/amcl_pose",
                                                 PoseWithCovarianceStamped,
