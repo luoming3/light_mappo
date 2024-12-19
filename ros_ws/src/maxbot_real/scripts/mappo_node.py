@@ -126,7 +126,7 @@ class MappoNode:
         # get obs from different methods
         if self.method == "physics": # physics + mappo
             car_center = self.get_car_position_physics()
-            guide_point = self.guide_point
+            guide_point = self.master_guide_point
         elif self.method == "socket": # socket + mappo
             car_center = self.car_center
             guide_point = self.master_guide_point
@@ -142,7 +142,7 @@ class MappoNode:
         rpos_car_dest_norm = normalized(guide_point - car_center)
         maxbot_linear_velocities = self.velocities
         maxbot_orientation = np.array([self.euler_ori[2]])
-        force = self.force
+        force = self.get_force()
         obs = np.concatenate((rpos_car_dest_norm, maxbot_linear_velocities,
                               maxbot_orientation, force),
                              axis=0)
@@ -151,6 +151,7 @@ class MappoNode:
 
     def clip_path(self, car_center):
         path = copy.deepcopy(self.path)
+        # yaw
         if len(path) > 1:
             first_point = path[0]
             second_point = path[1]
@@ -162,7 +163,12 @@ class MappoNode:
             else:
                 rospy.loginfo(f"the next guide point: {self.path[1]}")
                 self.path = self.path[1:]
-        self.guide_point = self.path[0]
+                self.guide_point = self.path[0]
+        # close enough
+        dist_to_point = np.linalg.norm(car_center - self.guide_point)
+        if dist_to_point < 0.1 and len(self.path) > 1:
+            self.path = self.path[1:]
+            self.guide_point = self.path[0]
 
     def step(self):
         if (self.car_center.size == 0) or (self.velocities.size== 0) or \
@@ -212,8 +218,6 @@ class MappoNode:
             self.status = STATUS_SUCCESS
         if current_dist_to_point > 5:
             self.status = STATUS_FAILURE
-        if current_dist_to_point < 0.1:
-            self.path = self.path[1:]
 
         return self.status
 
@@ -353,6 +357,15 @@ class MappoNode:
 
         car_center = np.array([x0, y0])
         return car_center
+    
+    def get_force(self):
+        force_x, force_y = self.force[0], self.force[1]
+        thresholds_x = np.array([-300000, -200000, -100000, 100000, 200000, 300000])
+        thresholds_y = np.array([-300000, -200000, -100000, 100000, 200000, 300000])
+
+        force_x = np.searchsorted(thresholds_x, force_x) - 3
+        force_y = np.searchsorted(thresholds_y, force_y) - 3
+        return np.array([force_x, force_y])
 
 def get_action(obs):
     '''
