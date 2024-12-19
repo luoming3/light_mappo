@@ -5,7 +5,7 @@ from status import *
 
 master_status = STATUS_STOP
 id_position = {}
-#id_position = {6: np.array([0., 0.])}
+# id_position = {6: np.array([0., 0.])}
 id_status = {}
 id_guide_point = {}
 

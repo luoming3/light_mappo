@@ -314,6 +314,7 @@ class MappoNode:
     def get_car_position_physics(self):
         alpha = euler_from_quaternion(self.orientation)[2]
         beta = self.rotation # should be between 0 ~ 2pi or -pi ~ pi
+        # beta = alpha
         x = self.position[0]
         y = self.position[1]
         if self.id == 1:
