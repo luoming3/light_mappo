@@ -292,7 +292,7 @@ def get_config():
     parser.add_argument(
         "--use_feature_normalization",
         action="store_false",
-        default=True,
+        default=False,
         help="Whether to apply layernorm to the inputs",
     )
     parser.add_argument(
