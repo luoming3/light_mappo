@@ -24,6 +24,8 @@ COPY light_mappo /app/light_mappo
 COPY test /app/test
 COPY ros_ws /app/ros_ws
 
+RUN touch "/app/.init_angle"; echo "0.0" >> /app/.init_angle
+
 # Build maxbot_real package
 RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && \
     cd ros_ws && \
