@@ -210,3 +210,19 @@ kill-navigation-all:
 		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
 			make kill-navigation'; \
 	done
+
+collect-log-file-all:
+	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		echo "collect log on $${REMOTE_HOST}"; \
+		scp ${REMOTE_USER}@$${REMOTE_HOST}:~/${DEPLOY_TAG}/deploy/logs/step_record_*.npy logs/; \
+	done
+
+clean-step-log:
+	@rm -f logs/step_record_*.npy
+
+clean-step-log-all:
+	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		echo "clean step log on $${REMOTE_HOST}"; \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
+			make clean-step-log'; \
+	done
