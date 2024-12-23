@@ -2,12 +2,14 @@ import socket
 import threading
 import numpy as np
 from status import *
+import time
 
 master_status = STATUS_STOP
 id_position = {}
 # id_position = {6: np.array([0., 0.])}
 id_status = {}
 id_guide_point = {}
+log_id = int(time.time())
 
 
 def process_data(id, status):
@@ -45,7 +47,12 @@ def process_req(conn, addr):
             data_recv = conn.recv(1024)
             if not data_recv:
                 break
-            data_split = data_recv.decode("utf8").split(",")
+            data_recv = data_recv.decode("utf8")
+            if data_recv == "log_id":
+                conn.sendall(bytes(str(log_id), "utf8"))
+                continue
+
+            data_split = data_recv.split(",")
             id = int(data_split[0])
             position = np.array([data_split[1], data_split[2]],
                                 dtype=np.float32)

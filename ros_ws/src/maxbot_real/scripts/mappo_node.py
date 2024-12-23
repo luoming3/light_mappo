@@ -40,6 +40,7 @@ turn_omega = 0.5
 # l is half the length of the assembled car
 w = 0.4
 l = 0.6
+step_data_file = ""
 
 class MappoNode:
 
@@ -91,6 +92,7 @@ class MappoNode:
         rospy.loginfo(f"path: {self.path}")
         # sleep for 1s to ensure that the socket server obtains the status of all MaxBots
         time.sleep(1)
+        self.fetch_step_data_filename()
 
     def process_amcl_pose(self, message):
         position = message.pose.pose.position
@@ -252,6 +254,22 @@ class MappoNode:
                 retry_count += 1
                 if retry_count == 5:
                     raise RuntimeError("Connection refused")
+
+    def fetch_step_data_filename(self):
+        global step_data_file
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((self.host, self.port))
+
+                while True:
+                    send_str = "log_id"
+                    s.sendall(bytes(send_str, "utf8"))
+                    data_str = s.recv(1024).decode("utf8")
+                    if len(data_str) > 1:
+                        step_data_file = f"step_record_{self.id}_{data_str}.npy"
+                        return
+        except ConnectionRefusedError:
+            rospy.logerr("Connection refused, and then wait 1s")
 
     def get_action_hardcode(self):
         ori = euler_from_quaternion(self.orientation)[2]
@@ -466,4 +484,4 @@ if __name__ == "__main__":
         # stop maxbot
         os.system("rostopic pub -1 /cmd_vel geometry_msgs/Twist \
                   '{linear: {x: 0, y: 0, z: 0}, angular: {x: 0, y: 0, z: 0}}'")
-        np.save(f"/app/logs/step_record_{id}.npy", records)
+        np.save(f"/app/logs/{step_data_file}", records)
