@@ -303,10 +303,10 @@ class MappoNode:
                 self.status = STATUS_STOP
                 return np.array([0., 0.])
             else:
-                self.status = STATUS_RUNNING
+                self.status = STATUS_FORWARD
                 return np.array([running_v, 0.])
         else:
-            self.status = STATUS_RUNNING
+            self.status = STATUS_FORWARD_TURN
             turn_right_condition = False
             diff_angle = ori - alpha
             if same_direction:
@@ -459,6 +459,10 @@ def main(*args):
             rospy.loginfo("turn direction")
         elif status == STATUS_STOP:
             rospy.loginfo("waiting")
+        elif status == STATUS_FORWARD:
+            rospy.loginfo("forward")
+        elif status == STATUS_FORWARD_TURN:
+            rospy.loginfo("forward and turn")
         else:
             rospy.logerr("unknown error")
             publish_action(np.array([0, 0]))

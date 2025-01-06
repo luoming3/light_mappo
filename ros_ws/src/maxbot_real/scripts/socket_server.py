@@ -16,7 +16,7 @@ def process_data(id, status):
     global id_status, master_status
 
     id_status[id] = status
-    if status == STATUS_RUNNING:
+    if status in {STATUS_RUNNING, STATUS_FORWARD, STATUS_FORWARD_TURN}:
         pass
     elif status == STATUS_SUCCESS:
         master_status = status
