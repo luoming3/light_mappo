@@ -272,6 +272,7 @@ class MappoNode:
             rospy.logerr("Connection refused, and then wait 1s")
 
     def get_action_hardcode(self):
+        # ori, alpha in [-pi, pi]
         ori = euler_from_quaternion(self.orientation)[2]
         alpha = self.calculate_angle(self.car_center, self.master_guide_point)
 
@@ -330,7 +331,7 @@ class MappoNode:
         return theta if y2 > y1 else -theta
 
     def get_car_position_physics(self):
-        alpha = euler_from_quaternion(self.orientation)[2]
+        alpha = euler_from_quaternion(self.orientation)[2] # alpha in [-pi, pi]
         beta = self.rotation # should be between 0 ~ 2pi or -pi ~ pi
         # beta = alpha
         x = self.position[0]
