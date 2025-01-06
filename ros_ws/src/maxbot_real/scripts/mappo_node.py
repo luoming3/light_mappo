@@ -31,7 +31,7 @@ ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
 records = []
 angle_tolerance = 5 / 180 * math.pi
-turn_threshold = 30 / 180 * math.pi
+turn_threshold = 15 / 180 * math.pi
 force_threshold = 200000
 running_v = 0.25
 running_omega = 0.25
