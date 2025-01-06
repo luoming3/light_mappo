@@ -33,6 +33,7 @@ records = []
 angle_tolerance = 5 / 180 * math.pi
 turn_threshold = 15 / 180 * math.pi
 force_threshold = 200000
+max_force_threshold = 300000
 running_v = 0.25
 running_omega = 0.25
 turn_omega = 0.5
@@ -281,8 +282,9 @@ class MappoNode:
         else:
             abs_diff = 2 * math.pi - abs(ori - alpha)
         same_direction = True if abs_diff < math.pi / 2 else False
+        max_abs_force = max(abs(self.force))
 
-        if abs_diff > turn_threshold:
+        if abs_diff > turn_threshold or max_abs_force > max_force_threshold:
             self.status = STATUS_TURN
             turn_right_condition = False
             diff_angle = ori - alpha
@@ -296,8 +298,7 @@ class MappoNode:
             else:
                 return np.array([0, turn_omega])
 
-        force = max(self.force)
-        if abs_diff < angle_tolerance and force < force_threshold:
+        if abs_diff < angle_tolerance and max_abs_force < force_threshold:
             if self.master_status == STATUS_TURN:
                 self.status = STATUS_STOP
                 return np.array([0., 0.])
