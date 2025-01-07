@@ -277,43 +277,36 @@ class MappoNode:
         ori = euler_from_quaternion(self.orientation)[2]
         alpha = self.calculate_angle(self.car_center, self.master_guide_point)
 
+        # turn right condition
+        diff_angle = ori - alpha
+        turn_right_condition = (0 < diff_angle < math.pi) or \
+            (-2 * math.pi < diff_angle < -math.pi)
+
+        # check if need to turn
         if abs(ori - alpha) < math.pi:
             abs_diff = abs(ori - alpha)
         else:
             abs_diff = 2 * math.pi - abs(ori - alpha)
-        same_direction = True if abs_diff < math.pi / 2 else False
         max_abs_force = max(abs(self.force))
-
         if abs_diff > turn_threshold or max_abs_force > max_force_threshold:
             self.status = STATUS_TURN
-            turn_right_condition = False
-            diff_angle = ori - alpha
-            if same_direction:
-                turn_right_condition = (0 < diff_angle and diff_angle < math.pi / 2) or \
-                    (-2 * math.pi < diff_angle and diff_angle < -3 * math.pi / 2)
-            else:
-                turn_right_condition = True
             if turn_right_condition:
                 return np.array([0, -turn_omega])
             else:
                 return np.array([0, turn_omega])
 
+        # before forwarding, check if any maxbot is turning
+        # if any maxbot is turning, stop
+        if self.master_status == STATUS_TURN:
+            self.status = STATUS_STOP
+            return np.array([0, 0])
+
+        # if master status is running, forward or forward_turn
         if abs_diff < angle_tolerance and max_abs_force < force_threshold:
-            if self.master_status == STATUS_TURN:
-                self.status = STATUS_STOP
-                return np.array([0., 0.])
-            else:
-                self.status = STATUS_FORWARD
-                return np.array([running_v, 0.])
+            self.status = STATUS_FORWARD
+            return np.array([running_v, 0.])
         else:
             self.status = STATUS_FORWARD_TURN
-            turn_right_condition = False
-            diff_angle = ori - alpha
-            if same_direction:
-                turn_right_condition = (0 < diff_angle and diff_angle < math.pi / 2) or \
-                    (-2 * math.pi < diff_angle and diff_angle < -3 * math.pi / 2)
-            else:
-                turn_right_condition = True
             if turn_right_condition:
                 return np.array([running_v, -running_omega])
             else:
