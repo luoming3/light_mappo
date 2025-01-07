@@ -320,6 +320,10 @@ class MappoNode:
                 return np.array([running_v, running_omega])
 
     def calculate_angle(self, car_center, guide_point):
+        '''
+        calculate the angle between the right direction and x-axis
+        the angle is in [-pi, pi]
+        '''
         x1, y1 = car_center[0], car_center[1]
         x2, y2 = guide_point[0], guide_point[1]
 
