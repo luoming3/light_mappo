@@ -79,10 +79,7 @@ def cal_dist(point1, point2):
 
 
 @timethis
-def main():
-    start = (-5.0, 3.0)
-    goal = (5.0, -3.0)
-
+def main(start, goal):
     guide_point = get_path(start, goal)
     if guide_point:
         [print(point) for point in guide_point]
@@ -93,4 +90,13 @@ def main():
 if __name__ == "__main__":
     rospy.init_node('make_plan_client')
 
-    main()
+    import ast
+    args = sys.argv[1:]
+    try:
+        start = ast.literal_eval(args[0])
+        goal = ast.literal_eval(args[1])
+    except:
+        raise RuntimeError("input args is invalid")
+    else:
+        main(start, goal)
+

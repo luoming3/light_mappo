@@ -1,12 +1,12 @@
 import rospy
 from std_msgs.msg import String
-from std_msgs.msg import Float32
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 import numpy as np
 import math
 import copy
+import re
 
 import os
 import sys
@@ -21,7 +21,7 @@ from light_mappo.agent import Agent
 from make_plan import get_path
 
 # /cmd_vel topic
-ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 STATUS_RUNNING = 0
 STATUS_SUCCESS = 1
 STATUS_FAILURE = 2
@@ -49,10 +49,11 @@ class MappoNode:
                                                 self.process_amcl_pose)
         self.odom_subscriber = rospy.Subscriber("/odom", Odometry,
                                                 self.process_odom)
-        self.force_subscriber = rospy.Subscriber("/force", Float32,
-                                                 self.process_force)  ## TODO
-        self.rotation_subscriber = rospy.Subscriber(
-            "/rotation", Float32, self.process_rotation)  # TODO
+        self.sensor_data_subscriber = rospy.Subscriber("/sensor_data", String,
+                                                 self.process_sensor_data)
+        rospy.loginfo("starting mappo node")
+        rospy.loginfo(f"start position: {self.start}, goal position: {self.goal}")
+        rospy.loginfo(f"path: {self.path}")
 
     def process_amcl_pose(self, message):
         position = message.pose.pose.position
@@ -67,9 +68,15 @@ class MappoNode:
             self.euler_ori = quaternion_to_euler(self.orientation)
             self.velocities = get_vel_from_linear(linear_x, self.euler_ori)
 
-    def process_force(self):
-        # TODO
-        self.force = np.array([0., 0.])
+    def process_sensor_data(self, sensor_data):
+        pattern = "LoadA:(-?[0-9]*\.?[0-9]*),LoadB:(-?[0-9]*\.?[0-9]*)"
+        searcher = re.search(pattern, sensor_data)
+        if searcher:
+            force_x = float(searcher.group(1))
+            force_y = float(searcher.group(2))
+            self.force = np.array([force_x, force_y])
+        else:
+            raise RuntimeError(f"invalid sensor_data: {sensor_data}")
 
     def process_rotation(self):
         # TODO
@@ -105,6 +112,7 @@ class MappoNode:
             if angle < 0:
                 pass
             else:
+                rospy.loginfo(f"the next guide point: {self.path[1]}")
                 self.path = self.path[1:]
             self.guide_point = self.path[0]
 
@@ -217,4 +225,9 @@ if __name__ == "__main__":
         goal = ast.literal_eval(args[1])
     except:
         raise RuntimeError("input args is invalid")
-    main(start, goal)
+    else:
+        main(start, goal)
+    finally:
+        # stop maxbot
+        os.system("rostopic pub -1 /cmd_vel geometry_msgs/Twist \
+                  '{linear: {x: 0, y: 0, z: 0}, angular: {x: 0, y: 0, z: 0}}'")

@@ -21,6 +21,7 @@ save-vnc-image:
 
 package:
 	@rm -f deploy.tar*
+	@rm -rf deploy/logs/*.log
 	@tar -cvf deploy.tar deploy
 	@sha256sum deploy.tar > deploy.tar.sha256
 
@@ -39,5 +40,8 @@ exec-container:
 build-vnc-image: build-image
 	docker build -t ${IMAGE_NAME}:${IMAGE_TAG}-vnc -f Dockerfile_vnc .
 
-run-vnc-container:
-	make -C deploy/ run-vnc-container
+update-tag:
+	@last_release=$(shell grep -P -o "release-\d*" README.md) ; \
+	latest_release=release-$(shell date +"%Y%m%d") ; \
+	sed -i "s/$${last_release}/$${latest_release}/g" deploy/Makefile ; \
+	sed -i "s/$${last_release}/$${latest_release}/g" README.md
