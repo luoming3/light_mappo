@@ -393,7 +393,7 @@ class MappoNode:
         Get action from algorithm
         '''
         max_abs_force = max(abs(self.force))
-        if max_abs_force > max_force_threshold:
+        if max_abs_force > max_force_threshold or self.master_status == STATUS_TURN:
             ori = euler_from_quaternion(self.orientation)[2]
             alpha = self.calculate_angle(self.car_center, self.master_guide_point)
 
@@ -411,12 +411,8 @@ class MappoNode:
                 else:
                     return np.array([0, turn_omega])
             else:
-                if self.master_status == STATUS_TURN:
-                    self.status = STATUS_STOP
-                    return np.array([0, 0])
-                else:
-                    # all maxbots are ready to run mappo
-                    pass
+                self.status = STATUS_STOP
+                return np.array([0, 0])
 
         if not np.any(obs):
             return None
