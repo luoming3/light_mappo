@@ -200,9 +200,9 @@ class MappoNode:
         obs, car_center, guide_point = self.get_obs()
         # get action from different method
         if self.method == "physics": # physics + mappo
-            action = get_action(obs)
+            action = self.get_action(obs)
         elif self.method == "socket": # socket + mappo
-            action = get_action(obs)
+            action = self.get_action(obs)
         elif self.method == "hard": # socket + hard
             action = self.get_action_hardcode()
         else:
@@ -388,14 +388,40 @@ class MappoNode:
         force_y = np.searchsorted(thresholds_y, force_y) - 3
         return np.array([force_x, force_y])
 
-def get_action(obs):
-    '''
-    Get action from algorithm
-    '''
-    if not np.any(obs):
-        return None
-    agent = Agent()
-    return agent.act(obs)
+    def get_action(self, obs):
+        '''
+        Get action from algorithm
+        '''
+        max_abs_force = max(abs(self.force))
+        if max_abs_force > max_force_threshold:
+            ori = euler_from_quaternion(self.orientation)[2]
+            alpha = self.calculate_angle(self.car_center, self.master_guide_point)
+
+            # turn right condition
+            diff_angle = ori - alpha
+            turn_right_condition = (0 < diff_angle < math.pi) or \
+                (-2 * math.pi < diff_angle < -math.pi)
+
+            abs_diff = min(abs(ori - alpha), 2 * math.pi - abs(ori - alpha))
+            # check if need to turn
+            if abs_diff > angle_tolerance:
+                self.status = STATUS_TURN
+                if turn_right_condition:
+                    return np.array([0, -turn_omega])
+                else:
+                    return np.array([0, turn_omega])
+            else:
+                if self.master_status == STATUS_TURN:
+                    self.status = STATUS_STOP
+                    return np.array([0, 0])
+                else:
+                    # all maxbots are ready to run mappo
+                    pass
+
+        if not np.any(obs):
+            return None
+        agent = Agent()
+        return agent.act(obs)
 
 
 def publish_action(action):
