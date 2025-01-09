@@ -29,6 +29,9 @@ from socket_server import car_center_socket_server
 # /cmd_vel topic
 ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
+# socket client send interval
+SOCKET_HZ = 50
+
 records = []
 angle_tolerance = 5 / 180 * math.pi
 turn_threshold = 15 / 180 * math.pi
@@ -247,7 +250,7 @@ class MappoNode:
                                 self.master_status = master_status
                                 self.master_guide_point = np.array([data_split[4], data_split[5]], dtype=np.float32)
 
-                        time.sleep(1 / 50.)
+                        time.sleep(1.0 / SOCKET_HZ)
             except ConnectionRefusedError:
                 rospy.logwarn("Connection refused, and then wait 1s")
                 time.sleep(1)
