@@ -28,6 +28,8 @@ def process_data(id, status):
         # if all status of maxbot are STATUS_STOP, then run it
         if sum(id_status.values()) % STATUS_STOP == 0:
             master_status = STATUS_RUNNING
+        else:
+            master_status = STATUS_TURN
     else:
         raise RuntimeError("unknown status")
 
