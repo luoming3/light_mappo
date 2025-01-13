@@ -35,8 +35,8 @@ SOCKET_HZ = 50
 records = []
 angle_tolerance = 5 / 180 * math.pi
 turn_threshold = 15 / 180 * math.pi
-force_threshold = 200000
-max_force_threshold = 300000
+force_threshold = 200000 # TODO: need to be tuned after calibration
+max_force_threshold = 300000 # TODO: need to be tuned after calibration
 running_v = 0.25
 running_omega = 0.25
 turn_omega = 0.5
@@ -381,6 +381,7 @@ class MappoNode:
     
     def get_force(self):
         force_x, force_y = self.force[0], self.force[1]
+        # TODO: need to be tuned after calibration
         thresholds_x = np.array([-300000, -200000, -100000, 100000, 200000, 300000])
         thresholds_y = np.array([-300000, -200000, -100000, 100000, 200000, 300000])
 
