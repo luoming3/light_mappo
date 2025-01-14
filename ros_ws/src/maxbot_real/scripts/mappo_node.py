@@ -195,6 +195,7 @@ class MappoNode:
             publish_action(np.array([0, 0]))
             return STATUS_FAILURE
         if self.master_status == STATUS_RUNNING:
+            # for record mappo algorithm running status
             self.status = STATUS_RUNNING
 
         obs, car_center, guide_point = self.get_obs()
