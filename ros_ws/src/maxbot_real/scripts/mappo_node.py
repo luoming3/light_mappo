@@ -333,6 +333,9 @@ class MappoNode:
         return theta if y2 > y1 else -theta
 
     def get_car_position_physics(self):
+        '''
+        TODO: Verify the effectiveness of this function in real MaxBot usage.
+        '''
         alpha = euler_from_quaternion(self.orientation)[2] # alpha in [-pi, pi]
         beta = self.rotation # should be between 0 ~ 2pi or -pi ~ pi
         # beta = alpha
