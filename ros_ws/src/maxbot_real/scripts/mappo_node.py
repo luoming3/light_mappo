@@ -39,12 +39,14 @@ force_threshold = 2000 # TODO: need to be tuned after calibration
 max_force_threshold = 4000 # TODO: need to be tuned after calibration
 running_v = 0.25
 running_omega = 0.25
+warm_up_speed = 0.15
 turn_omega = 0.5
 # w is half the width of the assembled car
 # l is half the length of the assembled car
 w = 0.4
 l = 0.6
 step_data_file = ""
+warm_up_steps = 5
 
 class MappoNode:
 
@@ -74,6 +76,7 @@ class MappoNode:
         self.w = w
         self.l = l
         self.gamma = math.atan(w / l)
+        self.warm_up_count = np.inf
 
         self.amcl_subscriber = rospy.Subscriber("/amcl_pose",
                                                 PoseWithCovarianceStamped,
@@ -182,10 +185,7 @@ class MappoNode:
             self.status = STATUS_STOP
             rospy.logwarn("observation is None")
             return STATUS_STOP
-        if self.master_status == STATUS_STOP:
-            self.status = STATUS_STOP
-            publish_action(np.array([0, 0]))
-            return STATUS_STOP
+
         if self.master_status == STATUS_SUCCESS:
             self.status = STATUS_SUCCESS
             publish_action(np.array([0, 0]))
@@ -194,6 +194,23 @@ class MappoNode:
             self.status = STATUS_FAILURE
             publish_action(np.array([0, 0]))
             return STATUS_FAILURE
+
+        if self.master_status == STATUS_WARM_UP:
+            self.warm_up_count = 0
+        else:
+            pass
+
+        if self.warm_up_count < warm_up_steps:
+            self.warm_up_count += 1
+            rospy.loginfo(f"warm up times: {self.warm_up_count}")
+            publish_action(np.array([warm_up_speed, 0.]))
+            self.status = STATUS_WARM_UP
+            return STATUS_WARM_UP
+
+        if self.master_status == STATUS_STOP:
+            self.status = STATUS_STOP
+            publish_action(np.array([0, 0]))
+            return STATUS_STOP
         if self.master_status == STATUS_RUNNING:
             # for record mappo algorithm running status
             self.status = STATUS_RUNNING
@@ -301,7 +318,7 @@ class MappoNode:
 
         # before forwarding, check if any maxbot is turning
         # if any maxbot is turning, stop
-        if self.master_status == STATUS_TURN:
+        if self.master_status == STATUS_TURN and self.status != STATUS_WARM_UP:
             self.status = STATUS_STOP
             return np.array([0, 0])
 
@@ -490,10 +507,12 @@ def main(*args):
             rospy.loginfo("forward")
         elif status == STATUS_FORWARD_TURN:
             rospy.loginfo("forward and turn")
+        elif status == STATUS_WARM_UP:
+            rospy.loginfo("warm up")
         else:
-            rospy.logerr("unknown error")
             publish_action(np.array([0, 0]))
-            raise RuntimeError("unknown error")
+            rospy.logerr("unknown status: {status}")
+            raise RuntimeError("unknown status: {status}")
         rate.sleep()
 
     rospy.spin()

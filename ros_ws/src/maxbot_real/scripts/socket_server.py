@@ -17,7 +17,7 @@ def process_data(id, status):
 
     id_status[id] = status
     if status in {STATUS_RUNNING, STATUS_FORWARD, STATUS_FORWARD_TURN}:
-        pass
+        master_status = STATUS_RUNNING
     elif status == STATUS_SUCCESS:
         master_status = status
     elif status == STATUS_FAILURE:
@@ -27,7 +27,7 @@ def process_data(id, status):
     elif status == STATUS_STOP:
         # if all status of maxbot are STATUS_STOP, then run it
         if sum(id_status.values()) % STATUS_STOP == 0:
-            master_status = STATUS_RUNNING
+            master_status = STATUS_WARM_UP
         else:
             master_status = STATUS_TURN
     else:
