@@ -1,0 +1,4 @@
+<launch>
+    <!-- run rviz -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find maxbot_real)/config/navigation.rviz" />
+</launch>
