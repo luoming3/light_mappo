@@ -47,6 +47,7 @@ w = 0.4
 l = 0.6
 step_data_file = ""
 warm_up_steps = 5
+step_fps = 10.
 
 class MappoNode:
 
@@ -194,19 +195,15 @@ class MappoNode:
             self.status = STATUS_FAILURE
             publish_action(np.array([0, 0]))
             return STATUS_FAILURE
-
-        if self.master_status == STATUS_TURN:
-            self.warm_up_count = 0
-        else:
-            if self.warm_up_count < warm_up_steps:
-                self.warm_up_count += 1
-                rospy.loginfo(f"warm up times: {self.warm_up_count}")
-                publish_action(np.array([warm_up_speed, 0.]))
-                self.status = STATUS_WARM_UP
-                return STATUS_WARM_UP
-            else:
-                # running
-                pass
+        # warm up serveral steps after beginning
+        while self.warm_up_count < warm_up_steps:
+            if self.master_status == STATUS_TURN:
+                self.warm_up_count = 0
+                break
+            self.warm_up_count += 1
+            rospy.loginfo(f"warm up times: {self.warm_up_count}")
+            publish_action(np.array([warm_up_speed, 0.]))
+            time.sleep(1 / step_fps)
 
         if self.master_status == STATUS_RUNNING:
             # for record mappo algorithm running status
@@ -485,7 +482,7 @@ def main(*args):
     mappo_node = MappoNode(*args)
 
     # pub FPS: 10 Hz
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(step_fps)
     while not rospy.is_shutdown():
         status = mappo_node.step()
         if status == STATUS_RUNNING:
@@ -504,8 +501,6 @@ def main(*args):
             rospy.loginfo("forward")
         elif status == STATUS_FORWARD_TURN:
             rospy.loginfo("forward and turn")
-        elif status == STATUS_WARM_UP:
-            rospy.loginfo("warm up")
         else:
             publish_action(np.array([0, 0]))
             rospy.logerr("unknown status: {status}")

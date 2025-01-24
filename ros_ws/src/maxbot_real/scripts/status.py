@@ -9,7 +9,5 @@ STATUS_TURN = 4
 STATUS_FORWARD = 5
 # forward and turn
 STATUS_FORWARD_TURN = 6
-# warm up
-STATUS_WARM_UP = 7
 # stop
 STATUS_STOP = 77
