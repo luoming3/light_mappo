@@ -6,7 +6,7 @@ from pathlib import Path
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 
 
-def get_logger(logger_name, logging_config={}):
+def get_logger(logger_name, logging_config={}, console=True):
     config_dict = {
         "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         "level": logging.INFO,
@@ -38,6 +38,6 @@ def get_logger(logger_name, logging_config={}):
 
     if len(logger.handlers) == 0:
         logger.addHandler(file_handler)
-        logger.addHandler(console_handler)
-    
+        if console: logger.addHandler(console_handler)
+
     return logger

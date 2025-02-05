@@ -9,6 +9,8 @@ from light_mappo.utils.util import _t2n
 from light_mappo.envs.isaac_sim.env_core import OBS_DIM, ACTION_SPACE
 
 MODEL_DIR = "/app/models/actor.pt"
+L = 0.1125  # wheel spacing
+R = 0.03 #  wheel radius
 
 
 class Agent(object):
@@ -16,7 +18,6 @@ class Agent(object):
     def __init__(self):
         parser = get_config()
         all_args = parser.parse_known_args()[0]
-        self.L = 0.3  # wheel spacing
 
         observation_space = spaces.Box(
             low=-np.inf,
@@ -73,15 +74,16 @@ class Agent(object):
 
         actions = _t2n(actions)
         if ACTION_SPACE.__class__.__name__ == "Box":
-            actions = np.tanh(actions[0]) * 0.16
-            v, omega = wheel_speeds_to_cmd_vel(actions[0], actions[1], self.L)
+            actions = np.tanh(actions[0]) * 5
+            v, omega = wheel_speeds_to_cmd_vel(actions[0], actions[1])
         else:
             raise NotImplementedError
 
         return np.array([v, omega])
 
 
-def wheel_speeds_to_cmd_vel(v_L, v_R, L):
-    v = (v_L + v_R) / 2
-    omega = (v_R - v_L) * 0.25 / L
+def wheel_speeds_to_cmd_vel(v_L, v_R):
+    v = (v_L + v_R) * R / 2
+    omega = (v_R - v_L) * R / L
+    omega = np.clip(omega, -0.5, 0.5)
     return v, omega
