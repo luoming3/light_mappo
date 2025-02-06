@@ -226,3 +226,6 @@ clean-step-log-all:
 		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
 			make clean-step-log'; \
 	done
+
+step_graph:
+	@python scripts/step_graph.py
