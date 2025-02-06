@@ -4,13 +4,6 @@ import numpy as np
 from status import *
 import time
 
-from light_mappo.utils.log import get_logger
-
-logging_config = {
-    "filename": "/app/logs/socket_server.log",
-}
-logger = get_logger("socket_server", logging_config, console=False)
-
 master_status = STATUS_STOP
 id_position = {}
 # id_position = {6: np.array([0., 0.])}
@@ -39,8 +32,6 @@ def process_data(id, status):
             master_status = STATUS_TURN
     else:
         raise RuntimeError("unknown status")
-    
-    logger.info(f"master_status: {master_status}")
 
     if 1 not in id_guide_point or 1 not in id_position or 6 not in id_position:
         return "1"
