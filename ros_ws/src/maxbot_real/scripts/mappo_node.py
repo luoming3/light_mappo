@@ -196,14 +196,17 @@ class MappoNode:
             publish_action(np.array([0, 0]))
             return STATUS_FAILURE
         # warm up serveral steps after beginning
-        while self.warm_up_count < warm_up_steps:
-            if self.master_status == STATUS_TURN:
+        if self.master_status == STATUS_TURN:
                 self.warm_up_count = 0
-                break
-            self.warm_up_count += 1
-            rospy.loginfo(f"warm up times: {self.warm_up_count}")
-            publish_action(np.array([warm_up_speed, 0.]))
-            time.sleep(1 / step_fps)
+        else:
+            while self.warm_up_count < warm_up_steps:
+                if self.master_status == STATUS_TURN:
+                    self.warm_up_count = 0
+                    break
+                self.warm_up_count += 1
+                rospy.loginfo(f"warm up times: {self.warm_up_count}")
+                publish_action(np.array([warm_up_speed, 0.]))
+                time.sleep(1 / step_fps)
 
         if self.master_status == STATUS_RUNNING:
             # for record mappo algorithm running status
