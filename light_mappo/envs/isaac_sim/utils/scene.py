@@ -150,6 +150,7 @@ def set_up_new_scene(config):
                 prim_path=jetbot_prim_path,
                 usd_path=jetbot_asset_path,
                 translation=drone_translations[i],
+                scale=(2., 2., 2.),
             )
         # drone_prim = self.drone.spawn(
         #     translations=drone_translations[i],
