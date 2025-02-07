@@ -79,9 +79,9 @@ see `light_mappo/envs/isaac_sim/docker/README.md`
 ### 2.1. package
 
 1. build image
-    - `make build-image` (under project folder)
+    - `make build-image` or `make build-vnc-image` (under project folder)
 2. save image
-    - `make save-image` (under project folder)
+    - `make save-image` or `make save-vnc-image` (under project folder)
 3. copy **actor.pt** to `deploy/models` directory
 4. compression deploy
     - `make package` (under project folder)
