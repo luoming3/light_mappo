@@ -77,7 +77,7 @@ class MappoNode:
         self.w = w
         self.l = l
         self.gamma = math.atan(w / l)
-        self.warm_up_count = 0
+        self.warm_up_count = np.inf
 
         self.amcl_subscriber = rospy.Subscriber("/amcl_pose",
                                                 PoseWithCovarianceStamped,
