@@ -27,7 +27,7 @@ from status import *
 from socket_server import car_center_socket_server
 
 # /cmd_vel topic
-ACION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+ACTION_PUBLISHER = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
 # socket client send interval
 SOCKET_HZ = 50
@@ -445,7 +445,7 @@ def publish_action(action):
     twist = Twist()
     twist.linear.x = action[0]
     twist.angular.z = action[1]
-    ACION_PUBLISHER.publish(twist)
+    ACTION_PUBLISHER.publish(twist)
 
 
 def quaternion_to_euler(qua_ori):
