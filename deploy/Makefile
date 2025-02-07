@@ -2,8 +2,8 @@ help:  # list all targets
 	@grep ^[a-z] Makefile
 
 IMAGE_NAME=mappo
-IMAGE_TAG=ros-noetic-focal
-CONTAINER_NAME=mappo
+IMAGE_TAG=ros-noetic-focal-vnc
+CONTAINER_NAME=mappo-vnc
 
 DEPLOY_TAG=release-20250207
 
