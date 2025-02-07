@@ -1,5 +1,5 @@
 import numpy as np
-from gym import spaces
+# from gym import spaces
 
 import torch
 import torch.distributions as D
@@ -19,12 +19,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 
 from light_mappo.utils.util import euler_to_quaternion, quaternion_to_euler
-
-OBS_DIM = 7
-ACTION_SPACE = spaces.Box(
-    np.array([-10, -10]).astype(np.float32),
-    np.array([+10, +10]).astype(np.float32),
-)  # left_wheel velocity and right_wheel velocity
+from light_mappo.envs.isaac_sim import OBS_DIM, ACTION_SPACE
 
 
 class EnvCore(object):

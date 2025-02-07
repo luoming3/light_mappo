@@ -2,6 +2,14 @@ import os.path as osp
 
 ASSET_PATH = osp.join(osp.dirname(__file__), "robot/assets")
 
+import numpy as np
+from gym import spaces
+
+OBS_DIM = 7
+ACTION_SPACE = spaces.Box(
+    np.array([-10, -10]).astype(np.float32),
+    np.array([+10, +10]).astype(np.float32),
+)  # left_wheel velocity and right_wheel velocity
 
 def init_simulation_app(headless=True):
     from omni.isaac.kit import SimulationApp

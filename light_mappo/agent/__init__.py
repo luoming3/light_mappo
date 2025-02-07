@@ -6,7 +6,7 @@ from gym import spaces
 from light_mappo.algorithms.algorithm.rMAPPOPolicy import RMAPPOPolicy as Policy
 from light_mappo.config import get_config
 from light_mappo.utils.util import _t2n
-from light_mappo.envs.isaac_sim.env_core import OBS_DIM, ACTION_SPACE
+from light_mappo.envs.isaac_sim import OBS_DIM, ACTION_SPACE
 
 MODEL_DIR = "/app/models/actor.pt"
 L = 0.1125  # wheel spacing
