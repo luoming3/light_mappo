@@ -36,7 +36,10 @@ class EnvRunner(Runner):
         logging_config = {
             "filename": str(log_path),
         }
-        self.logger = get_logger(__name__, logging_config)
+        run_dir = config["run_dir"]
+        log_name = run_dir.parts[-1]
+        self.logger = get_logger(log_name, logging_config)
+        # self.logger = get_logger(__name__, logging_config)
 
     def run(self):
         self.warmup()
