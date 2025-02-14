@@ -91,6 +91,30 @@ def parse_args(args, parser):
 
     return all_args
 
+def modify_dr_config(config, new_para):
+    new_para_list = new_para.split('_')
+    new_para_list = [float(i) for i in new_para_list] 
+    dr_config = config.get("domain_randomization", None)
+    randomization_params = dr_config.get("randomization_params", None)
+    if randomization_params is not None:
+        for opt in randomization_params.keys():
+            if opt == "observations":
+                observations_dr_params = dr_config["randomization_params"]["observations"]
+                observations_dr_params["on_interval"]["distribution_parameters"][0][1] = new_para_list[2]
+                observations_dr_params["on_interval"]["distribution_parameters"][1][1] = new_para_list[3]
+                observations_dr_params["on_interval"]["distribution_parameters"][2][1] = new_para_list[4]
+                observations_dr_params["on_interval"]["distribution_parameters"][3][1] = new_para_list[5]
+                observations_dr_params["on_interval"]["distribution_parameters"][4][1] = new_para_list[6]
+            elif opt == "actions":
+                actions_dr_params = dr_config["randomization_params"]["actions"]
+                actions_dr_params["on_interval"]["distribution_parameters"][1] = new_para_list[1]
+            elif opt == "rigid_prim_views":
+                if randomization_params["rigid_prim_views"] is not None:
+                    for view_name in randomization_params["rigid_prim_views"].keys():
+                        if randomization_params["rigid_prim_views"][view_name] is not None:
+                            force_dr_params = randomization_params["rigid_prim_views"][view_name]["force"]
+                            force_dr_params["on_interval"]["distribution_parameters"][1][2] = new_para_list[0] 
+    return config
 
 def main(args):
     t1 = time.time()
@@ -123,33 +147,6 @@ def main(args):
         device = torch.device("cpu")
         torch.set_num_threads(all_args.n_training_threads)
 
-    # run dir
-    run_dir = (
-        Path(os.path.split(os.path.dirname(os.path.abspath(__file__)))[0] + "/results")
-        / all_args.env_name
-        / all_args.scenario_name
-        / all_args.algorithm_name
-        / all_args.experiment_name
-    )
-    if not run_dir.exists():
-        os.makedirs(str(run_dir))
-
-    if not run_dir.exists():
-        curr_run = "run1"
-    else:
-        exst_run_nums = [
-            int(str(folder.name).split("run")[1])
-            for folder in run_dir.iterdir()
-            if str(folder.name).startswith("run")
-        ]
-        if len(exst_run_nums) == 0:
-            curr_run = "run1"
-        else:
-            curr_run = "run%i" % (max(exst_run_nums) + 1)
-    run_dir = run_dir / curr_run
-    if not run_dir.exists():
-        os.makedirs(str(run_dir))
-
     setproctitle.setproctitle(
         str(all_args.experiment_name)
         + "-"
@@ -166,7 +163,6 @@ def main(args):
     np.random.seed(all_args.seed)
     random.seed(all_args.seed)
 
-    print(f"run_dir: {run_dir}")
     pprint.pprint(vars(all_args))
 
     # create SimulationApp for import isaac sim modules
@@ -182,15 +178,6 @@ def main(args):
     eval_envs = make_eval_env(all_args) if all_args.use_eval else None
     num_agents = all_args.num_agents
 
-    config = {
-        "all_args": all_args,
-        "envs": envs,
-        "eval_envs": eval_envs,
-        "num_agents": num_agents,
-        "device": device,
-        "run_dir": run_dir,
-    }
-
     # run experiments
     if all_args.share_policy:
         from light_mappo.runner.shared.env_runner import EnvRunner as Runner
@@ -201,17 +188,113 @@ def main(args):
         with open(os.path.join(parent_dir, 'light_mappo/dr_config/domain_randomization.yaml'), 'r') as file:
             dr_config = yaml.safe_load(file)
 
-        print('model!!!!!!', dr_config)
-        print(f"run_dir: {run_dir}")
+    dr_para_list_0 = ['2_0.2_0.04_0.015_0.03_3_12', '2_0.2_0.03_0.02_0.03_3_12', '2_0.2_0.03_0.015_0.04_3_12', '2_0.2_0.03_0.015_0.03_4_12', '2_0.2_0.03_0.015_0.03_3_16', 
+                    '2_0.2_0.04_0.02_0.03_3_12', '2_0.2_0.04_0.015_0.04_3_12', '2_0.2_0.04_0.015_0.03_4_12', '2_0.2_0.04_0.015_0.03_3_16', 
+                    '2_0.2_0.03_0.02_0.04_3_12', '2_0.2_0.03_0.02_0.03_4_12', '2_0.2_0.03_0.02_0.03_3_16',
+                    '2_0.2_0.03_0.015_0.04_4_12', '2_0.2_0.03_0.015_0.04_3_16',
+                    '2_0.2_0.03_0.015_0.03_4_16']
+    
+    dr_para_list_1 = ['2_0.2_0.04_0.02_0.04_3_12', '2_0.2_0.04_0.02_0.03_4_12', '2_0.2_0.04_0.02_0.03_3_16', '2_0.2_0.04_0.015_0.04_4_12', '2_0.2_0.04_0.015_0.03_4_16', '2_0.2_0.04_0.015_0.04_3_16',
+                    '2_0.2_0.03_0.02_0.04_4_12', '2_0.2_0.03_0.02_0.04_3_16', '2_0.2_0.03_0.02_0.03_4_16',
+                    '2_0.2_0.03_0.015_0.04_4_16',
+                    '2_0.2_0.04_0.02_0.04_4_12', '2_0.2_0.04_0.02_0.03_4_16', '2_0.2_0.04_0.02_0.04_3_16', '2_0.2_0.04_0.015_0.04_4_16',
+                    '2_0.2_0.03_0.02_0.04_4_16']
+    
+    dr_para_list_2 = ['3_0.2_0.04_0.015_0.03_3_12', '3_0.2_0.03_0.02_0.03_3_12', '3_0.2_0.03_0.015_0.04_3_12', '3_0.2_0.03_0.015_0.03_4_12', '3_0.2_0.03_0.015_0.03_3_16', 
+                    '3_0.2_0.04_0.02_0.03_3_12', '3_0.2_0.04_0.015_0.04_3_12', '3_0.2_0.04_0.015_0.03_4_12', '3_0.2_0.04_0.015_0.03_3_16', 
+                    '3_0.2_0.03_0.02_0.04_3_12', '3_0.2_0.03_0.02_0.03_4_12', '3_0.2_0.03_0.02_0.03_3_16',
+                    '3_0.2_0.03_0.015_0.04_4_12', '3_0.2_0.03_0.015_0.04_3_16',
+                    '3_0.2_0.03_0.015_0.03_4_16']
+    
+    dr_para_list_3 = ['3_0.2_0.04_0.02_0.04_3_12', '3_0.2_0.04_0.02_0.03_4_12', '3_0.2_0.04_0.02_0.03_3_16', '3_0.2_0.04_0.015_0.04_4_12', '3_0.2_0.04_0.015_0.03_4_16', '3_0.2_0.04_0.015_0.04_3_16',
+                    '3_0.2_0.03_0.02_0.04_4_12', '3_0.2_0.03_0.02_0.04_3_16', '3_0.2_0.03_0.02_0.03_4_16',
+                    '3_0.2_0.03_0.015_0.04_4_16',
+                    '3_0.2_0.04_0.02_0.04_4_12', '3_0.2_0.04_0.02_0.03_4_16', '3_0.2_0.04_0.02_0.04_3_16', '3_0.2_0.04_0.015_0.04_4_16',
+                    '3_0.2_0.03_0.02_0.04_4_16']
+    
+    dr_para_list_4 = ['2_0.2_0.03_0.015_0.03_4_16']
 
-        _randomizer = get_randomizer(world, config, dr_config)
+    dr_para_list_5 = ['3_0.2_0.03_0.015_0.03_4_16']
 
-        if _randomizer:
-            _randomizer.set_up_domain_randomization()
-            envs.env.env.dr_randomizer = _randomizer
+    dr_para_list_30_0 = ['0']
+    dr_para_list_30_1 = ['3_0.2_0.03_0.02_0.03_3_12']
+    dr_para_list_30_2 = ['3_0.2_0.03_0.02_0.03_4_16']
+    dr_para_list_30_3 = ['2_0.2_0.02_0.01_0.02_2_8']
+    
+    dr_para_list_20_0 = ['0']
+    dr_para_list_20_1 = ['3_0.2_0.03_0.02_0.03_3_12']
 
-    runner = Runner(config)
-    runner.run()
+    dr_para_list_10_0 = ['0']
+    dr_para_list_10_1 = ['3_0.2_0.03_0.02_0.03_3_12']
+
+    dr_para_list_hard_60_0 = ['0']
+    dr_para_list_hard_60_1 = ['3_0.2_0.03_0.02_0.03_3_12']
+    dr_para_list_hard_60_2 = ['2_0.2_0.02_0.01_0.02_2_8']
+    dr_para_list_hard_60_3 = ['2_0.2_0.03_0.015_0.03_3_12']
+    dr_para_list_hard_60_4 = ['2_0.3_0.02_0.01_0.02_2_8']
+    reward_para_list = [(0.96, 0.04), (0.96, 0.05), (0.96, 0.06), (0.97, 0.04), (0.97, 0.05), (0.97, 0.06), (0.98, 0.04), (0.98, 0.05), (0.98, 0.06)]
+    reward_para_list_1 = [(0.98, 0.05)]
+
+    for i in range(len(dr_para_list_hard_60_1)):
+        print(dr_para_list_hard_60_1[i])
+        # run dir
+        for dir_reward_thr, total_vel_thr in reward_para_list_1:
+            envs.env.env.dir_reward_thr = dir_reward_thr
+            envs.env.env.total_vel_thr = total_vel_thr
+            run_dir = (
+                Path(os.path.split(os.path.dirname(os.path.abspath(__file__)))[0] + "/results")
+                / all_args.env_name
+                / all_args.scenario_name
+                / all_args.algorithm_name
+                / all_args.experiment_name
+                / "dr_test_model_hard_60_round2"
+                / dr_para_list_hard_60_1[i]
+            )
+            if not run_dir.exists():
+                os.makedirs(str(run_dir))
+
+            # if not run_dir.exists():
+            #     curr_run = "run1"
+            # else:
+            #     exst_run_nums = [
+            #         int(str(folder.name).split("run")[1])
+            #         for folder in run_dir.iterdir()
+            #         if str(folder.name).startswith("run")
+            #     ]
+            #     if len(exst_run_nums) == 0:
+            #         curr_run = "run1"
+            #     else:
+            #         curr_run = "run%i" % (max(exst_run_nums) + 1)
+            curr_run = str(dir_reward_thr) + "_" + str(total_vel_thr)
+            run_dir = run_dir / curr_run
+            if not run_dir.exists():
+                os.makedirs(str(run_dir))
+
+            print(f"run_dir: {run_dir}")
+
+            config = {
+                "all_args": all_args,
+                "envs": envs,
+                "eval_envs": eval_envs,
+                "num_agents": num_agents,
+                "device": device,
+                "run_dir": run_dir,
+            }
+
+            # domain randomization
+            if all_args.use_randomize:
+                dr_config = modify_dr_config(dr_config, dr_para_list_hard_60_1[i])
+                print('model!!!!!!', dr_config)
+                print(f"run_dir: {run_dir}")
+
+                _randomizer = get_randomizer(world, config, dr_config)
+
+                if _randomizer:
+                    _randomizer.set_up_domain_randomization()
+                    envs.env.env.dr_randomizer = _randomizer
+            
+            runner = Runner(config)
+            runner.run()
 
     # post process
     envs.close()

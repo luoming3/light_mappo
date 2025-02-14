@@ -55,6 +55,31 @@ def parse_args(args, parser):
     return all_args
 
 
+def modify_dr_config(config, new_para):
+    new_para_list = new_para.split('_')
+    new_para_list = [float(i) for i in new_para_list] 
+    dr_config = config.get("domain_randomization", None)
+    randomization_params = dr_config.get("randomization_params", None)
+    if randomization_params is not None:
+        for opt in randomization_params.keys():
+            if opt == "observations":
+                observations_dr_params = dr_config["randomization_params"]["observations"]
+                observations_dr_params["on_interval"]["distribution_parameters"][0][1] = new_para_list[2]
+                observations_dr_params["on_interval"]["distribution_parameters"][1][1] = new_para_list[3]
+                observations_dr_params["on_interval"]["distribution_parameters"][2][1] = new_para_list[4]
+                observations_dr_params["on_interval"]["distribution_parameters"][3][1] = new_para_list[5]
+                observations_dr_params["on_interval"]["distribution_parameters"][4][1] = new_para_list[6]
+            elif opt == "actions":
+                actions_dr_params = dr_config["randomization_params"]["actions"]
+                actions_dr_params["on_interval"]["distribution_parameters"][1] = new_para_list[1]
+            elif opt == "rigid_prim_views":
+                if randomization_params["rigid_prim_views"] is not None:
+                    for view_name in randomization_params["rigid_prim_views"].keys():
+                        if randomization_params["rigid_prim_views"][view_name] is not None:
+                            force_dr_params = randomization_params["rigid_prim_views"][view_name]["force"]
+                            force_dr_params["on_interval"]["distribution_parameters"][1][2] = new_para_list[0] 
+    return config
+
 def main(args):
     parser = get_config()
     all_args = parse_args(args, parser)
@@ -153,13 +178,23 @@ def main(args):
     else:
         model_dir_input = Path(all_args.model_dir)
         model_list = get_model_list(model_dir_input)
+
+        # folder_path = '/home/user/wenze/ros_ws/light_mappo/light_mappo/dr_config'
+        # yaml_files = glob.glob(f"{folder_path}/*.yaml")
+        with open(os.path.join(parent_dir, 'light_mappo/dr_config/dr_2_4_4.yaml'), 'r') as file:
+            dr_config = yaml.safe_load(file)
+
         for model_dir in model_list:
+            print('dr_config', model_dir.split("/"))
+            reward_config = model_dir.split("/")[-3]
+            envs.env.env.dir_reward_thr = float(reward_config.split("_")[0])
+            envs.env.env.total_vel_thr = float(reward_config.split("_")[1])
             # for dr_config_path in yaml_files:
             if all_args.use_randomize:
-                # print('model!!!!!!', model_dir, dr_config_path)
+                dr_config = modify_dr_config(dr_config, model_dir.split("/")[-4])
+
+                print('dr_config!!!!!!', dr_config)
                 print('model!!!!!!', model_dir)
-                with open('/home/user/wenze/ros_ws/light_mappo/light_mappo/dr_config/dr_5.yaml', 'r') as file:
-                    dr_config = yaml.safe_load(file)
 
                 _randomizer = get_randomizer(world, config, dr_config)
 

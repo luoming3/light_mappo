@@ -564,4 +564,19 @@ def get_config():
         help="use domain randomization",
     )
 
+    # reward parameters
+    parser.add_argument(
+        "--dir_reward_thr",
+        type=float,
+        default=0.98,
+        help='set car direction reward threshold'
+    )
+
+    parser.add_argument(
+        "--total_vel_thr",
+        type=float,
+        default=0.05,
+        help="set car total velocity threshold"
+    )
+
     return parser

@@ -58,6 +58,9 @@ class EnvCore(object):
             torch.tensor([0., 0., -1.], dtype=torch.float32, device=self.device) * torch.pi,
             torch.tensor([1e-8, 1e-8, 1.], dtype=torch.float32, device=self.device) * torch.pi
         )
+        
+        self.dir_reward_thr = all_args.dir_reward_thr
+        self.total_vel_thr = all_args.total_vel_thr
 
         if self.all_args.use_randomize:
             self.dr_randomizer = None
@@ -169,15 +172,20 @@ class EnvCore(object):
         previous_dist_to_goal = torch.norm(goal_world_position - previous_car_position, p=2, dim=1)
         current_dist_to_goal = torch.norm(goal_world_position - current_car_position, p=2, dim=1)
 
+        # print('dir_reward_thr: ', self.dir_reward_thr, 'total_vel_thr: ', self.total_vel_thr)
         # running
         dist_reward = previous_dist_to_goal - current_dist_to_goal
         direction_reward = torch.cosine_similarity(self.car_linear_velocities, self.rpos_car_dest, dim=1)
-        velocities_reward = 5 * torch.where(direction_reward > 0.95, 1., -1.) * torch.norm(self.car_linear_velocities, dim=1)
-        direction_reward = torch.where(direction_reward > 0.95, direction_reward, 0)
+        total_vel = torch.norm(self.car_linear_velocities, dim=1)
+        velocities_reward = 4 * torch.where(direction_reward > self.dir_reward_thr, 1., -1.) * total_vel * torch.where(total_vel > self.total_vel_thr, 1., 0.) # 10 * direction_para * velocity_value * value_para
+        direction_reward = torch.where(direction_reward > self.dir_reward_thr, direction_reward, 0)
         step_reward = -2
-        total_force = torch.norm(self.y_joint_force, p=2, dim=1) + torch.norm(self.x_joint_force, p=2, dim=1)
-        joint_pen = torch.log(total_force)/torch.log(torch.ones((1,), device=self.device)*100)
-        joint_pen = torch.where(joint_pen > 1.4, joint_pen - 1, 0)
+
+        x_joint_force = torch.norm(self.x_joint_force, p=1, dim=1)
+        y_joint_force = torch.norm(self.y_joint_force, p=1, dim=1)
+        x_pen = torch.where(x_joint_force > 30, x_joint_force/200, 0)
+        y_pen = torch.where(y_joint_force > 200, y_joint_force/2000, 0)
+        joint_pen = x_pen + y_pen
         env_reward = (dist_reward + direction_reward + velocities_reward + step_reward - joint_pen).reshape((self.env_num, 1))
         env_done = torch.zeros((self.env_num, 1), dtype=bool, device=self.device)
         
@@ -257,9 +265,27 @@ class EnvCore(object):
         jetbot_orientation = jetbot_orientation.reshape(self.env_num, self.agent_num, 1)
 
         joint_forces = self.car_view.get_measured_joint_forces()[:,1:1+self.agent_num,:2]
-        self.y_joint_force = joint_forces[:,:,1]
-        self.x_joint_force = joint_forces[:,:,0]
-        self.joint_forces = joint_forces
+        self.y_joint_force = joint_forces[:,:,1].detach().clone()
+        self.x_joint_force = joint_forces[:,:,0].detach().clone()
+        self.joint_forces = joint_forces.detach().clone()
+
+
+        # joint_forces[(joint_forces[:,:,0] >= -30) & (joint_forces[:,:,0] < 30)] = 0
+        # joint_forces[(joint_forces[:,:,0] < -30) & (joint_forces[:,:,0] >= -60)] = -1
+        # joint_forces[(joint_forces[:,:,0] < -60) & (joint_forces[:,:,0] >= -120)] = -2  
+        # joint_forces[joint_forces[:,:,0] < -120] = -3
+        # joint_forces[(joint_forces[:,:,0] >= 30) & (joint_forces[:,:,0] < 60)] = 1
+        # joint_forces[(joint_forces[:,:,0] >= 60) & (joint_forces[:,:,0] < 120)] = 2
+        # joint_forces[joint_forces[:,:,0] >= 120] = 3
+
+
+        # joint_forces[(joint_forces[:,:,1] >= -100) & (joint_forces[:,:,1] < 100)] = 0
+        # joint_forces[(joint_forces[:,:,1] < -100) & (joint_forces[:,:,1] >= -200)] = -1
+        # joint_forces[(joint_forces[:,:,1] < -200) & (joint_forces[:,:,1] >= -500)] = -2
+        # joint_forces[joint_forces[:,:,1] < -500] = -3
+        # joint_forces[(joint_forces[:,:,1] >= 100) & (joint_forces[:,:,1] < 200)] = 1
+        # joint_forces[(joint_forces[:,:,1] >= 200) & (joint_forces[:,:,1] < 500)] = 2
+        # joint_forces[joint_forces[:,:,1] >= 500] = 3
         # joint_forces = torch.tanh(joint_forces/50)
 
         observations = torch.cat(
