@@ -177,14 +177,14 @@ class EnvCore(object):
         dist_reward = previous_dist_to_goal - current_dist_to_goal
         direction_reward = torch.cosine_similarity(self.car_linear_velocities, self.rpos_car_dest, dim=1)
         total_vel = torch.norm(self.car_linear_velocities, dim=1)
-        velocities_reward = 4 * torch.where(direction_reward > self.dir_reward_thr, 1., -1.) * total_vel * torch.where(total_vel > self.total_vel_thr, 1., 0.) # 10 * direction_para * velocity_value * value_para
+        velocities_reward = 10 * torch.where(direction_reward > self.dir_reward_thr, 1., -1.) * total_vel * torch.where(total_vel > self.total_vel_thr, 1., 0.) # 10 * direction_para * velocity_value * value_para
         direction_reward = torch.where(direction_reward > self.dir_reward_thr, direction_reward, 0)
         step_reward = -2
 
         x_joint_force = torch.norm(self.x_joint_force, p=1, dim=1)
         y_joint_force = torch.norm(self.y_joint_force, p=1, dim=1)
         x_pen = torch.where(x_joint_force > 30, x_joint_force/200, 0)
-        y_pen = torch.where(y_joint_force > 200, y_joint_force/2000, 0)
+        y_pen = torch.where(y_joint_force > 600, y_joint_force/2000, 0)
         joint_pen = x_pen + y_pen
         env_reward = (dist_reward + direction_reward + velocities_reward + step_reward - joint_pen).reshape((self.env_num, 1))
         env_done = torch.zeros((self.env_num, 1), dtype=bool, device=self.device)
