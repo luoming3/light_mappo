@@ -545,14 +545,14 @@ def get_config():
     parser.add_argument(
         "--skip_frame",
         type=int,
-        default=6,
+        default=1,
         help="set low fps via this args and physics_dt",
     )
 
     parser.add_argument(
         "--truncation_step",
         type=int,
-        default=256,
+        default=1024,
         help="set truncation step",
     )
 
