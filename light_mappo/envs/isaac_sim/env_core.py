@@ -120,6 +120,41 @@ class EnvCore(object):
         self.steps[indices] = 0
 
         return observations
+    
+    def calculate_angle(self, car_center, guide_point):
+        '''
+        calculate the angle between the right direction and x-axis
+        the angle is in [-pi, pi]
+        '''
+        x1, y1 = car_center[:, 0], car_center[:, 1]
+        x2, y2 = guide_point[:, 0], guide_point[:, 1]
+
+        dx = x2 - x1
+        dy = y2 - y1
+        magnitude = torch.sqrt(dx**2 + dy**2)
+        cos_theta = dx / magnitude
+        theta = torch.acos(cos_theta)
+
+        result = torch.where(y2>y1, theta, -theta)
+        return result
+    
+    def cal_diff_angle(self, current_car_position, goal_world_position, jetbot_orientation):
+        alpha = self.calculate_angle(current_car_position, goal_world_position)
+        alpha = alpha.unsqueeze(1).expand((-1, self.agent_num))
+        # turn right condition
+        diff_angle = jetbot_orientation - alpha
+
+        # abs_diff_angle = torch.abs(diff_angle)
+        # result_temp_0 = torch.where(torch.where(abs_diff_angle > math.pi, 2*math.pi - abs_diff_angle, abs_diff_angle) > (10 * math.pi / 180), 1, 0) 
+
+        result_temp_1 = torch.logical_or(((diff_angle > 0) & (diff_angle < math.pi / 2)), ((-math.pi < diff_angle) & (diff_angle < -math.pi / 2)))
+        result_temp_2 = torch.logical_or(result_temp_1, ((math.pi < diff_angle) & (diff_angle < 3/2 * math.pi)))
+        result_temp_3 = torch.logical_or(result_temp_2, ((-2 * math.pi < diff_angle) & (diff_angle < -3/2 * math.pi)))
+
+        # turn_right_condition = torch.where(result_temp_3, -1, 1).mul(result_temp_0)
+        turn_right_condition = torch.where(result_temp_3, -1, 1)
+            
+        return turn_right_condition
 
     def step(self, actions):
         '''
@@ -181,12 +216,20 @@ class EnvCore(object):
         direction_reward = torch.where(direction_reward > self.dir_reward_thr, direction_reward, 0)
         step_reward = -2
 
+        jetbot_orientation = env_obs[:, :, 4]
+        jetbot_angular_velocities = self.jetbot_view.get_angular_velocities()[:, 2].reshape(self.env_num, self.agent_num)
+        turn_right_condition = self.cal_diff_angle(current_car_position, goal_world_position, jetbot_orientation)
+        jetbot_orient_reward_temp = (torch.abs(jetbot_angular_velocities) - 0.27) / (2.7 - 0.27) * 0.2 + 0.1
+        jetbot_orient = torch.where(jetbot_angular_velocities > 0, 1, -1).mul(turn_right_condition)
+        jetbot_orient_reward = torch.where(torch.abs(jetbot_angular_velocities) > 0.27, jetbot_orient_reward_temp * jetbot_orient, 0)
+        jetbot_orient_reward = jetbot_orient_reward.sum(dim=1)
+
         x_joint_force = torch.norm(self.x_joint_force, p=1, dim=1)
         y_joint_force = torch.norm(self.y_joint_force, p=1, dim=1)
         x_pen = torch.where(x_joint_force > 30, x_joint_force/200, 0)
         y_pen = torch.where(y_joint_force > 600, y_joint_force/2000, 0)
         joint_pen = x_pen + y_pen
-        env_reward = (dist_reward + direction_reward + velocities_reward + step_reward - joint_pen).reshape((self.env_num, 1))
+        env_reward = (dist_reward + direction_reward + velocities_reward + step_reward + jetbot_orient_reward - joint_pen).reshape((self.env_num, 1))
         env_done = torch.zeros((self.env_num, 1), dtype=bool, device=self.device)
         
         # arrival
@@ -214,7 +257,7 @@ class EnvCore(object):
             self.target_pos[arrival_indices] = next_point
             self.target_pos[truncation_indices] = torch.zeros((1, 2), device=self.device)
 
-        env_info = [[{}] * self.agent_num for _ in range(self.env_num)]
+        env_info = [[{"jetbot_orient_reward": jetbot_orient_reward}] * self.agent_num for _ in range(self.env_num)]
         
         result = (
             env_obs,
