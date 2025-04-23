@@ -307,6 +307,7 @@ class MappoNode:
             abs_diff = 2 * math.pi - abs(ori - alpha)
         max_abs_force = max(abs(self.force))
         if abs_diff > turn_threshold or max_abs_force > max_force_threshold:
+            rospy.loginfo(f"abs_diff: {abs_diff}, max_abs_force: {max_abs_force}")
             self.status = STATUS_TURN
             if turn_right_condition:
                 return np.array([0, -turn_omega])
