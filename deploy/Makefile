@@ -231,3 +231,14 @@ clean-step-log-all:
 
 step_graph:
 	@python scripts/step_graph.py
+
+cp_patch_to_docker:
+	@docker cp ros_ws/src/maxbot_real/scripts ${CONTAINER_NAME}:/app/ros_ws/src/maxbot_real
+
+push_patch:
+	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		echo "push patch to $${REMOTE_HOST}"; \
+		scp -r ../ros_ws/src/maxbot_real/scripts ${REMOTE_USER}@$${REMOTE_HOST}:~/${DEPLOY_TAG}/deploy/ros_ws/src/maxbot_real; \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
+			make cp_patch_to_docker'; \
+	done
