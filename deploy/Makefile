@@ -239,6 +239,7 @@ push_patch:
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
 		echo "push patch to $${REMOTE_HOST}"; \
 		scp -r ../ros_ws/src/maxbot_real/scripts ${REMOTE_USER}@$${REMOTE_HOST}:~/${DEPLOY_TAG}/deploy/ros_ws/src/maxbot_real; \
+		scp Makefile ${REMOTE_USER}@$${REMOTE_HOST}:~/${DEPLOY_TAG}/deploy; \
 		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
-			make cp_patch_to_docker'; \
+		make cp_patch_to_docker'; \
 	done
