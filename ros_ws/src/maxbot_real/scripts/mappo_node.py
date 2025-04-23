@@ -203,8 +203,10 @@ class MappoNode:
                 if self.master_status == STATUS_TURN:
                     self.warm_up_count = 0
                     break
+                self.status = STATUS_RUNNING
                 self.warm_up_count += 1
                 rospy.loginfo(f"warm up times: {self.warm_up_count}")
+                rospy.loginfo(f"status: {self.status}")
                 publish_action(np.array([warm_up_speed, 0.]))
                 time.sleep(1 / step_fps)
 
@@ -501,6 +503,8 @@ def main(*args):
             rospy.loginfo("turn direction")
         elif status == STATUS_STOP:
             rospy.loginfo("waiting")
+            rospy.loginfo(f"self.status: {mappo_node.status}")
+            rospy.loginfo(f"master_status: {mappo_node.master_status}")
         elif status == STATUS_FORWARD:
             rospy.loginfo("forward")
         elif status == STATUS_FORWARD_TURN:
