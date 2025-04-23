@@ -222,11 +222,23 @@ collect-log-file-all:
 clean-step-log:
 	@rm -f logs/step_record_*.npy
 
+backup-log:
+	@mkdir -p logs_bak_$(shell date +"%Y%m%d")
+	@cp -rf logs/* logs_bak_$(shell date +"%Y%m%d")
+	@rm -rf logs/*
+
 clean-step-log-all:
 	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
 		echo "clean step log on $${REMOTE_HOST}"; \
 		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
 			make clean-step-log'; \
+	done
+
+backup-log-all:
+	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+		echo "backup step log on $${REMOTE_HOST}"; \
+		ssh ${REMOTE_USER}@$${REMOTE_HOST} 'cd ${DEPLOY_TAG}/deploy; \
+			make backup-log'; \
 	done
 
 step_graph:
