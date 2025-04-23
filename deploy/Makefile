@@ -212,9 +212,11 @@ kill-navigation-all:
 	done
 
 collect-log-file-all:
-	@for REMOTE_HOST in ${MAXBOT_IPS}; do \
+	@log_dir=logs/$(shell date +"%Y%m%d"); \
+	mkdir -p $${log_dir}; \
+	for REMOTE_HOST in ${MAXBOT_IPS}; do \
 		echo "collect log on $${REMOTE_HOST}"; \
-		scp ${REMOTE_USER}@$${REMOTE_HOST}:~/${DEPLOY_TAG}/deploy/logs/step_record_*.npy logs/; \
+		scp ${REMOTE_USER}@$${REMOTE_HOST}:~/${DEPLOY_TAG}/deploy/logs/step_record_*.npy $${log_dir}; \
 	done
 
 clean-step-log:
