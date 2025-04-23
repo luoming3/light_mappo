@@ -16,3 +16,6 @@ deploy.tar.sha256
 *.tar.gz
 *.pt
 *.tar
+
+## log
+logs
