@@ -37,9 +37,9 @@ angle_tolerance = 5 / 180 * math.pi
 turn_threshold = 15 / 180 * math.pi
 force_threshold = 2000 # TODO: need to be tuned after calibration
 max_force_threshold = 4000 # TODO: need to be tuned after calibration
-running_v = 0.25
-running_omega = 0.25
-warm_up_speed = 0.15
+running_v = 0.3
+running_omega = 0.3
+warm_up_speed = 0.2
 turn_omega = 0.5
 # w is half the width of the assembled car
 # l is half the length of the assembled car
