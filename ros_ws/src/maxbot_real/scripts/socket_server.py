@@ -32,11 +32,17 @@ def process_data(id, status):
             master_status = STATUS_TURN
     else:
         raise RuntimeError("unknown status")
+    
+    total_bot = 6
+    if total_bot == 3:
+        if 1 not in id_guide_point or 1 not in id_position or 4 not in id_position or 5 not in id_position:
+            return "1"
+        car_center = ((id_position[1] + id_position[5]) / 2 + id_position[4]) / 2
+    else:
+        if 1 not in id_guide_point or 1 not in id_position or 6 not in id_position:
+            return "1"
+        car_center = (id_position[1] + id_position[6]) / 2
 
-    if 1 not in id_guide_point or 1 not in id_position or 6 not in id_position:
-        return "1"
-
-    car_center = (id_position[1] + id_position[6]) / 2
     guide_point = id_guide_point[1] # master guide point
     data_str = f"1,{car_center[0]},{car_center[1]},{master_status},{guide_point[0]},{guide_point[1]}"
     return data_str
