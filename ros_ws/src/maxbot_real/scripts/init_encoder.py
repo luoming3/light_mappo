@@ -45,7 +45,7 @@ def process_amcl_pose(message):
 
 
 def main():
-    rospy.init_node("init_ratory_encoder")
+    rospy.init_node("init_encoder")
     rospy.Subscriber("/sensor_data", String, process_sensor_data)
     time.sleep(1) # wait to get sensor_data
     rospy.Subscriber("/amcl_pose",PoseWithCovarianceStamped, process_amcl_pose)
